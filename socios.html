@@ -46,7 +46,7 @@
         </ul>
       </nav>
 
-      <button class="mobile-menu-toggle" aria-label="Menú" onclick="document.querySelector('.nav-links').classList.toggle('active')">&#9776;</button>
+      <button class="mobile-menu-toggle" aria-label="Menú" aria-expanded="false">&#9776;</button>
     </div>
   </header>
 
@@ -59,7 +59,7 @@
         <p class="section-lead">Unite a la mayor comunidad de cazadores responsables del país y fortalecé la representatividad de nuestra actividad.</p>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:40px; margin-bottom:60px;">
+      <div class="grid-2" style="margin-bottom:60px;">
         <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:36px;">
           <h2 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:700; color:var(--text-bone); margin-bottom:18px;">
             Beneficios de la Afiliación
@@ -96,7 +96,7 @@
             Solicitud de Afiliación
           </h2>
           <form onsubmit="event.preventDefault(); alert('¡Solicitud de afiliación enviada con éxito! La comisión directiva revisará los datos y te enviará las credenciales por correo electrónico.');">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label">Nombre *</label>
                 <input type="text" class="form-control" placeholder="Ej. Carlos" required>
@@ -107,7 +107,7 @@
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label">Cédula de Identidad *</label>
                 <input type="text" class="form-control" placeholder="Ej. 4.123.456-7" required>
@@ -123,7 +123,7 @@
               <input type="email" class="form-control" placeholder="Ej. carlos@correo.uy" required>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label">Departamento</label>
                 <select class="form-control">
@@ -170,7 +170,7 @@
         </button>
       </div>
 
-      <div style="display:grid; grid-template-columns: 460px 1fr; gap:40px; align-items:start;">
+      <div class="grid-sidebar-left">
         <!-- Digital Card Preview Frame -->
         <div class="member-card-wrapper">
           <div id="digital-member-card">
@@ -205,7 +205,7 @@
             <h3 style="font-family:var(--font-heading); font-size:1.2rem; font-weight:700; color:var(--text-bone); margin-bottom:16px;">
               🎁 Convenios y Beneficios Activos para Socios
             </h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="grid-2">
               <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
                 <strong style="color:var(--bronze-light); display:block;">Armería El Cazador</strong>
                 <span style="font-size:0.85rem; color:var(--text-bone-muted);">15% de descuento en cartuchería y accesorios presentando QR.</span>

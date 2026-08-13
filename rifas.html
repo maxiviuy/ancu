@@ -46,7 +46,7 @@
         </ul>
       </nav>
 
-      <button class="mobile-menu-toggle" aria-label="Menú" onclick="document.querySelector('.nav-links').classList.toggle('active')">&#9776;</button>
+      <button class="mobile-menu-toggle" aria-label="Menú" aria-expanded="false">&#9776;</button>
     </div>
   </header>
 
@@ -75,7 +75,7 @@
         </div>
 
         <!-- Real-Time Counter Badges -->
-        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-top:28px; padding-top:24px; border-top:1px solid var(--border-subtle);">
+        <div class="grid-4" style="margin-top:28px; padding-top:24px; border-top:1px solid var(--border-subtle);">
           <div style="background:rgba(255,255,255,0.03); padding:14px; border-radius:var(--radius-md); text-align:center; border:1px solid var(--border-subtle);">
             <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Total en Juego</div>
             <div style="font-size:1.4rem; font-weight:700; color:var(--text-bone);">1.000</div>
@@ -101,7 +101,7 @@
           🏆 Premios en Juego
         </h2>
 
-        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+        <div class="grid-3">
           <div style="background:var(--bg-card); border:1px solid var(--border-bronze); border-radius:var(--radius-lg); padding:24px; position:relative;">
             <div style="display:inline-block; background:var(--bronze-primary); color:#0A0F0D; font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:4px; margin-bottom:14px;">
               1º PREMIO
@@ -140,7 +140,7 @@
               Cuchillo de Monte Glock FM81
             </h3>
             <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:12px;">
-              Acero al carbono austriaco, filo con sierra superior, empuñadura de polímero y vaina de seguridad.
+              Acero al carbono fosfatado, sierra dorsal, empuñadura de polímero militar y vaina con retención de seguridad.
             </p>
             <div style="font-size:0.75rem; background:rgba(16,185,129,0.12); color:#A7F3D0; padding:6px 10px; border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
               ✓ Entrega directa a todo el país.
@@ -209,7 +209,7 @@
         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;">
           Todas nuestras rifas quedan registradas públicamente con acta de escribano y número de orden para total transparencia institucional.
         </p>
-        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px;">
+        <div class="grid-2">
           <div style="background:var(--bg-card); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <span style="font-size:0.75rem; color:var(--text-muted);">Sorteo del 28/12/2025 · Rifa #2</span>
             <div style="font-weight:700; color:var(--text-bone); margin-top:4px;">1º Premio: Nº 714 (Ganador: M*** S*** - Paysandú)</div>
@@ -255,7 +255,7 @@
       </div>
 
       <form id="checkout-form" onsubmit="submitCheckout(event)">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-row-2">
           <div class="form-group">
             <label class="form-label" for="buyer-name">Nombre y Apellido *</label>
             <input type="text" id="buyer-name" class="form-control" placeholder="Ej. Juan Pérez" required>
@@ -266,7 +266,7 @@
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-row-2">
           <div class="form-group">
             <label class="form-label" for="buyer-phone">Teléfono / WhatsApp *</label>
             <input type="tel" id="buyer-phone" class="form-control" placeholder="Ej. 099 123 456" required>

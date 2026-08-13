@@ -46,7 +46,7 @@
         </ul>
       </nav>
 
-      <button class="mobile-menu-toggle" aria-label="Menú" onclick="document.querySelector('.nav-links').classList.toggle('active')">&#9776;</button>
+      <button class="mobile-menu-toggle" aria-label="Menú" aria-expanded="false">&#9776;</button>
     </div>
   </header>
 
@@ -62,7 +62,7 @@
       <div style="display:flex; flex-direction:column; gap:20px; max-width:900px; margin:0 auto 40px auto;">
         
         <!-- Activity Card 1 -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:28px; display:grid; grid-template-columns: 140px 1fr auto; gap:24px; align-items:center;">
+        <div class="activity-card-grid">
           <div style="background:rgba(35,88,60,0.3); border:1px solid var(--forest-light); border-radius:var(--radius-md); padding:14px; text-align:center;">
             <span style="font-size:0.75rem; color:#8CE0AF; font-weight:700; text-transform:uppercase;">SEPTIEMBRE</span>
             <div style="font-size:1.8rem; font-weight:800; color:var(--text-bone);">12</div>
@@ -83,7 +83,7 @@
         </div>
 
         <!-- Activity Card 2 -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:28px; display:grid; grid-template-columns: 140px 1fr auto; gap:24px; align-items:center;">
+        <div class="activity-card-grid">
           <div style="background:rgba(197,155,39,0.15); border:1px solid var(--border-bronze); border-radius:var(--radius-md); padding:14px; text-align:center;">
             <span style="font-size:0.75rem; color:var(--bronze-light); font-weight:700; text-transform:uppercase;">OCTUBRE</span>
             <div style="font-size:1.8rem; font-weight:800; color:var(--text-bone);">03</div>
@@ -104,7 +104,7 @@
         </div>
 
         <!-- Activity Card 3 -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:28px; display:grid; grid-template-columns: 140px 1fr auto; gap:24px; align-items:center;">
+        <div class="activity-card-grid">
           <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; text-align:center;">
             <span style="font-size:0.75rem; color:var(--text-bone-muted); font-weight:700; text-transform:uppercase;">NOVIEMBRE</span>
             <div style="font-size:1.8rem; font-weight:800; color:var(--text-bone);">14</div>

@@ -46,7 +46,7 @@
         </ul>
       </nav>
 
-      <button class="mobile-menu-toggle" aria-label="Menú" onclick="document.querySelector('.nav-links').classList.toggle('active')">&#9776;</button>
+      <button class="mobile-menu-toggle" aria-label="Menú" aria-expanded="false">&#9776;</button>
     </div>
   </header>
 
@@ -60,7 +60,7 @@
       </div>
 
       <!-- Authorities Grid -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:28px; margin-bottom:60px;">
+      <div class="grid-3" style="margin-bottom:60px;">
         
         <div class="pillar-card" style="text-align:center;">
           <div style="width:100px; height:100px; border-radius:50%; margin:0 auto 18px auto; overflow:hidden; border:2px solid var(--bronze-primary); background:#0A0F0D;">
@@ -128,7 +128,7 @@
         </p>
 
         <form onsubmit="event.preventDefault(); alert('Mensaje remitido a la Secretaría General de ANCU. Responderemos a la brevedad.');">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-row-2">
             <div class="form-group">
               <label class="form-label">Nombre Completo *</label>
               <input type="text" class="form-control" required>

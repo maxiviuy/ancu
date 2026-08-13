@@ -46,7 +46,7 @@
         </ul>
       </nav>
 
-      <button class="mobile-menu-toggle" aria-label="Menú" onclick="document.querySelector('.nav-links').classList.toggle('active')">&#9776;</button>
+      <button class="mobile-menu-toggle" aria-label="Menú" aria-expanded="false">&#9776;</button>
     </div>
   </header>
 
@@ -59,7 +59,7 @@
         <p class="section-lead">Representamos a los cazadores del Uruguay, promoviendo la actividad legal, ética y la convivencia armónica con el medio rural.</p>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center;">
+      <div class="grid-2" style="align-items:center;">
         <div>
           <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-bottom:16px;">
             Quiénes Somos
@@ -70,7 +70,7 @@
           <p style="color:var(--text-muted); line-height:1.7; margin-bottom:20px;">
             Inspirados en las mejores federaciones de conservación europeas y americanas, nuestro rol combina la defensa de la tenencia legal y responsable de armas de fuego con el cuidado del monte nativo y la colaboración activa con productores rurales.
           </p>
-          <div style="display:flex; gap:16px;">
+          <div style="display:flex; gap:16px; flex-wrap:wrap;">
             <a href="autoridades.html" class="btn btn-bronze">Comisión Directiva &rarr;</a>
             <a href="#estatutos" class="btn btn-secondary">Estatutos y Transparencia</a>
           </div>
@@ -92,7 +92,7 @@
         <p class="section-lead">La base que guía cada acción institucional de la Asociación Nacional de Cazadores del Uruguay.</p>
       </div>
 
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:24px;">
+      <div class="grid-3">
         <div class="pillar-card">
           <div class="pillar-icon-box">🌿</div>
           <h3 class="pillar-title">Conservación</h3>
@@ -141,7 +141,7 @@
         Contamos con referentes, delegados zonales y socios activos en los 19 departamentos del país.
       </p>
 
-      <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:40px; max-width:900px; margin:0 auto; display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">
+      <div class="departments-grid" style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; max-width:900px; margin:0 auto;">
         <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Lavalleja</div>
         <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Tacuarembó</div>
         <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Rocha</div>
@@ -158,6 +158,9 @@
         <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Soriano</div>
         <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Colonia</div>
         <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 San José</div>
+        <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Canelones</div>
+        <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Flores</div>
+        <div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:0.9rem;">📍 Montevideo</div>
       </div>
     </div>
   </section>

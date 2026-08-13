@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ANCU - ASOCIACIÓN NACIONAL DE CAZADORES DEL URUGUAY
  * Core Client Engine & Interactive State Management
  * Powered by Astro · astroseguridad.lat · info@ancu.uy
@@ -89,7 +89,8 @@ function saveState() {
 }
 
 // ---------------- DOM Ready & Init ----------------
-document.addEventListener('DOMContentLoaded', () => {
+function bootstrapApp() {
+  initMobileNavigation();
   initRaffleGrid();
   initHundredsTabs();
   initRaffleSearch();
@@ -98,7 +99,45 @@ document.addEventListener('DOMContentLoaded', () => {
   initNormativaFilters();
   initAdminDashboard();
   updateRaffleStats();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapApp);
+} else {
+  bootstrapApp();
+}
+
+// ---------------- Mobile Navigation Handler ----------------
+function initMobileNavigation() {
+  const toggleBtn = document.querySelector('.mobile-menu-toggle');
+  const navLinks = document.querySelector('.nav-links');
+  if (!toggleBtn || !navLinks) return;
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isActive = navLinks.classList.toggle('active');
+    toggleBtn.innerHTML = isActive ? '&times;' : '&#9776;';
+    toggleBtn.setAttribute('aria-expanded', isActive);
+  });
+
+  // Close when clicking any nav link
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('active');
+      toggleBtn.innerHTML = '&#9776;';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && !toggleBtn.contains(e.target)) {
+      navLinks.classList.remove('active');
+      toggleBtn.innerHTML = '&#9776;';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
 
 // ---------------- Raffle Engine Logic ----------------
 let currentHundred = 0;

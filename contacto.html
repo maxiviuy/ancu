@@ -46,7 +46,7 @@
         </ul>
       </nav>
 
-      <button class="mobile-menu-toggle" aria-label="Menú" onclick="document.querySelector('.nav-links').classList.toggle('active')">&#9776;</button>
+      <button class="mobile-menu-toggle" aria-label="Menú" aria-expanded="false">&#9776;</button>
     </div>
   </header>
 
@@ -59,16 +59,16 @@
         <p class="section-lead">Ponete en comunicación con la Comisión Directiva, administración y delegados de ANCU.</p>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:50px;">
+      <div class="grid-sidebar-right">
         <!-- Left Info Cards -->
         <div>
           <div style="background:var(--bg-card); border:1px solid var(--border-bronze); border-radius:var(--radius-xl); padding:32px; margin-bottom:24px;">
-            <span class="raffle-tag">LÍNEA GRATUITA NACIONAL</span>
-            <div style="font-size:2.2rem; font-weight:800; color:var(--bronze-light); margin:10px 0 6px 0;">
-              info@ancu.uy
+            <span class="raffle-tag">CORREO INSTITUCIONAL OFICIAL</span>
+            <div style="font-size:1.8rem; font-weight:800; color:var(--bronze-light); margin:10px 0 6px 0; word-break:break-all;">
+              <a href="mailto:info@ancu.uy" style="color:inherit;">info@ancu.uy</a>
             </div>
             <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.5;">
-              Atención telefónica de lunes a viernes de 09:00 a 18:00 hs. Consultas sobre afiliaciones, trámites y rifas oficiales.
+              Canal central de secretaría general y comisión directiva para consultas sobre afiliaciones, trámites, convenios y rifas oficiales.
             </p>
           </div>
 
@@ -123,7 +123,7 @@
           </h2>
 
           <form onsubmit="event.preventDefault(); alert('¡Mensaje enviado con éxito a ANCU! Nos contactaremos a la brevedad.');">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label">Nombre *</label>
                 <input type="text" class="form-control" required placeholder="Tu nombre">
@@ -134,7 +134,7 @@
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label">Teléfono *</label>
                 <input type="tel" class="form-control" required placeholder="099 123 456">
