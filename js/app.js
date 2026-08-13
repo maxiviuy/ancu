@@ -5,13 +5,13 @@
  */
 
 // ---------------- State & Storage Initialization ----------------
-const APP_STORAGE_KEY = 'ancu_app_state_v1';
+const APP_STORAGE_KEY = 'ancu_app_state_v2';
 
 const DEFAULT_STATE = {
   activeRaffle: {
-    id: "3",
-    title: "Gran Rifa Anual ANCU 2026",
-    subtitle: "Campaña de Fortalecimiento Institucional y Actividades de Campo",
+    id: "1",
+    title: "Gran Rifa de Colaboración ANCU 2026",
+    subtitle: "Fondo de Equipamiento y Actividades Institucionales",
     drawDate: "2026-08-31T20:00:00",
     drawMethod: "Quiniela Nocturna de la Lotería Nacional",
     ticketPrice: 400,
@@ -21,7 +21,6 @@ const DEFAULT_STATE = {
       { order: 2, title: "1 Pistola Taurus G3C Compact Black Cal. 9mm", regulated: true, note: "Requiere THATA vigente para entrega legal" },
       { order: 3, title: "1 Cuchillo de Supervivencia y Monte Glock FM81", regulated: false, note: "Entrega directa" }
     ],
-    // Initial numbers mock with some sold/reserved to simulate a live active system
     numbers: {}
   },
   selectedNumbers: [],
@@ -29,10 +28,10 @@ const DEFAULT_STATE = {
   cartTimeRemaining: 900, // 15 minutes (in seconds)
   memberUser: {
     isLoggedIn: true,
-    firstName: "Juan",
-    lastName: "Pérez Rodríguez",
+    firstName: "Carlos",
+    lastName: "Mendiondo",
     ci: "3.842.190-4",
-    memberNumber: "ANCU-0428",
+    memberNumber: "ANCU-0012",
     category: "Socio Pleno Activo",
     status: "ACTIVE", // ACTIVE or OVERDUE
     validUntil: "31/12/2026",
@@ -40,28 +39,15 @@ const DEFAULT_STATE = {
     thataNumber: "UY-88421",
     photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80"
   },
-  auditLogs: [
-    { time: "13/08/2026 16:40", user: "Tesorero ANCU", action: "Aprobación de Transferencia BROU #812 (Números 101, 142)" },
-    { time: "13/08/2026 15:15", user: "Sistema MP", action: "Webhook aprobado orden #MP-9942 (Número 597)" },
-    { time: "13/08/2026 12:00", user: "Administrador ANCU", action: "Actualización de Decreto Fauna 164/996 en Centro de Normativa" }
-  ]
+  auditLogs: []
 };
 
-// Populate 1000 numbers with realistic statuses
+// Populate 1000 clean available numbers for the raffle template
 function generateInitialNumbers() {
   const numbers = {};
-  const soldList = [0, 1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 21, 23, 24, 25, 26, 28, 29, 30, 101, 142, 152, 166, 242, 372, 597];
-  const heldList = [20, 22, 27, 130, 228, 905];
-
   for (let i = 0; i < 1000; i++) {
     const formatted = String(i).padStart(3, '0');
-    if (soldList.includes(i)) {
-      numbers[formatted] = { status: 'sold', buyer: 'Socio / Colaborador' };
-    } else if (heldList.includes(i)) {
-      numbers[formatted] = { status: 'held', heldUntil: Date.now() + 15 * 60 * 1000 };
-    } else {
-      numbers[formatted] = { status: 'available' };
-    }
+    numbers[formatted] = { status: 'available' };
   }
   return numbers;
 }
