@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asociación Nacional de Cazadores del Uruguay | ANCU</title>
+  <meta name="description" content="Representación, información, comunidad y fomento de la caza responsable, legal y segura en todo el Uruguay.">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C59B27'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+</head>
+<body>
+
+  <!-- Top Announcement & Telephone Support Bar -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-left">
+        <span class="top-bar-badge"><span class="dot"></span> Temporada Oficial 2026 Habilitada</span>
+        <a href="tel:08002110" class="phone-highlight" id="btn-phone-top">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          Línea Institucional: 0800 2110
+        </a>
+      </div>
+      <div class="top-bar-right">
+        <div class="astro-sponsor-tag">
+          Desarrollo y Respaldo por <span>Astro</span> · <a href="https://astroseguridad.lat" target="_blank" rel="noopener" style="text-decoration:underline;">astroseguridad.lat</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header Navigation with 9 Main Modules -->
+  <header class="header-nav">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo" id="nav-brand-logo">
+        <div class="logo-symbol">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">ANCU</span>
+          <span class="brand-sub">Asociación Nacional de Cazadores</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link active" id="nav-inicio">Inicio</a></li>
+          <li><a href="institucional.html" class="nav-link" id="nav-institucional">Institucional</a></li>
+          <li><a href="autoridades.html" class="nav-link" id="nav-autoridades">Autoridades</a></li>
+          <li><a href="socios.html" class="nav-link" id="nav-socios">Socios</a></li>
+          <li><a href="normativa.html" class="nav-link" id="nav-normativa">Normativa y Permisos</a></li>
+          <li><a href="noticias.html" class="nav-link" id="nav-noticias">Noticias</a></li>
+          <li><a href="actividades.html" class="nav-link" id="nav-actividades">Actividades</a></li>
+          <li><a href="rifas.html" class="nav-link highlight-raffle" id="nav-rifas">🎯 Rifa Activa</a></li>
+          <li><a href="contacto.html" class="nav-link" id="nav-contacto">Contacto</a></li>
+          <li><a href="socios.html#portal" class="nav-link nav-btn-socio" id="nav-portal-btn">Mi ANCU</a></li>
+        </ul>
+      </nav>
+
+      <button class="mobile-menu-toggle" aria-label="Menú" onclick="document.querySelector('.nav-links').classList.toggle('active')">&#9776;</button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section" style="background-image: url('assets/hero_uruguay_monte.jpg');">
+    <div class="hero-overlay"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge-pill">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C59B27" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Organización Oficial de Ámbito Nacional</span>
+        </div>
+        <h1 class="hero-title">
+          Asociación Nacional de Cazadores del Uruguay
+        </h1>
+        <p class="hero-subtitle">
+          Representando a quienes practican la caza legal, ética y responsable en todo el país. Defendiendo nuestros derechos, promoviendo la seguridad y cooperando con la conservación de la fauna.
+        </p>
+        <div class="hero-actions">
+          <a href="socios.html" class="btn btn-bronze btn-lg" id="hero-btn-socio">Hacete Socio</a>
+          <a href="normativa.html" class="btn btn-secondary btn-lg" id="hero-btn-normativa">Conocé la Normativa</a>
+        </div>
+        <div class="hero-portal-shortcut">
+          ¿Ya sos socio de ANCU? <a href="socios.html#portal">Ingresar al Portal "Mi ANCU" &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Four Pillars Grid (Overlapping Hero Bottom) -->
+  <section class="container" style="margin-bottom: 60px;">
+    <div class="pillars-grid">
+      <div class="pillar-card">
+        <div class="pillar-icon-box">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="pillar-title">Representación</h3>
+        <p class="pillar-desc">Defensa y representación institucional del sector ante ministerios, DINABISE y organismos públicos nacionales.</p>
+      </div>
+
+      <div class="pillar-card">
+        <div class="pillar-icon-box">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M4.93 19.07l4.24-4.24"/></svg>
+        </div>
+        <h3 class="pillar-title">Caza Responsable</h3>
+        <p class="pillar-desc">Fomento de prácticas éticas, manejo seguro de armas de fuego y estricto cumplimiento del marco legal vigente.</p>
+      </div>
+
+      <div class="pillar-card">
+        <div class="pillar-icon-box">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V17a1 1 0 0 1-2 0v-.07A7.003 7.003 0 0 1 5.07 11H5a1 1 0 0 1 0-2h.07A7.003 7.003 0 0 1 11 3.07V3a1 1 0 0 1 2 0v.07A7.003 7.003 0 0 1 18.93 9H19a1 1 0 0 1 0 2h-.07A7.003 7.003 0 0 1 13 16.93z"/></svg>
+        </div>
+        <h3 class="pillar-title">Conservación</h3>
+        <p class="pillar-desc">Participación activa en el control de especies exóticas invasoras (jabalí, ciervo axis) y estudios de fauna silvestre.</p>
+      </div>
+
+      <div class="pillar-card">
+        <div class="pillar-icon-box">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="pillar-title">Comunidad</h3>
+        <p class="pillar-desc">Una red nacional que conecta a cazadores de todo el Uruguay con beneficios, seguros y actividades de campo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Access Section (¿Sos cazador?) -->
+  <section class="section-sm">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">Centro de Recursos</span>
+        <h2 class="section-heading">¿Sos cazador? Todo lo que necesitás, en un solo lugar.</h2>
+        <p class="section-lead">Accedé de forma directa a la información oficial, formularios y trámites que exige la legislación uruguaya.</p>
+      </div>
+
+      <div class="quick-grid">
+        <a href="normativa.html#permisos" class="quick-card" id="card-permisos">
+          <div class="quick-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="quick-content">
+            <h4>Permisos de Caza</h4>
+            <p>Requisitos oficiales de DINABISE / Ministerio de Ambiente y trámite en línea en gub.uy.</p>
+          </div>
+        </a>
+
+        <a href="normativa.html#especies" class="quick-card" id="card-especies">
+          <div class="quick-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div class="quick-content">
+            <h4>Normativa y Vedas</h4>
+            <p>Especies habilitadas, cupos diarios de piezas y temporadas de caza deportiva actualizadas.</p>
+          </div>
+        </a>
+
+        <a href="normativa.html#jabali" class="quick-card" id="card-jabali">
+          <div class="quick-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <div class="quick-content">
+            <h4>Caza Libre de Jabalí</h4>
+            <p>Decreto 138/020 sobre control de plaga nacional y modalidades nocturnas permitidas.</p>
+          </div>
+        </a>
+
+        <a href="normativa.html#armas" class="quick-card" id="card-armas">
+          <div class="quick-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div class="quick-content">
+            <h4>Tenencia y THATA</h4>
+            <p>Guías de pertenencia del SMA, transporte en vehículos y decálogo de seguridad con armas.</p>
+          </div>
+        </a>
+
+        <a href="normativa.html#descargas" class="quick-card" id="card-descargas">
+          <div class="quick-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="quick-content">
+            <h4>Permiso de Campo (PDF)</h4>
+            <p>Descarga interactiva del formulario oficial de autorización de dueños de predios rurales.</p>
+          </div>
+        </a>
+
+        <a href="socios.html" class="quick-card" id="card-afiliacion">
+          <div class="quick-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </div>
+          <div class="quick-content">
+            <h4>Hacete Socio</h4>
+            <p>Unite a la comunidad, obtené tu carnet digital con QR y descuentos exclusivos en armerías.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Active Raffle Showcase Spotlight -->
+  <section class="section">
+    <div class="container">
+      <div class="raffle-banner-card">
+        <div class="raffle-banner-info">
+          <div class="raffle-tag">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Campaña Activa 2026
+          </div>
+          <h2 class="raffle-banner-title">Gran Rifa Anual ANCU</h2>
+          <p style="color:var(--text-muted); margin-bottom: 20px; font-size: 0.95rem;">
+            Colaborá con el fondo de equipamiento y actividades de campo de la Asociación. Selección ágil con bloqueo temporal de 15 minutos y pago seguro online.
+          </p>
+
+          <div class="raffle-meta-list">
+            <div class="raffle-meta-item">
+              <span class="raffle-meta-label">Precio del Número</span>
+              <span class="raffle-meta-val">$ 400 UYU</span>
+            </div>
+            <div class="raffle-meta-item">
+              <span class="raffle-meta-label">Fecha del Sorteo</span>
+              <span class="raffle-meta-val">31/08/2026</span>
+            </div>
+            <div class="raffle-meta-item">
+              <span class="raffle-meta-label">Modalidad</span>
+              <span class="raffle-meta-val" style="font-size:0.95rem;">Quiniela Nocturna</span>
+            </div>
+          </div>
+
+          <div class="progress-bar-wrap">
+            <div class="progress-labels">
+              <span>Progreso de Números</span>
+              <strong id="stat-percent" style="color:var(--bronze-light);">Cargando...</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="raffle-progress-bar" style="width: 35%;"></div>
+            </div>
+          </div>
+
+          <a href="rifas.html" class="btn btn-bronze btn-lg" id="btn-goto-raffle">
+            Elegir mi Número &rarr;
+          </a>
+        </div>
+
+        <div class="raffle-prizes-preview">
+          <div class="prize-mini-card">
+            <span class="prize-mini-badge">1º PREMIO</span>
+            <div style="font-size:1.8rem; margin:10px 0;">🎯</div>
+            <div class="prize-mini-title">Rifle Savage Mark-II Cal. .22LR</div>
+          </div>
+          <div class="prize-mini-card">
+            <span class="prize-mini-badge">2º PREMIO</span>
+            <div style="font-size:1.8rem; margin:10px 0;">🛡️</div>
+            <div class="prize-mini-title">Pistola Taurus G3C Cal. 9mm</div>
+          </div>
+          <div class="prize-mini-card">
+            <span class="prize-mini-badge">3º PREMIO</span>
+            <div style="font-size:1.8rem; margin:10px 0;">🔪</div>
+            <div class="prize-mini-title">Cuchillo Monte Glock FM81</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Institutional Scene & Authority -->
+  <section class="section" style="background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+    <div class="container">
+      <div style="display:grid; grid-template-columns: 1.1fr 1fr; gap:50px; align-items:center;">
+        <div>
+          <span class="section-tag">Institucional</span>
+          <h2 class="section-heading">Una voz unida, seria y comprometida con el campo uruguayo</h2>
+          <p style="color:var(--text-bone-muted); margin-bottom: 18px; line-height: 1.7;">
+            La Asociación Nacional de Cazadores del Uruguay trabaja activamente junto a productores rurales, autoridades gubernamentales y la academia científica.
+          </p>
+          <p style="color:var(--text-muted); margin-bottom: 24px; line-height: 1.7;">
+            Promovemos la capacitación constante en seguridad de tiro, el respeto irrestricto por la propiedad privada y la colaboración voluntaria en estudios de control poblacional de especies plaga como el jabalí.
+          </p>
+          <div style="display:flex; gap:20px;">
+            <a href="institucional.html" class="btn btn-secondary">Conocer la Asociación</a>
+            <a href="autoridades.html" class="btn btn-primary">Comisión Directiva</a>
+          </div>
+        </div>
+        <div style="border-radius: var(--radius-xl); overflow:hidden; border:1px solid var(--border-medium); box-shadow: var(--shadow-lg);">
+          <img src="assets/cazadores_campo_uruguay.jpg" alt="Cazadores en campo uruguayo ANCU" style="width:100%; height:auto;" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured News & Editorial -->
+  <section class="section">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">Actualidad</span>
+        <h2 class="section-heading">Noticias y Asuntos Públicos</h2>
+        <p class="section-lead">Información verificada, comunicados de posición institucional y novedades del sector cinegético nacional.</p>
+      </div>
+
+      <div class="news-grid">
+        <article class="news-card">
+          <div class="news-img-wrap">
+            <img src="assets/reunion_institucional_ancu.jpg" alt="Muestreo científico ANCU y Facultad Veterinaria" />
+            <span class="news-tag">Conservación</span>
+          </div>
+          <div class="news-body">
+            <span class="news-date">10 de Agosto, 2026</span>
+            <h3 class="news-title">ANCU coopera en muestreo sanitario de jabalíes junto a la Facultad de Veterinaria</h3>
+            <p class="news-excerpt">Jornada de investigación en territorio para análisis serológico y control epidemiológico de especies exóticas en la cuenca del Río Negro.</p>
+            <a href="noticias.html#noticia-1" class="news-read-more">Leer artículo completo &rarr;</a>
+          </div>
+        </article>
+
+        <article class="news-card">
+          <div class="news-img-wrap">
+            <img src="assets/hero_uruguay_monte.jpg" alt="Reglamentación de Caza 2026" />
+            <span class="news-tag">Normativa</span>
+          </div>
+          <div class="news-body">
+            <span class="news-date">02 de Agosto, 2026</span>
+            <h3 class="news-title">DINABISE ratifica calendario y cupos para la temporada de caza deportiva</h3>
+            <p class="news-excerpt">Detalle de las resoluciones del Ministerio de Ambiente sobre temporadas habilitadas, especies y trámites digitales de permisos.</p>
+            <a href="noticias.html#noticia-2" class="news-read-more">Leer artículo completo &rarr;</a>
+          </div>
+        </article>
+
+        <article class="news-card">
+          <div class="news-img-wrap">
+            <img src="assets/cazadores_campo_uruguay.jpg" alt="Reunión Directiva ANCU" />
+            <span class="news-tag">Comunicado</span>
+          </div>
+          <div class="news-body">
+            <span class="news-date">24 de Julio, 2026</span>
+            <h3 class="news-title">Posición oficial de ANCU sobre la tenencia responsable de armas y agilización del THATA</h3>
+            <p class="news-excerpt">La Comisión Directiva presentó una propuesta formal ante el SMA para facilitar los trámites de renovación a cazadores del interior.</p>
+            <a href="noticias.html#noticia-3" class="news-read-more">Leer artículo completo &rarr;</a>
+          </div>
+        </article>
+      </div>
+
+      <div style="text-align:center; margin-top:40px;">
+        <a href="noticias.html" class="btn btn-secondary">Ver todas las noticias &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Socio Banner ("ANCU Somos Todos") -->
+  <section class="section" style="background: radial-gradient(circle at center, #1B3525 0%, #0D1A12 100%); border-top:1px solid var(--border-bronze); border-bottom:1px solid var(--border-bronze);">
+    <div class="container" style="text-align:center; max-width:800px;">
+      <span class="section-tag" style="background:rgba(197,155,39,0.2);">Comunidad Nacional</span>
+      <h2 class="section-heading" style="font-size:2.6rem;">ANCU somos todos</h2>
+      <p style="color:var(--text-bone-muted); font-size:1.15rem; margin-bottom:32px; line-height:1.7;">
+        Al asociarte no solo respaldás la representatividad de la caza legal ante las autoridades del país, sino que accedés a tu carnet digital con código QR, seguro de actividad y descuentos exclusivos en armerías aliadas.
+      </p>
+      <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+        <a href="socios.html" class="btn btn-bronze btn-lg">Quiero Asociarme</a>
+        <a href="socios.html#portal" class="btn btn-secondary btn-lg">Ya soy socio &rarr; Ingresar</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sponsors / Partners Bar -->
+  <section class="sponsors-bar">
+    <div class="container">
+      <div class="sponsors-label">Empresas e Instituciones que Acompañan a ANCU</div>
+      <div class="sponsors-grid">
+        <div class="sponsor-item-logo">ARMERÍA EL CAZADOR</div>
+        <div class="sponsor-item-logo">OUTDOOR URUGUAY</div>
+        <div class="sponsor-item-logo">VETERINARIA DEL CAMPO</div>
+        <div class="sponsor-item-logo">4X4 MONTE EQUIPAMIENTO</div>
+        <div class="sponsor-item-logo">ÓPTICA CINEGÉTICA</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="brand-logo" style="margin-bottom:16px;">
+            <div class="logo-symbol">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="brand-text">
+              <span class="brand-name">ANCU</span>
+              <span class="brand-sub">Asociación Nacional de Cazadores</span>
+            </div>
+          </div>
+          <p style="line-height:1.6; margin-bottom:18px;">
+            Personería Jurídica en trámite. Organización civil sin fines de lucro dedicada a la defensa de la caza legal, el fomento de la seguridad y la conservación ambiental en la República Oriental del Uruguay.
+          </p>
+          <div style="color:var(--bronze-light); font-weight:700; font-size:1.05rem;">
+            📞 Línea Institucional: 0800 2110
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Institución</h4>
+          <ul class="footer-links">
+            <li><a href="institucional.html">Quiénes Somos</a></li>
+            <li><a href="autoridades.html">Comisión Directiva</a></li>
+            <li><a href="institucional.html#estatutos">Estatutos y Actas</a></li>
+            <li><a href="noticias.html">Comunicados Oficiales</a></li>
+            <li><a href="contacto.html">Contacto Directo</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Cazador</h4>
+          <ul class="footer-links">
+            <li><a href="normativa.html#permisos">Permisos DINABISE</a></li>
+            <li><a href="normativa.html#armas">THATA y Guías SMA</a></li>
+            <li><a href="normativa.html#descargas">Descarga de Permiso de Campo</a></li>
+            <li><a href="rifas.html">Rifas Oficiales</a></li>
+            <li><a href="socios.html">Portal de Socios</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Transparencia y Respaldo</h4>
+          <p style="font-size:0.85rem; line-height:1.5; margin-bottom:14px;">
+            Plataforma digital desarrollada e impulsada con el respaldo tecnológico de <strong>Astro</strong> y <strong>astroseguridad.lat</strong>.
+          </p>
+          <div style="background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); padding:10px 14px; border-radius:8px; font-size:0.8rem;">
+            🛡️ Cumplimiento de la Ley 18.331 de Protección de Datos Personales (Uruguay).
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 Asociación Nacional de Cazadores del Uruguay. Todos los derechos reservados.</div>
+        <div style="color:var(--text-muted);">Tecnología Astro · 0800 2110</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
