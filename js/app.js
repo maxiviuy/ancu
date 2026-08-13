@@ -1,7 +1,7 @@
 ﻿/**
  * ANCU - ASOCIACIÓN NACIONAL DE CAZADORES DEL URUGUAY
  * Core Client Engine & Interactive State Management
- * Powered by Astro · astroseguridad.lat · 0800 2110
+ * Powered by Astro · astroseguridad.lat · info@ancu.uy
  */
 
 // ---------------- State & Storage Initialization ----------------
@@ -645,7 +645,7 @@ function generateFieldPermitPDF() {
       </div>
 
       <div class="footer">
-        Documento extendido con el aval de la Asociación Nacional de Cazadores del Uruguay (ANCU) · ancu.uy · 0800 2110
+        Documento extendido con el aval de la Asociación Nacional de Cazadores del Uruguay (ANCU) · ancu.uy · info@ancu.uy
       </div>
     </body>
     </html>
