@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ANCU - ASOCIACIÓN NACIONAL DE CAZADORES DEL URUGUAY
  * Core Client Engine & Interactive State Management
  * Powered by Astro · astroseguridad.lat · 0800 2110
@@ -498,9 +498,7 @@ function renderDigitalCard() {
           <div class="card-org-title">Asociación Nacional de Cazadores</div>
           <div class="card-org-sub">República Oriental del Uruguay · Fundada 2020</div>
         </div>
-        <div class="logo-symbol" style="width:36px; height:36px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
+        <div class="logo-symbol" style="width:36px; height:36px;"><img src="assets/logo.png" alt="Logo ANCU" class="brand-logo-img"></div>
       </div>
 
       <div class="card-body-layout">

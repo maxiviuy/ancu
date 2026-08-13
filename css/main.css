@@ -209,17 +209,26 @@ button, input, select, textarea {
 }
 
 .logo-symbol {
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--forest-primary), var(--forest-dark));
+  background: #ffffff;
   border: 2px solid var(--bronze-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--bronze-light);
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
+  overflow: hidden;
+  padding: 1px;
+}
+
+.logo-symbol img, .brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  display: block;
 }
 
 .logo-symbol svg {
