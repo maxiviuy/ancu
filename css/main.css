@@ -274,25 +274,27 @@ button, input, select, textarea {
 .brand-text {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .brand-name {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   letter-spacing: -0.01em;
   color: var(--text-bone);
-  line-height: 1.2;
+  line-height: 1.1;
   white-space: nowrap;
 }
 
 .brand-sub {
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--bronze-light);
   font-weight: 600;
-  white-space: nowrap;
+  line-height: 1.15;
+  margin-top: 2px;
 }
 
 .nav-links {
