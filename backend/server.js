@@ -8,6 +8,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const db = require('./db');
 
 const app = express();
@@ -16,34 +17,70 @@ const PORT = process.env.PORT || 4000;
 // Configuración de Directorios de Subida
 const uploadsDir = path.join(__dirname, '../uploads');
 const prizeUploadsDir = path.join(uploadsDir, 'prizes');
+const newsUploadsDir = path.join(uploadsDir, 'news');
 const receiptUploadsDir = path.join(uploadsDir, 'receipts');
 
 if (!fs.existsSync(prizeUploadsDir)) fs.mkdirSync(prizeUploadsDir, { recursive: true });
+if (!fs.existsSync(newsUploadsDir)) fs.mkdirSync(newsUploadsDir, { recursive: true });
 if (!fs.existsSync(receiptUploadsDir)) fs.mkdirSync(receiptUploadsDir, { recursive: true });
 
 // Multer Storage para Fotos de Premios
 const prizeStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, prizeUploadsDir);
-  },
+  destination: (req, file, cb) => cb(null, prizeUploadsDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const uniqueName = `prize_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, uniqueName);
+    cb(null, `prize_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
+const uploadPrize = multer({
+  storage: prizeStorage,
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
   }
 });
 
-const uploadPrize = multer({
-  storage: prizeStorage,
-  limits: { fileSize: 12 * 1024 * 1024 }, // 12MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
-    }
+// Multer Storage para Fotos de Noticias
+const newsStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, newsUploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    cb(null, `news_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`);
   }
 });
+const uploadNews = multer({
+  storage: newsStorage,
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
+  }
+});
+
+// ----------------------------------------------------
+// Inicialización de Mercado Pago SDK
+// ----------------------------------------------------
+const mpAccessToken = process.env.MP_ACCESS_TOKEN || '';
+const mpPublicKey = process.env.MP_PUBLIC_KEY || '';
+const mpWebhookSecret = process.env.MP_WEBHOOK_SECRET || '';
+
+let mpClient = null;
+let mpPreference = null;
+let mpPayment = null;
+
+if (mpAccessToken && mpAccessToken !== 'TU_MERCADO_PAGO_ACCESS_TOKEN') {
+  try {
+    mpClient = new MercadoPagoConfig({ accessToken: mpAccessToken });
+    mpPreference = new Preference(mpClient);
+    mpPayment = new Payment(mpClient);
+    console.log('💳 Mercado Pago SDK inicializado con credenciales activas.');
+  } catch (err) {
+    console.warn('⚠️ Error al inicializar Mercado Pago SDK:', err.message);
+  }
+} else {
+  console.log('ℹ️ Mercado Pago operando en modo preparado/simulado (a la espera de credenciales en producción).');
+}
 
 // Middleware
 app.use(cors());
@@ -83,12 +120,15 @@ setInterval(cleanExpiredHolds, 30000);
 // ----------------------------------------------------
 app.get('/api/health', async (req, res) => {
   try {
-    const result = await db.query('SELECT COUNT(*) FROM raffle_tickets');
+    const ticketsCount = await db.query('SELECT COUNT(*) FROM raffle_tickets');
+    const newsCount = await db.query('SELECT COUNT(*) FROM news_articles');
     res.json({
       status: 'OK',
       timestamp: new Date().toISOString(),
       database: 'Connected',
-      tickets: parseInt(result.rows[0].count, 10)
+      tickets: parseInt(ticketsCount.rows[0].count, 10),
+      newsArticles: parseInt(newsCount.rows[0].count, 10),
+      mercadoPagoMode: mpPreference ? 'LIVE' : 'SIMULATION_READY'
     });
   } catch (err) {
     res.status(500).json({ status: 'ERROR', message: err.message });
@@ -96,7 +136,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ----------------------------------------------------
-// 1. MÓDULO DE RIFAS (PÚBLICO)
+// 1. MÓDULO DE RIFAS Y MERCADO PAGO
 // ----------------------------------------------------
 
 // Obtener estado de la rifa activa y los 1000 números
@@ -180,7 +220,6 @@ app.post('/api/raffle/hold', async (req, res) => {
 
     await client.query('BEGIN');
 
-    // Bloquear filas para evitar condición de carrera (SELECT ... FOR UPDATE)
     const checkRes = await client.query(`
       SELECT number, status, held_until 
       FROM raffle_tickets 
@@ -188,7 +227,6 @@ app.post('/api/raffle/hold', async (req, res) => {
       FOR UPDATE;
     `, [raffleId, numbers]);
 
-    // Verificar si alguno ya está ocupado
     const unavailable = [];
     for (const row of checkRes.rows) {
       if (row.status === 'paid') {
@@ -206,7 +244,6 @@ app.post('/api/raffle/hold', async (req, res) => {
       });
     }
 
-    // Actualizar a estado 'held' por 15 minutos
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await client.query(`
       UPDATE raffle_tickets 
@@ -221,7 +258,6 @@ app.post('/api/raffle/hold', async (req, res) => {
       WHERE raffle_id = $7 AND number = ANY($8::text[]);
     `, [expiresAt, buyerName || null, buyerPhone || null, buyerEmail || null, buyerCi || null, buyerDept || null, raffleId, numbers]);
 
-    // Registrar en auditoría
     await client.query(`
       INSERT INTO audit_logs (action, details, ip_address)
       VALUES ($1, $2, $3);
@@ -244,7 +280,93 @@ app.post('/api/raffle/hold', async (req, res) => {
   }
 });
 
-// Confirmación de compra / Checkout
+// Crear Preferencia de Mercado Pago (Checkout Pro) para Boletos de Rifa
+app.post('/api/raffle/create-preference', async (req, res) => {
+  try {
+    const { raffleId = 1, numbers, buyerName, buyerPhone, buyerEmail, buyerCi, buyerDept } = req.body;
+
+    if (!Array.isArray(numbers) || numbers.length === 0) {
+      return res.status(400).json({ error: 'Lista de números no válida.' });
+    }
+
+    const raffleRes = await db.query('SELECT title, ticket_price FROM raffles WHERE id = $1', [raffleId]);
+    const raffle = raffleRes.rows[0] || { title: 'Gran Rifa ANCU 2026', ticket_price: 400.00 };
+    const ticketPrice = parseFloat(raffle.ticket_price);
+    const totalAmount = numbers.length * ticketPrice;
+    const externalReference = `RAFFLE_${raffleId}_${buyerCi || 'NOCI'}_${Date.now()}`;
+
+    // Si Mercado Pago está configurado con Access Token real:
+    if (mpPreference) {
+      const preferenceData = {
+        items: [
+          {
+            id: `raffle-${raffleId}`,
+            title: `${raffle.title} - Números: ${numbers.join(', ')}`,
+            description: `Adquisición de ${numbers.length} boleto(s) oficiales de rifa ANCU`,
+            quantity: 1,
+            currency_id: 'UYU',
+            unit_price: totalAmount
+          }
+        ],
+        payer: {
+          name: buyerName,
+          email: buyerEmail,
+          identification: {
+            type: 'CI',
+            number: buyerCi
+          }
+        },
+        external_reference: externalReference,
+        metadata: {
+          target_type: 'RAFFLE',
+          raffle_id: raffleId,
+          numbers: numbers,
+          buyer_name: buyerName,
+          buyer_phone: buyerPhone,
+          buyer_email: buyerEmail,
+          buyer_ci: buyerCi,
+          buyer_dept: buyerDept
+        },
+        back_urls: {
+          success: 'https://ancu.uy/rifas.html?mp_status=approved',
+          pending: 'https://ancu.uy/rifas.html?mp_status=pending',
+          failure: 'https://ancu.uy/rifas.html?mp_status=failure'
+        },
+        notification_url: 'https://ancu.uy/api/webhooks/mercadopago',
+        auto_return: 'approved'
+      };
+
+      const preferenceResult = await mpPreference.create({ body: preferenceData });
+
+      return res.json({
+        success: true,
+        mode: 'LIVE',
+        preferenceId: preferenceResult.id,
+        initPoint: preferenceResult.init_point,
+        sandboxInitPoint: preferenceResult.sandbox_init_point,
+        externalReference,
+        totalAmount
+      });
+    }
+
+    // Modo Simulación/Preparado (Retorna enlace seguro con simulación)
+    const simulatedRef = `MP-SIM-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    res.json({
+      success: true,
+      mode: 'SIMULATION',
+      preferenceId: `pref_sim_${Date.now()}`,
+      initPoint: null,
+      externalReference: simulatedRef,
+      totalAmount,
+      message: 'Mercado Pago preparado. Configura MP_ACCESS_TOKEN en el archivo .env del VPS para abrir Checkout Pro en vivo.'
+    });
+  } catch (err) {
+    console.error('Error creating MP preference:', err);
+    res.status(500).json({ error: 'Error al generar preferencia de pago de Mercado Pago.' });
+  }
+});
+
+// Confirmación de compra / Checkout Híbrido (Mercado Pago o Transferencias)
 app.post('/api/raffle/checkout', async (req, res) => {
   const client = await db.getClient();
   try {
@@ -256,7 +378,7 @@ app.post('/api/raffle/checkout', async (req, res) => {
       buyerEmail,
       buyerCi,
       buyerDept,
-      paymentMethod, // 'MERCADOPAGO', 'BROU', 'PREX'
+      paymentMethod,
       paymentRef,
       receiptUrl,
       notes
@@ -273,7 +395,7 @@ app.post('/api/raffle/checkout', async (req, res) => {
     const totalAmount = numbers.length * ticketPrice;
 
     if (paymentMethod === 'MERCADOPAGO') {
-      const generatedOrderRef = `MP-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const generatedOrderRef = paymentRef || `MP-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       await client.query(`
         UPDATE raffle_tickets 
@@ -304,7 +426,7 @@ app.post('/api/raffle/checkout', async (req, res) => {
         paymentRef: generatedOrderRef,
         numbers,
         totalAmount,
-        message: '¡Pago con Mercado Pago acreditado! Tus números han sido asignados y confirmados oficialmente.'
+        message: '¡Pago con Mercado Pago acreditado! Tus números han sido confirmados oficialmente.'
       });
     } else {
       // Transferencia bancaria (BROU / Prex)
@@ -355,11 +477,132 @@ app.post('/api/raffle/checkout', async (req, res) => {
   }
 });
 
+// Webhook IPN de Mercado Pago
+app.post('/api/webhooks/mercadopago', async (req, res) => {
+  try {
+    const { type, data, action } = req.body;
+    const paymentId = (data && data.id) || req.query['data.id'] || req.query.id;
+
+    console.log(`[Webhook MP] Evento recibido: ${type || action}, ID: ${paymentId}`);
+
+    if (mpPayment && paymentId) {
+      const paymentInfo = await mpPayment.get({ id: paymentId });
+      if (paymentInfo && paymentInfo.status === 'approved') {
+        const metadata = paymentInfo.metadata || {};
+        const client = await db.getClient();
+        try {
+          await client.query('BEGIN');
+
+          if (metadata.target_type === 'RAFFLE' && Array.isArray(metadata.numbers)) {
+            await client.query(`
+              UPDATE raffle_tickets 
+              SET status = 'paid',
+                  buyer_name = $1,
+                  buyer_phone = $2,
+                  buyer_email = $3,
+                  buyer_ci = $4,
+                  buyer_dept = $5,
+                  payment_method = 'MERCADOPAGO',
+                  payment_ref = $6,
+                  held_until = NULL,
+                  updated_at = NOW()
+              WHERE raffle_id = $7 AND number = ANY($8::text[]);
+            `, [metadata.buyer_name, metadata.buyer_phone, metadata.buyer_email, metadata.buyer_ci, metadata.buyer_dept, `MP-${paymentId}`, metadata.raffle_id || 1, metadata.numbers]);
+          } else if (metadata.target_type === 'MEMBERSHIP' && metadata.member_ci) {
+            await client.query(`
+              UPDATE members 
+              SET status = 'ACTIVE', valid_until = CURRENT_DATE + INTERVAL '1 year', updated_at = NOW()
+              WHERE ci = $1;
+            `, [metadata.member_ci]);
+          }
+
+          await client.query(`
+            INSERT INTO audit_logs (action, details, ip_address)
+            VALUES ($1, $2, $3);
+          `, ['MP_WEBHOOK_PAYMENT_APPROVED', { paymentId, status: paymentInfo.status, amount: paymentInfo.transaction_amount, metadata }, req.ip]);
+
+          await client.query('COMMIT');
+          console.log(`[Webhook MP] Pago ${paymentId} confirmado e impactado en base de datos.`);
+        } catch (dbErr) {
+          await client.query('ROLLBACK');
+          console.error('[Webhook MP] Error al impactar en BD:', dbErr);
+        } finally {
+          client.release();
+        }
+      }
+    }
+
+    res.status(200).send('OK');
+  } catch (err) {
+    console.error('Error processing Mercado Pago Webhook:', err);
+    res.status(200).send('ERROR_HANDLED');
+  }
+});
+
 // ----------------------------------------------------
-// 2. MÓDULO DE SOCIOS Y PADRÓN ("MI ANCU")
+// 2. MÓDULO DE NOTICIAS Y COMUNICADOS (CMS)
 // ----------------------------------------------------
 
-// Consultar socio por cédula o número de socio (Normalizado)
+// Listar noticias públicas
+app.get('/api/news', async (req, res) => {
+  try {
+    const { category, featured } = req.query;
+    let query = `SELECT * FROM news_articles WHERE status = 'PUBLISHED'`;
+    const params = [];
+
+    if (category) {
+      params.push(category);
+      query += ` AND category = $${params.length}`;
+    }
+
+    if (featured === 'true') {
+      query += ` AND is_featured = true`;
+    }
+
+    query += ` ORDER BY is_featured DESC, publish_date DESC, id DESC LIMIT 20;`;
+
+    const newsRes = await db.query(query, params);
+    res.json({ articles: newsRes.rows });
+  } catch (err) {
+    console.error('Error fetching news articles:', err);
+    res.status(500).json({ error: 'Error al consultar noticias.' });
+  }
+});
+
+// Obtener detalle de una noticia específica
+app.get('/api/news/:idOrSlug', async (req, res) => {
+  try {
+    const { idOrSlug } = req.params;
+    const isNumeric = /^\d+$/.test(idOrSlug);
+
+    let articleRes;
+    if (isNumeric) {
+      articleRes = await db.query('SELECT * FROM news_articles WHERE id = $1 LIMIT 1;', [parseInt(idOrSlug, 10)]);
+    } else {
+      articleRes = await db.query('SELECT * FROM news_articles WHERE slug = $1 LIMIT 1;', [idOrSlug]);
+    }
+
+    if (articleRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Artículo de noticia no encontrado.' });
+    }
+
+    const article = articleRes.rows[0];
+
+    // Incrementar contador de vistas
+    await db.query('UPDATE news_articles SET views_count = views_count + 1 WHERE id = $1;', [article.id]);
+
+    res.json({ article });
+  } catch (err) {
+    console.error('Error fetching single news article:', err);
+    res.status(500).json({ error: 'Error al consultar el artículo.' });
+  }
+});
+
+// ----------------------------------------------------
+// 3. MÓDULO DE SOCIOS Y PADRÓN ("MI ANCU")
+// ----------------------------------------------------
+
+// Consultar socio por cédula o número de socio
 app.get('/api/members/lookup/:identifier', async (req, res) => {
   try {
     const { identifier } = req.params;
@@ -545,10 +788,10 @@ app.post('/api/members/pay-fee', async (req, res) => {
 });
 
 // ----------------------------------------------------
-// 3. MÓDULO DE ADMINISTRACIÓN (BACKOFFICE)
+// 4. MÓDULO DE ADMINISTRACIÓN (BACKOFFICE / ROLES)
 // ----------------------------------------------------
 
-// Login de Administrador
+// Login de Administrador / Editor / Tesorería
 app.post('/api/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -598,17 +841,25 @@ app.post('/api/admin/upload-prize-image', uploadPrize.single('image'), (req, res
     if (!req.file) {
       return res.status(400).json({ error: 'No se recibió ningún archivo de imagen válido.' });
     }
-
     const imageUrl = `/uploads/prizes/${req.file.filename}`;
-    res.json({
-      success: true,
-      imageUrl,
-      filename: req.file.filename,
-      size: req.file.size
-    });
+    res.json({ success: true, imageUrl, filename: req.file.filename, size: req.file.size });
   } catch (err) {
     console.error('Error uploading prize image:', err);
-    res.status(500).json({ error: 'Error al procesar la subida de imagen.' });
+    res.status(500).json({ error: 'Error al procesar la subida de imagen de premio.' });
+  }
+});
+
+// Subida de Fotografías de Noticias
+app.post('/api/admin/upload-news-image', uploadNews.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se recibió ningún archivo de imagen válido.' });
+    }
+    const imageUrl = `/uploads/news/${req.file.filename}`;
+    res.json({ success: true, imageUrl, filename: req.file.filename, size: req.file.size });
+  } catch (err) {
+    console.error('Error uploading news image:', err);
+    res.status(500).json({ error: 'Error al procesar la subida de imagen de noticia.' });
   }
 });
 
@@ -639,6 +890,10 @@ app.get('/api/admin/summary', async (req, res) => {
       SELECT COUNT(*) as pending_receipts FROM payment_receipts WHERE status = 'PENDING';
     `);
 
+    const newsRes = await db.query(`
+      SELECT COUNT(*) as total_news FROM news_articles;
+    `);
+
     const auditRes = await db.query(`
       SELECT * FROM audit_logs ORDER BY id DESC LIMIT 15;
     `);
@@ -664,6 +919,7 @@ app.get('/api/admin/summary', async (req, res) => {
         total: parseInt(memberStats.total_members, 10)
       },
       pendingReceipts: parseInt(receiptsRes.rows[0].pending_receipts, 10),
+      totalNews: parseInt(newsRes.rows[0].total_news, 10),
       recentAuditLogs: auditRes.rows
     });
   } catch (err) {
@@ -703,30 +959,6 @@ app.get('/api/admin/raffles', async (req, res) => {
   }
 });
 
-// Obtener detalles de una rifa específica para edición
-app.get('/api/admin/raffles/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const raffleRes = await db.query('SELECT * FROM raffles WHERE id = $1', [id]);
-    if (raffleRes.rowCount === 0) {
-      return res.status(404).json({ error: 'Rifa no encontrada.' });
-    }
-    const raffle = raffleRes.rows[0];
-    const prizesRes = await db.query('SELECT * FROM raffle_prizes WHERE raffle_id = $1 ORDER BY prize_order ASC', [id]);
-
-    res.json({
-      raffle: {
-        ...raffle,
-        ticket_price: parseFloat(raffle.ticket_price),
-        prizes: prizesRes.rows
-      }
-    });
-  } catch (err) {
-    console.error('Error fetching raffle details:', err);
-    res.status(500).json({ error: 'Error al consultar la rifa.' });
-  }
-});
-
 // Crear una nueva campaña de rifa con 1000 números
 app.post('/api/admin/raffles', async (req, res) => {
   const client = await db.getClient();
@@ -748,7 +980,6 @@ app.post('/api/admin/raffles', async (req, res) => {
 
     await client.query('BEGIN');
 
-    // Si la nueva rifa es ACTIVE, pasar las anteriores a CLOSED
     if (status === 'ACTIVE') {
       await client.query("UPDATE raffles SET status = 'CLOSED' WHERE status = 'ACTIVE';");
     }
@@ -761,7 +992,6 @@ app.post('/api/admin/raffles', async (req, res) => {
 
     const newRaffle = newRaffleRes.rows[0];
 
-    // Insertar premios
     if (Array.isArray(prizes) && prizes.length > 0) {
       for (const [idx, p] of prizes.entries()) {
         await client.query(`
@@ -770,7 +1000,6 @@ app.post('/api/admin/raffles', async (req, res) => {
         `, [newRaffle.id, idx + 1, p.title, p.description || null, p.imageUrl || null, p.estimatedValue || 0, p.regulated || false, p.note || null]);
       }
     } else {
-      // 3 premios por defecto
       await client.query(`
         INSERT INTO raffle_prizes (raffle_id, prize_order, title, description, regulated, note)
         VALUES 
@@ -780,7 +1009,6 @@ app.post('/api/admin/raffles', async (req, res) => {
       `, [newRaffle.id]);
     }
 
-    // Generar automáticamente los números (ej. 000 a 999)
     await client.query(`
       INSERT INTO raffle_tickets (raffle_id, number, status)
       SELECT $1, LPAD(i::text, 3, '0'), 'available'
@@ -812,15 +1040,7 @@ app.post('/api/admin/raffles', async (req, res) => {
 app.put('/api/admin/raffles/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      title,
-      subtitle,
-      drawDate,
-      drawMethod,
-      ticketPrice,
-      status,
-      bannerImageUrl
-    } = req.body;
+    const { title, subtitle, drawDate, drawMethod, ticketPrice, status, bannerImageUrl } = req.body;
 
     const updateRes = await db.query(`
       UPDATE raffles 
@@ -856,7 +1076,7 @@ app.put('/api/admin/raffles/:id', async (req, res) => {
   }
 });
 
-// Modificar y guardar premios de una rifa (1º, 2º, 3º, etc. con fotos y specs)
+// Modificar premios de una rifa
 app.put('/api/admin/raffles/:id/prizes', async (req, res) => {
   const client = await db.getClient();
   try {
@@ -868,8 +1088,6 @@ app.put('/api/admin/raffles/:id/prizes', async (req, res) => {
     }
 
     await client.query('BEGIN');
-
-    // Reemplazo atómico de premios
     await client.query('DELETE FROM raffle_prizes WHERE raffle_id = $1', [id]);
 
     for (const [idx, p] of prizes.entries()) {
@@ -910,6 +1128,173 @@ app.put('/api/admin/raffles/:id/prizes', async (req, res) => {
     client.release();
   }
 });
+
+// ----------------------------------------------------
+// 5. CMS ADMIN: GESTOR DE NOTICIAS Y COMUNICADOS
+// ----------------------------------------------------
+
+// Listar todas las noticias para administración (incluye borradores)
+app.get('/api/admin/news', async (req, res) => {
+  try {
+    const newsRes = await db.query(`
+      SELECT * FROM news_articles 
+      ORDER BY id DESC;
+    `);
+    res.json({ articles: newsRes.rows });
+  } catch (err) {
+    console.error('Error fetching admin news:', err);
+    res.status(500).json({ error: 'Error al consultar noticias administrativas.' });
+  }
+});
+
+// Helper para crear slug URL-friendly
+function generateSlug(text) {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-') + '-' + Math.floor(1000 + Math.random() * 9000);
+}
+
+// Crear nueva noticia / comunicado
+app.post('/api/admin/news', async (req, res) => {
+  try {
+    const {
+      title,
+      category = 'Comunicados',
+      author = 'Secretaría de Prensa ANCU',
+      publishDate,
+      imageUrl,
+      excerpt,
+      content,
+      isFeatured = false,
+      status = 'PUBLISHED'
+    } = req.body;
+
+    if (!title || !excerpt || !content) {
+      return res.status(400).json({ error: 'Título, resumen y contenido son obligatorios.' });
+    }
+
+    const slug = generateSlug(title);
+    const dateVal = publishDate || new Date().toISOString().slice(0, 10);
+
+    // Si se marca como destacada, desmarcar otras destacadas si se desea
+    if (isFeatured) {
+      await db.query('UPDATE news_articles SET is_featured = false WHERE is_featured = true;');
+    }
+
+    const insertRes = await db.query(`
+      INSERT INTO news_articles (title, slug, category, author, publish_date, image_url, excerpt, content, is_featured, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *;
+    `, [title, slug, category, author, dateVal, imageUrl || null, excerpt, content, isFeatured, status]);
+
+    const article = insertRes.rows[0];
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['NEWS_CREATED', { articleId: article.id, title: article.title, category: article.category }, req.ip]);
+
+    res.json({
+      success: true,
+      message: '¡Artículo de noticia publicado con éxito!',
+      article
+    });
+  } catch (err) {
+    console.error('Error creating news article:', err);
+    res.status(500).json({ error: 'Error al publicar noticia.' });
+  }
+});
+
+// Modificar noticia existente
+app.put('/api/admin/news/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      category,
+      author,
+      publishDate,
+      imageUrl,
+      excerpt,
+      content,
+      isFeatured,
+      status
+    } = req.body;
+
+    if (isFeatured) {
+      await db.query('UPDATE news_articles SET is_featured = false WHERE id != $1;', [id]);
+    }
+
+    const updateRes = await db.query(`
+      UPDATE news_articles 
+      SET title = COALESCE($1, title),
+          category = COALESCE($2, category),
+          author = COALESCE($3, author),
+          publish_date = COALESCE($4, publish_date),
+          image_url = COALESCE($5, image_url),
+          excerpt = COALESCE($6, excerpt),
+          content = COALESCE($7, content),
+          is_featured = COALESCE($8, is_featured),
+          status = COALESCE($9, status),
+          updated_at = NOW()
+      WHERE id = $10
+      RETURNING *;
+    `, [title, category, author, publishDate, imageUrl, excerpt, content, isFeatured, status, id]);
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Artículo no encontrado.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['NEWS_UPDATED', { articleId: id, title }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Artículo actualizado con éxito.',
+      article: updateRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating news article:', err);
+    res.status(500).json({ error: 'Error al actualizar noticia.' });
+  }
+});
+
+// Eliminar noticia
+app.delete('/api/admin/news/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleteRes = await db.query('DELETE FROM news_articles WHERE id = $1 RETURNING title;', [id]);
+
+    if (deleteRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Artículo no encontrado.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['NEWS_DELETED', { articleId: id, title: deleteRes.rows[0].title }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Artículo eliminado con éxito.'
+    });
+  } catch (err) {
+    console.error('Error deleting news article:', err);
+    res.status(500).json({ error: 'Error al eliminar noticia.' });
+  }
+});
+
+// ----------------------------------------------------
+// 6. ADMINISTRACIÓN DE COMPROBANTES Y CSV
+// ----------------------------------------------------
 
 // Listar comprobantes de pago
 app.get('/api/admin/receipts', async (req, res) => {
@@ -1042,7 +1427,7 @@ app.get('/api/admin/export/raffle.csv', async (req, res) => {
       ORDER BY number ASC;
     `);
 
-    let csv = '\uFEFF'; // BOM para compatibilidad con Microsoft Excel
+    let csv = '\uFEFF';
     csv += 'NUMERO;ESTADO;NOMBRE_COMPRADOR;CEDULA;TELEFONO;DEPARTAMENTO;MEDIO_PAGO;FECHA_CONFIRMACION\r\n';
 
     for (const t of ticketsRes.rows) {

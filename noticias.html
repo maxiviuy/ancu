@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Noticias y Comunicados Oficiales | ANCU</title>
   <meta name="description" content="Actualidad, resoluciones de DINABISE, comunicados de posición institucional y novedades del sector cinegético en Uruguay.">
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/main.css?v=20260814_5">
   <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body>
@@ -54,95 +54,87 @@
   <main class="section">
     <div class="container">
       <div class="section-title-wrap">
-        <span class="section-tag">Sala de Noticias</span>
+        <span class="section-tag">Sala de Prensa & Comunicados</span>
         <h1 class="section-heading">Actualidad y Comunicados Oficiales</h1>
-        <p class="section-lead">Posiciones institucionales, convenios científicos y resoluciones gubernamentales que afectan la actividad.</p>
+        <p class="section-lead">Posiciones institucionales, convenios científicos y resoluciones gubernamentales que afectan la actividad cinegética en Uruguay.</p>
       </div>
 
-      <!-- Featured Statement Banner -->
-      <div style="background:linear-gradient(135deg, #18281E 0%, #101B14 100%); border:1px solid var(--border-bronze); border-radius:var(--radius-xl); padding:32px; margin-bottom:40px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
-        <div>
-          <span class="raffle-tag" style="background:rgba(197,155,39,0.2);">COMUNICADO OFICIAL DE ANCU</span>
-          <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:6px;">
-            Posición de ANCU ante las propuestas de modificación de la Ley de Fauna
+      <!-- Featured Statement Banner (Dynamic from PostgreSQL) -->
+      <div id="featured-news-banner" style="background:linear-gradient(135deg, #18281E 0%, #101B14 100%); border:1px solid var(--border-bronze); border-radius:var(--radius-xl); padding:32px; margin-bottom:36px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+        <div style="flex:1; min-width:300px;">
+          <span class="raffle-tag" id="featured-news-tag" style="background:rgba(197,155,39,0.2);">COMUNICADO DESTACADO</span>
+          <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:8px;" id="featured-news-title">
+            Cargando comunicado destacado...
           </h2>
-          <p style="color:var(--text-bone-muted); font-size:0.95rem; margin-top:8px; max-width:700px;">
-            La Comisión Directiva expone los fundamentos técnicos y de conservación para mantener la figura de libre caza sobre especies exóticas plaga y agilizar los permisos deportivos.
+          <p style="color:var(--text-bone-muted); font-size:0.95rem; margin-top:8px; max-width:740px;" id="featured-news-excerpt">
+            Espere un instante mientras consultamos la base de datos oficial.
           </p>
         </div>
-        <a href="#noticia-3" class="btn btn-bronze">Leer Comunicado &rarr;</a>
+        <div>
+          <button type="button" class="btn btn-bronze" id="featured-news-btn" onclick="openFeaturedArticle()">Leer Comunicado Completo &rarr;</button>
+        </div>
       </div>
 
-      <!-- News Grid -->
-      <div class="news-grid">
-        <article class="news-card" id="noticia-1">
-          <div class="news-img-wrap">
-            <img src="assets/reunion_institucional_ancu.jpg" alt="Muestreo sanitario ANCU y Facultad Veterinaria" />
-            <span class="news-tag">Conservación</span>
-          </div>
-          <div class="news-body">
-            <span class="news-date">10 de Agosto, 2026</span>
-            <h3 class="news-title">ANCU coopera en muestreo sanitario de jabalíes junto a la Facultad de Veterinaria</h3>
-            <p class="news-excerpt">
-              Un equipo conjunto integrado por biólogos, veterinarios y cazadores de ANCU recolectó muestras en predios del centro y este del país para monitorear enfermedades zoonóticas en poblaciones de jabalí.
-            </p>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
-              <span style="font-size:0.8rem; color:var(--text-muted);">Autor: Secretaría Técnica</span>
-              <a href="https://api.whatsapp.com/send?text=Leé+esta+noticia+en+ANCU:+https://ancu.uy/noticias" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Compartir 📲</a>
-            </div>
-          </div>
-        </article>
+      <!-- Category Filter Tabs -->
+      <div style="display:flex; gap:8px; margin-bottom:28px; overflow-x:auto; padding-bottom:6px;">
+        <button type="button" class="btn btn-tab active" data-category="all" onclick="filterNewsCategory('all', this)">Todas las Noticias</button>
+        <button type="button" class="btn btn-tab" data-category="Comunicados" onclick="filterNewsCategory('Comunicados', this)">Comunicados</button>
+        <button type="button" class="btn btn-tab" data-category="Resoluciones DINABISE" onclick="filterNewsCategory('Resoluciones DINABISE', this)">Resoluciones DINABISE</button>
+        <button type="button" class="btn btn-tab" data-category="Conservación" onclick="filterNewsCategory('Conservación', this)">Conservación & Ciencia</button>
+        <button type="button" class="btn btn-tab" data-category="Actividades" onclick="filterNewsCategory('Actividades', this)">Actividades</button>
+      </div>
 
-        <article class="news-card" id="noticia-2">
-          <div class="news-img-wrap">
-            <img src="assets/hero_uruguay_monte.jpg" alt="Decretos de Caza 2026" />
-            <span class="news-tag">Normativa</span>
-          </div>
-          <div class="news-body">
-            <span class="news-date">02 de Agosto, 2026</span>
-            <h3 class="news-title">DINABISE ratifica calendario y cupos para la temporada de caza deportiva</h3>
-            <p class="news-excerpt">
-              Se recuerdan las especies habilitadas por temporada, los límites de piezas diarias por cazador y la obligatoriedad de contar con el permiso digital emitido por el Ministerio de Ambiente.
-            </p>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
-              <span style="font-size:0.8rem; color:var(--text-muted);">Autor: Asesoría Legal</span>
-              <a href="https://api.whatsapp.com/send?text=Leé+esta+noticia+en+ANCU:+https://ancu.uy/noticias" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Compartir 📲</a>
-            </div>
-          </div>
-        </article>
-
-        <article class="news-card" id="noticia-3">
-          <div class="news-img-wrap">
-            <img src="assets/cazadores_campo_uruguay.jpg" alt="Comunicado ANCU" />
-            <span class="news-tag">Institucional</span>
-          </div>
-          <div class="news-body">
-            <span class="news-date">24 de Julio, 2026</span>
-            <h3 class="news-title">Propuesta de agilización del trámite de THATA para cazadores del interior</h3>
-            <p class="news-excerpt">
-              Reunión de trabajo con delegados de las brigadas rurales y el SMA para coordinar operativos móviles de renovación de guías y títulos de tenencia en localidades alejadas.
-            </p>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
-              <span style="font-size:0.8rem; color:var(--text-muted);">Autor: Comisión Directiva</span>
-              <a href="https://api.whatsapp.com/send?text=Leé+esta+noticia+en+ANCU:+https://ancu.uy/noticias" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Compartir 📲</a>
-            </div>
-          </div>
-        </article>
+      <!-- News Grid (Populated dynamically by JS from PostgreSQL) -->
+      <div class="news-grid" id="public-news-grid">
+        <div style="padding:40px; text-align:center; color:var(--text-muted); grid-column:1 / -1;">
+          Cargando noticias y resoluciones desde PostgreSQL...
+        </div>
       </div>
 
     </div>
   </main>
+
+  <!-- Article Detail Modal -->
+  <div class="modal-overlay" id="article-detail-modal">
+    <div class="modal-box" style="max-width:800px; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px;">
+        <div>
+          <span class="news-tag" id="detail-modal-category" style="margin-bottom:8px; display:inline-block;">Categoría</span>
+          <h2 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:700; color:var(--text-bone); line-height:1.3;" id="detail-modal-title">
+            Título de la Noticia
+          </h2>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;" id="detail-modal-meta">
+            12 de Agosto, 2026 · Autor: Comisión Directiva
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('article-detail-modal')">&times;</button>
+      </div>
+
+      <div id="detail-modal-img-wrap" style="margin-bottom:20px; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-bronze); display:none;">
+        <img src="" id="detail-modal-img" style="width:100%; max-height:340px; object-fit:cover;" alt="Foto Noticia">
+      </div>
+
+      <div style="font-size:0.95rem; color:var(--text-bone); line-height:1.7; white-space:pre-line;" id="detail-modal-content">
+        Contenido...
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:28px; padding-top:16px; border-top:1px solid var(--border-subtle); flex-wrap:wrap; gap:10px;">
+        <span style="font-size:0.8rem; color:var(--text-muted);">Asociación Nacional de Cazadores del Uruguay</span>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('article-detail-modal')">Cerrar Artículo</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="site-footer">
     <div class="container">
       <div class="footer-bottom">
         <div>&copy; 2026 Asociación Nacional de Cazadores del Uruguay · Sala de Prensa y Novedades.</div>
-                <div style="color:var(--text-muted);">Tecnología y Respaldo de <a href="https://astroseguridad.lat" target="_blank" rel="noopener" style="color:var(--bronze-light); text-decoration:underline; font-weight:600;">Astro</a> · <a href="mailto:info@ancu.uy" style="color:inherit; text-decoration:none;">info@ancu.uy</a></div>
+        <div style="color:var(--text-muted);">Tecnología y Respaldo de <a href="https://astroseguridad.lat" target="_blank" rel="noopener" style="color:var(--bronze-light); text-decoration:underline; font-weight:600;">Astro</a> · <a href="mailto:info@ancu.uy" style="color:inherit; text-decoration:none;">info@ancu.uy</a></div>
       </div>
     </div>
   </footer>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20260814_5"></script>
 </body>
 </html>

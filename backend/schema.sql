@@ -142,3 +142,26 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     ip_address VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 8. Gestor de Noticias y Comunicados (CMS)
+CREATE TABLE IF NOT EXISTS news_articles (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    category VARCHAR(100) NOT NULL DEFAULT 'Comunicados', -- 'Comunicados', 'Resoluciones DINABISE', 'Conservación', 'Actividades', 'Seguridad'
+    author VARCHAR(150) NOT NULL DEFAULT 'Secretaría de Prensa ANCU',
+    publish_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    image_url TEXT,
+    excerpt TEXT NOT NULL,
+    content TEXT NOT NULL,
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(50) NOT NULL DEFAULT 'PUBLISHED', -- 'PUBLISHED', 'DRAFT', 'ARCHIVED'
+    views_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_news_status_date ON news_articles (status, publish_date DESC);
+CREATE INDEX IF NOT EXISTS idx_news_category ON news_articles (category);
+CREATE INDEX IF NOT EXISTS idx_news_slug ON news_articles (slug);
+

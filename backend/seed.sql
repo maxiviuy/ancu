@@ -6,6 +6,7 @@
 INSERT INTO admin_users (username, email, password_hash, full_name, role)
 VALUES 
     ('admin', 'admin@ancu.uy', 'ancu2026admin', 'Comisión Directiva ANCU', 'SUPERADMIN'),
+    ('editor', 'editor@ancu.uy', 'ancu2026editor', 'Redacción y Prensa ANCU', 'EDITOR'),
     ('tesoreria', 'tesoreria@ancu.uy', 'tesoreria2026', 'Tesorería Central ANCU', 'TREASURY')
 ON CONFLICT (username) DO NOTHING;
 
@@ -63,6 +64,47 @@ VALUES
     ('MEMBERSHIP', '3.842.190-4', 'Carlos Mendiondo', '099 888 777', '3.842.190-4', 'PREX', 600.00, 'APPROVED', 'Cuota Agosto 2026 aprobada')
 ON CONFLICT DO NOTHING;
 
--- 7. Log de Auditoría Inicial
+-- 7. Artículos y Noticias Iniciales (CMS)
+INSERT INTO news_articles (title, slug, category, author, publish_date, image_url, excerpt, content, is_featured, status)
+VALUES 
+    (
+        'Posición de ANCU ante las propuestas de modificación de la Ley de Fauna',
+        'posicion-ancu-modificacion-ley-fauna-2026',
+        'Comunicados',
+        'Comisión Directiva ANCU',
+        '2026-08-12',
+        'assets/hero_uruguay_monte.jpg',
+        'La Comisión Directiva expone los fundamentos técnicos y de conservación para mantener la figura de libre caza sobre especies exóticas plaga y agilizar los permisos deportivos.',
+        'La Asociación Nacional de Cazadores del Uruguay (ANCU) hace pública su posición institucional frente a los recientes debates parlamentarios sobre la regulación de fauna exótica y especies invasoras.\n\nReiteramos la necesidad de fundamentar las políticas públicas en evidencia científica, reconociendo el rol de los cazadores deportivos y de control como actores fundamentales en el monitoreo y contención del jabalí, ciervo axis y capincho en predios productivos.\n\nExhortamos a las autoridades de DINABISE y del Ministerio de Ganadería a continuar la mesa de diálogo técnico para asegurar normativas claras, seguras y aplicables.',
+        true,
+        'PUBLISHED'
+    ),
+    (
+        'ANCU coopera en muestreo sanitario de jabalíes junto a la Facultad de Veterinaria',
+        'ancu-muestreo-sanitario-jabalies-veterinaria',
+        'Conservación',
+        'Secretaría Técnica ANCU',
+        '2026-08-10',
+        'assets/reunion_institucional_ancu.jpg',
+        'Un equipo conjunto integrado por biólogos, veterinarios y cazadores de ANCU recolectó muestras en predios del centro y este del país para monitorear enfermedades zoonóticas en poblaciones de jabalí.',
+        'En el marco del convenio de cooperación científica, socios acreditados de ANCU participaron en las jornadas de campo para la recolección de muestras biológicas y control de triquinosis y brucelosis porcina.\n\nEste esfuerzo voluntario permite mantener actualizados los mapas epidemiológicos del Uruguay y ratifica el compromiso ético de nuestra comunidad con la salud pública.',
+        false,
+        'PUBLISHED'
+    ),
+    (
+        'Apertura de la Temporada de Caza Deportiva 2026: Guía Rápida de Especies y Cupos',
+        'guia-rapida-apertura-temporada-caza-2026',
+        'Resoluciones DINABISE',
+        'Área Legal y Reglamentaria',
+        '2026-08-01',
+        'assets/hero_uruguay_monte.jpg',
+        'Resumen detallado de los decretos ministeriales vigentes, cupos diarios de transporte, calibres mínimos autorizados y vigencia de permisos.',
+        'Recordamos a todos los socios y cazadores del país los aspectos clave de la normativa 2026:\n\n1. Jabalí (Sus scrofa): Caza libre en todo el territorio nacional con permiso del propietario.\n2. Ciervo Axis: Habilitado bajo cupos departamentales autorizados por DINABISE.\n3. Obligatoriedad de portar THATA vigente y constancia de consentimiento predial.\n\nDescargue el formulario oficial desde nuestro portal.',
+        false,
+        'PUBLISHED'
+    )
+ON CONFLICT (slug) DO NOTHING;
+
+-- 8. Log de Auditoría Inicial
 INSERT INTO audit_logs (action, details, ip_address)
-VALUES ('SYSTEM_INIT', '{"message": "Sistema inicializado con base de datos PostgreSQL y 1000 números cargados"}'::jsonb, '127.0.0.1');
+VALUES ('SYSTEM_INIT', '{"message": "Sistema inicializado con base de datos PostgreSQL, 1000 números y CMS de noticias cargado"}'::jsonb, '127.0.0.1');

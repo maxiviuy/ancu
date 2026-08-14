@@ -638,6 +638,32 @@ button, input, select, textarea {
   font-size: 1.05rem;
 }
 
+.btn-tab {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-bone-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.btn-tab:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text-bone);
+  border-color: var(--border-medium);
+}
+
+.btn-tab.active {
+  background: var(--bronze-primary);
+  color: #0A0F0D;
+  border-color: var(--bronze-light);
+  font-weight: 700;
+  box-shadow: var(--shadow-bronze);
+}
+
 /* ------------------ Four Pillars Grid ------------------ */
 .pillars-grid {
   display: grid;
