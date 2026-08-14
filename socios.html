@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Socios y Portal Privado Mi ANCU | ANCU</title>
   <meta name="description" content="Asociate a la Asociación Nacional de Cazadores del Uruguay. Carnet digital con QR, pago de cuotas online y beneficios en armerías y comercios.">
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/main.css?v=20260814_2">
   <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body>
@@ -160,24 +160,58 @@
           Área Exclusiva de Socios
         </span>
         <h2 class="section-heading">Portal "Mi ANCU"</h2>
-        <p class="section-lead">Accedé a tu credencial digital con código QR, comprobantes y estado de cuota en tiempo real.</p>
+        <p class="section-lead">Accedé a tu credencial digital con código QR, comprobantes y estado de cuota en tiempo real desde la base de datos oficial.</p>
       </div>
 
-      <!-- Demo Simulator Switch for Review -->
-      <div style="text-align:center; margin-bottom:30px;">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleMemberStatusDemo()">
-          🔄 Alternar Estado de Demostración (Al Día / Cuota Pendiente)
-        </button>
+      <!-- Member Login & Lookup Box -->
+      <div style="max-width:700px; margin:0 auto 40px auto; background:linear-gradient(135deg, rgba(22,34,26,0.95) 0%, rgba(14,23,17,0.98) 100%); border:1.5px solid var(--border-bronze); border-radius:var(--radius-xl); padding:32px; box-shadow:0 12px 36px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:rgba(197,155,39,0.15); display:flex; align-items:center; justify-content:center; color:var(--bronze-light); border:1px solid var(--border-bronze);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <h3 style="font-family:var(--font-heading); font-size:1.25rem; font-weight:700; color:var(--text-bone);">Ingresar a tu Cuenta de Socio</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Ingresá tu Cédula de Identidad o Número de Socio para consultar tu credencial.</p>
+          </div>
+        </div>
+
+        <form id="member-login-form" onsubmit="handleMemberLogin(event)" style="margin-top:20px;">
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <input type="text" id="login-identifier-input" class="form-control" placeholder="Ej. 3.842.190-4 o ANCU-0012" style="flex:1; min-width:240px; font-size:1rem;" required>
+            <button type="submit" class="btn btn-bronze" id="btn-login-member" style="padding:12px 24px;">
+              Ingresar al Portal &rarr;
+            </button>
+          </div>
+        </form>
+
+        <div style="margin-top:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:0.8rem; color:var(--text-muted);">
+          <span>Ejemplos del padrón:</span>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:3px 8px; font-size:0.75rem;" onclick="quickLoginMember('3.842.190-4')">👤 Carlos Mendiondo</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:3px 8px; font-size:0.75rem;" onclick="quickLoginMember('4.321.678-9')">👤 Martín Larrosa</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:3px 8px; font-size:0.75rem;" onclick="quickLoginMember('2.987.654-3')">👤 Gonzalo Ribeiro (Pendiente)</button>
+        </div>
+      </div>
+
+      <!-- Active Member Bar (When Logged In) -->
+      <div id="active-session-bar" style="display:flex; justify-content:space-between; align-items:center; background:rgba(35,88,60,0.25); border:1px solid rgba(52,126,87,0.4); padding:12px 20px; border-radius:var(--radius-lg); margin-bottom:28px; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--color-available); box-shadow:0 0 8px var(--color-available);"></span>
+          <span style="font-size:0.92rem; color:var(--text-bone);" id="session-user-label">Sesión activa: <strong>Carlos Mendiondo</strong> (ANCU-0012)</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="printMemberCard()">🖨️ Imprimir Carnet</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="logoutMember()">Salir / Consultar Otro</button>
+        </div>
       </div>
 
       <div class="grid-sidebar-left">
         <!-- Digital Card Preview Frame -->
         <div class="member-card-wrapper">
           <div id="digital-member-card">
-            <!-- Rendered by JS -->
+            <!-- Rendered by JS from PostgreSQL -->
           </div>
           <div style="text-align:center; margin-top:14px; font-size:0.8rem; color:var(--text-muted);">
-            📱 Presentá este carnet desde tu celular ante controles o comercios adheridos.
+            📱 Presentá este carnet desde tu celular ante controles de campo o comercios adheridos.
           </div>
         </div>
 
@@ -190,8 +224,8 @@
                 <h3 style="font-family:var(--font-heading); font-size:1.25rem; font-weight:700; color:var(--text-bone);">
                   Gestión de Cuota Social
                 </h3>
-                <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">
-                  Mantené tu membresía activa para conservar la cobertura y beneficios.
+                <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;" id="fee-status-description">
+                  Mantené tu membresía activa para conservar la cobertura, respaldo jurídico y beneficios.
                 </p>
               </div>
               <button type="button" class="btn btn-bronze" onclick="payMembershipFeeMP()">
@@ -249,6 +283,6 @@
     </div>
   </footer>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20260814_2"></script>
 </body>
 </html>

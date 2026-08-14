@@ -600,11 +600,136 @@ function initModalListeners() {
 }
 
 // ---------------- Member Portal (Mi ANCU) ----------------
+async function handleMemberLogin(event) {
+  if (event) event.preventDefault();
+  const inputEl = document.getElementById('login-identifier-input');
+  if (!inputEl) return;
+
+  const val = inputEl.value.trim();
+  if (!val) {
+    alert("Por favor ingrese su Cédula de Identidad o Nº de Socio.");
+    return;
+  }
+
+  const btn = document.getElementById('btn-login-member');
+  if (btn) btn.textContent = 'Verificando...';
+
+  try {
+    const res = await fetch(`${API_BASE}/members/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: val })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'No se encontró ningún socio con los datos ingresados.');
+      if (btn) btn.textContent = 'Ingresar al Portal →';
+      return;
+    }
+
+    AppState.memberUser = {
+      isLoggedIn: true,
+      firstName: data.member.firstName,
+      lastName: data.member.lastName,
+      ci: data.member.ci,
+      memberNumber: data.member.memberNumber,
+      category: data.member.category,
+      status: data.member.status,
+      validUntil: new Date(data.member.validUntil).toLocaleDateString('es-UY'),
+      department: data.member.department,
+      thataNumber: data.member.thataNumber || 'En trámite',
+      photoUrl: data.member.photoUrl || DEFAULT_STATE.memberUser.photoUrl
+    };
+    saveState();
+
+    alert(data.message || `¡Bienvenido ${data.member.firstName}!`);
+    renderDigitalCard();
+    updateSessionBar();
+
+    // Smooth scroll to digital card
+    const cardEl = document.getElementById('digital-member-card');
+    if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (err) {
+    console.warn('Error de login API, intentando modo local:', err);
+    // Fallback local lookup
+    await syncMemberFromAPI(val);
+  } finally {
+    if (btn) btn.textContent = 'Ingresar al Portal →';
+  }
+}
+
+function quickLoginMember(ci) {
+  const inputEl = document.getElementById('login-identifier-input');
+  if (inputEl) inputEl.value = ci;
+  handleMemberLogin();
+}
+
+function logoutMember() {
+  if (confirm("¿Deseas cerrar la sesión activa del socio?")) {
+    AppState.memberUser.isLoggedIn = false;
+    saveState();
+    updateSessionBar();
+    const inputEl = document.getElementById('login-identifier-input');
+    if (inputEl) inputEl.value = '';
+    const cardWrap = document.getElementById('digital-member-card');
+    if (cardWrap) {
+      cardWrap.innerHTML = `
+        <div style="background:var(--bg-card); border:2px dashed var(--border-bronze); border-radius:var(--radius-xl); padding:40px; text-align:center; color:var(--text-muted);">
+          <div style="font-size:2.5rem; margin-bottom:12px;">🪪</div>
+          <h3 style="color:var(--text-bone); font-size:1.15rem; margin-bottom:6px;">Credencial Digital No Cargada</h3>
+          <p style="font-size:0.85rem;">Ingresá tu cédula arriba para consultar tu estado en el padrón oficial de ANCU.</p>
+        </div>
+      `;
+    }
+  }
+}
+
+function updateSessionBar() {
+  const sessionBar = document.getElementById('active-session-bar');
+  const userLabel = document.getElementById('session-user-label');
+  const descEl = document.getElementById('fee-status-description');
+
+  if (!sessionBar) return;
+
+  const m = AppState.memberUser;
+  if (m && m.isLoggedIn) {
+    sessionBar.style.display = 'flex';
+    if (userLabel) {
+      userLabel.innerHTML = `Sesión activa: <strong>${m.firstName} ${m.lastName}</strong> (${m.memberNumber}) · C.I. ${m.ci}`;
+    }
+    if (descEl) {
+      const isOk = m.status === 'ACTIVE';
+      descEl.innerHTML = isOk 
+        ? `<span style="color:var(--color-available); font-weight:700;">🟢 Tu cuota se encuentra AL DÍA</span> hasta el ${m.validUntil}.`
+        : `<span style="color:var(--color-held); font-weight:700;">🟠 Cuota social pendiente de abono.</span> Podés regularizarla ahora con Mercado Pago.`;
+    }
+  } else {
+    sessionBar.style.display = 'none';
+  }
+}
+
+function printMemberCard() {
+  window.print();
+}
+
 function renderDigitalCard() {
   const cardWrap = document.getElementById('digital-member-card');
   if (!cardWrap) return;
 
   const m = AppState.memberUser;
+  if (!m || !m.isLoggedIn) {
+    cardWrap.innerHTML = `
+      <div style="background:var(--bg-card); border:2px dashed var(--border-bronze); border-radius:var(--radius-xl); padding:40px; text-align:center; color:var(--text-muted);">
+        <div style="font-size:2.5rem; margin-bottom:12px;">🪪</div>
+        <h3 style="color:var(--text-bone); font-size:1.15rem; margin-bottom:6px;">Credencial Digital Bloqueada</h3>
+        <p style="font-size:0.85rem;">Ingresá tu cédula arriba para autenticarte y acceder a tu carnet oficial.</p>
+      </div>
+    `;
+    updateSessionBar();
+    return;
+  }
+
   const isOk = m.status === 'ACTIVE';
 
   cardWrap.innerHTML = `
@@ -651,11 +776,12 @@ function renderDigitalCard() {
           ${isOk ? 'SOCIO AL DÍA · Válido hasta ' + m.validUntil : 'CUOTA PENDIENTE'}
         </span>
         <div class="qr-code-box">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://ancu.uy/socio/${m.memberNumber}" alt="QR Carnet" />
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://ancu.uy/validar-socio?ci=${encodeURIComponent(m.ci)}" alt="QR Carnet" />
         </div>
       </div>
     </div>
   `;
+  updateSessionBar();
 }
 
 function toggleMemberStatusDemo() {

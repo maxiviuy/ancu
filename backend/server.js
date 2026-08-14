@@ -310,7 +310,7 @@ app.post('/api/raffle/checkout', async (req, res) => {
 // 2. MÓDULO DE SOCIOS Y PADRÓN ("MI ANCU")
 // ----------------------------------------------------
 
-// Consultar socio por cédula o número de socio
+// Consultar socio por cédula o número de socio (Normalizado)
 app.get('/api/members/lookup/:identifier', async (req, res) => {
   try {
     const { identifier } = req.params;
@@ -318,7 +318,9 @@ app.get('/api/members/lookup/:identifier', async (req, res) => {
 
     const memberRes = await db.query(`
       SELECT * FROM members 
-      WHERE ci = $1 OR member_number = $1
+      WHERE REPLACE(REPLACE(ci, '.', ''), '-', '') = REPLACE(REPLACE($1, '.', ''), '-', '') 
+         OR member_number ILIKE $1 
+         OR ci = $1
       LIMIT 1;
     `, [cleanId]);
 
@@ -327,8 +329,6 @@ app.get('/api/members/lookup/:identifier', async (req, res) => {
     }
 
     const member = memberRes.rows[0];
-
-    // Verificar si la fecha de vigencia expiró
     const isExpired = new Date(member.valid_until) < new Date();
     const effectiveStatus = isExpired ? 'OVERDUE' : member.status;
 
@@ -353,6 +353,62 @@ app.get('/api/members/lookup/:identifier', async (req, res) => {
   } catch (err) {
     console.error('Error looking up member:', err);
     res.status(500).json({ error: 'Error al consultar datos de socio.' });
+  }
+});
+
+// Login formal de Socio al Portal "Mi ANCU"
+app.post('/api/members/login', async (req, res) => {
+  try {
+    const { identifier } = req.body;
+    if (!identifier) {
+      return res.status(400).json({ error: 'Por favor ingrese su Cédula de Identidad o Nº de Socio.' });
+    }
+
+    const cleanId = identifier.trim();
+    const memberRes = await db.query(`
+      SELECT * FROM members 
+      WHERE REPLACE(REPLACE(ci, '.', ''), '-', '') = REPLACE(REPLACE($1, '.', ''), '-', '') 
+         OR member_number ILIKE $1 
+         OR ci = $1
+      LIMIT 1;
+    `, [cleanId]);
+
+    if (memberRes.rowCount === 0) {
+      return res.status(404).json({ error: 'No se encontró ningún socio registrado con los datos proporcionados.' });
+    }
+
+    const member = memberRes.rows[0];
+    const isExpired = new Date(member.valid_until) < new Date();
+    const effectiveStatus = isExpired ? 'OVERDUE' : member.status;
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['MEMBER_PORTAL_LOGIN', { memberNumber: member.member_number, ci: member.ci, name: `${member.first_name} ${member.last_name}` }, req.ip]);
+
+    res.json({
+      success: true,
+      message: `¡Bienvenido/a ${member.first_name}! Acceso concedido al Portal "Mi ANCU".`,
+      member: {
+        id: member.id,
+        memberNumber: member.member_number,
+        firstName: member.first_name,
+        lastName: member.last_name,
+        fullName: `${member.first_name} ${member.last_name}`,
+        ci: member.ci,
+        phone: member.phone,
+        email: member.email,
+        department: member.department,
+        thataNumber: member.thata_number,
+        category: member.category,
+        status: effectiveStatus,
+        validUntil: member.valid_until,
+        photoUrl: member.photo_url || 'assets/logo.png'
+      }
+    });
+  } catch (err) {
+    console.error('Error logging in member:', err);
+    res.status(500).json({ error: 'Error al iniciar sesión de socio.' });
   }
 });
 
