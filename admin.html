@@ -85,6 +85,9 @@
         <button type="button" class="btn btn-tab admin-only-tab" id="tab-btn-receipts" onclick="switchAdminTab('receipts')">
           ⏳ Transferencias & Comprobantes
         </button>
+        <button type="button" class="btn btn-tab superadmin-only-tab" id="tab-btn-users" onclick="switchAdminTab('users')">
+          👥 Usuarios & Permisos
+        </button>
         <button type="button" class="btn btn-tab admin-only-tab" id="tab-btn-audit" onclick="switchAdminTab('audit')">
           🛡️ Auditoría & Operaciones
         </button>
@@ -302,7 +305,50 @@
         </div>
       </section>
 
-      <!-- ================= TAB 4: AUDITORÍA ================= -->
+      <!-- ================= TAB 4: USUARIOS & PERMISOS ================= -->
+      <section id="admin-tab-users" class="admin-tab-content" style="display:none;">
+        <div style="background:var(--bg-card); border:1.5px solid var(--border-bronze); border-radius:var(--radius-xl); padding:32px; box-shadow:0 12px 36px rgba(0,0,0,0.4);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag">Control de Acceso</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.45rem; font-weight:700; color:var(--text-bone);">
+                👥 Gestión de Cuentas y Roles de Acceso
+              </h2>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                Creá y gestioná las cuentas de Super Administradores, Editores de Prensa/Rifas y Tesorería.
+              </p>
+            </div>
+
+            <div>
+              <button type="button" class="btn btn-bronze btn-md" onclick="openNewUserModal()">
+                ✨ Nuevo Usuario / Editor
+              </button>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-md); overflow-x:auto;">
+            <table style="width:100%; min-width:650px; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border-subtle); color:var(--text-muted); background:rgba(255,255,255,0.02);">
+                  <th style="padding:12px 16px;">Nombre y Apellido</th>
+                  <th style="padding:12px 16px;">Usuario</th>
+                  <th style="padding:12px 16px;">Correo</th>
+                  <th style="padding:12px 16px;">Rol de Permisos</th>
+                  <th style="padding:12px 16px;">Fecha Alta</th>
+                  <th style="padding:12px 16px; text-align:right;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-tbody">
+                <tr>
+                  <td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);">Cargando usuarios...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: AUDITORÍA ================= -->
       <section id="admin-tab-audit" class="admin-tab-content" style="display:none;">
         <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px;">
           <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone); margin-bottom:6px;">
@@ -443,6 +489,57 @@
         <div style="display:flex; justify-content:flex-end; gap:10px;">
           <button type="button" class="btn btn-secondary" onclick="closeModal('new-raffle-modal')">Cancelar</button>
           <button type="submit" class="btn btn-bronze" id="btn-create-raffle-submit">Crear y Generar 1.000 Números &rarr;</button>
+        </div>
+      </form>
+    </div>
+  <!-- Modal: Crear / Editar Usuario Administrador o Editor -->
+  <div class="modal-overlay" id="user-editor-modal">
+    <div class="modal-box" style="max-width:540px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone);" id="user-modal-header-title">
+          ✨ Crear Cuenta de Acceso
+        </h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('user-editor-modal')">&times;</button>
+      </div>
+
+      <form id="user-editor-form" onsubmit="saveUserForm(event)">
+        <input type="hidden" id="user-modal-id" value="">
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="user-modal-fullname">Nombre Completo y Cargo</label>
+          <input type="text" id="user-modal-fullname" class="form-control" placeholder="Ej: Juan Pérez - Prensa ANCU" required>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="user-modal-username">Nombre de Usuario</label>
+            <input type="text" id="user-modal-username" class="form-control" placeholder="ej: jperez" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="user-modal-role">Rol de Permisos</label>
+            <select id="user-modal-role" class="form-control">
+              <option value="EDITOR">✍️ EDITOR (Noticias & Rifas)</option>
+              <option value="TREASURY">💰 TESORERÍA (Finanzas & Comprobantes)</option>
+              <option value="ADMIN">🛡️ ADMINISTRADOR (General)</option>
+              <option value="SUPERADMIN">👑 SUPERADMIN (Total)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="user-modal-email">Correo Electrónico</label>
+          <input type="email" id="user-modal-email" class="form-control" placeholder="correo@ancu.uy" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" for="user-modal-password" id="user-modal-password-label">Contraseña</label>
+          <input type="password" id="user-modal-password" class="form-control" placeholder="••••••••" required>
+          <small style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:4px;" id="user-modal-password-hint">Mínimo 6 caracteres.</small>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('user-editor-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-bronze" id="btn-save-user-submit">Guardar Usuario &rarr;</button>
         </div>
       </form>
     </div>

@@ -835,6 +835,150 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
+// Listar usuarios administrativos
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const usersRes = await db.query(`
+      SELECT id, username, email, full_name, role, created_at 
+      FROM admin_users 
+      ORDER BY id ASC;
+    `);
+    res.json({ users: usersRes.rows });
+  } catch (err) {
+    console.error('Error fetching admin users:', err);
+    res.status(500).json({ error: 'Error al consultar usuarios del sistema.' });
+  }
+});
+
+// Crear nuevo usuario administrador o editor
+app.post('/api/admin/users', async (req, res) => {
+  try {
+    const { username, email, password, fullName, role = 'EDITOR' } = req.body;
+
+    if (!username || !email || !password || !fullName) {
+      return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+    }
+
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
+
+    const existingRes = await db.query(`
+      SELECT id FROM admin_users 
+      WHERE username = $1 OR email = $2;
+    `, [cleanUsername, cleanEmail]);
+
+    if (existingRes.rowCount > 0) {
+      return res.status(409).json({ error: 'Ya existe un usuario con ese nombre de usuario o correo electrónico.' });
+    }
+
+    const insertRes = await db.query(`
+      INSERT INTO admin_users (username, email, password_hash, full_name, role)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, username, email, full_name, role, created_at;
+    `, [cleanUsername, cleanEmail, password, fullName.trim(), role]);
+
+    const newUser = insertRes.rows[0];
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ADMIN_USER_CREATED', { userId: newUser.id, username: newUser.username, role: newUser.role }, req.ip]);
+
+    res.json({
+      success: true,
+      message: `¡Usuario ${newUser.full_name} (${newUser.role}) creado exitosamente!`,
+      user: newUser
+    });
+  } catch (err) {
+    console.error('Error creating admin user:', err);
+    res.status(500).json({ error: 'Error al crear usuario.' });
+  }
+});
+
+// Modificar usuario administrador
+app.put('/api/admin/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, password, fullName, role } = req.body;
+
+    let updateQuery;
+    let params;
+
+    if (password && password.trim() !== '') {
+      updateQuery = `
+        UPDATE admin_users 
+        SET email = COALESCE($1, email),
+            full_name = COALESCE($2, full_name),
+            role = COALESCE($3, role),
+            password_hash = $4
+        WHERE id = $5
+        RETURNING id, username, email, full_name, role, created_at;
+      `;
+      params = [email ? email.trim().toLowerCase() : null, fullName ? fullName.trim() : null, role, password, id];
+    } else {
+      updateQuery = `
+        UPDATE admin_users 
+        SET email = COALESCE($1, email),
+            full_name = COALESCE($2, full_name),
+            role = COALESCE($3, role)
+        WHERE id = $4
+        RETURNING id, username, email, full_name, role, created_at;
+      `;
+      params = [email ? email.trim().toLowerCase() : null, fullName ? fullName.trim() : null, role, id];
+    }
+
+    const updateRes = await db.query(updateQuery, params);
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ADMIN_USER_UPDATED', { userId: id, role }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Usuario actualizado con éxito.',
+      user: updateRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating admin user:', err);
+    res.status(500).json({ error: 'Error al actualizar usuario.' });
+  }
+});
+
+// Eliminar usuario administrador
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (parseInt(id, 10) === 1) {
+      return res.status(403).json({ error: 'No es posible eliminar al Super Administrador principal.' });
+    }
+
+    const deleteRes = await db.query('DELETE FROM admin_users WHERE id = $1 RETURNING username;', [id]);
+
+    if (deleteRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ADMIN_USER_DELETED', { userId: id, username: deleteRes.rows[0].username }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Usuario eliminado con éxito.'
+    });
+  } catch (err) {
+    console.error('Error deleting admin user:', err);
+    res.status(500).json({ error: 'Error al eliminar usuario.' });
+  }
+});
+
 // Subida de Fotografías de Premios
 app.post('/api/admin/upload-prize-image', uploadPrize.single('image'), (req, res) => {
   try {

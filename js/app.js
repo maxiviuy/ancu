@@ -1125,6 +1125,7 @@ function checkAdminAuthView() {
   const dashboardView = document.getElementById('admin-dashboard-view');
   const roleBadge = document.getElementById('admin-role-badge');
   const adminOnlyTabs = document.querySelectorAll('.admin-only-tab');
+  const superadminOnlyTabs = document.querySelectorAll('.superadmin-only-tab');
 
   if (!loginScreen || !dashboardView) return;
 
@@ -1134,15 +1135,22 @@ function checkAdminAuthView() {
 
     const role = AppState.adminUser.role;
     if (roleBadge) {
-      const roleLabel = role === 'EDITOR' ? '✍️ Editor de Prensa & Rifas' : (role === 'TREASURY' ? '💰 Tesorería' : '🛡️ Super Administrador');
+      const roleLabel = role === 'EDITOR' 
+        ? '✍️ Editor de Prensa & Rifas' 
+        : (role === 'TREASURY' ? '💰 Tesorería' : (role === 'SUPERADMIN' ? '👑 Super Administrador' : '🛡️ Administrador'));
       roleBadge.textContent = `Sesión: ${AppState.adminUser.fullName} (${AppState.adminUser.username}) · Rol: ${roleLabel}`;
     }
 
     // Role-based visibility
     if (role === 'EDITOR') {
       adminOnlyTabs.forEach(t => t.style.display = 'none');
+      superadminOnlyTabs.forEach(t => t.style.display = 'none');
+    } else if (role === 'SUPERADMIN') {
+      adminOnlyTabs.forEach(t => t.style.display = 'inline-flex');
+      superadminOnlyTabs.forEach(t => t.style.display = 'inline-flex');
     } else {
       adminOnlyTabs.forEach(t => t.style.display = 'inline-flex');
+      superadminOnlyTabs.forEach(t => t.style.display = 'none');
     }
   } else {
     loginScreen.style.display = 'flex';
@@ -1244,6 +1252,9 @@ async function initAdminDashboard() {
 
     // Load News Articles into Admin CMS
     await loadAdminNews();
+
+    // Load Admin Users if SuperAdmin
+    await loadAdminUsers();
 
     // Load receipts
     const receiptsRes = await fetch(`${API_BASE}/admin/receipts`);
@@ -1459,6 +1470,151 @@ async function deleteArticle(articleId) {
       await syncNewsFromAPI();
     } else {
       alert("Error al eliminar el artículo.");
+    }
+  } catch (err) {
+    alert("Error de conexión con el backend.");
+  }
+}
+
+// ---------------- Admin User Management Functions ----------------
+async function loadAdminUsers() {
+  const tbody = document.getElementById('admin-users-tbody');
+  if (!tbody) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/users`);
+    if (!res.ok) return;
+    const { users } = await res.json();
+
+    if (!Array.isArray(users) || users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);">No hay usuarios registrados.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const isSuper = u.role === 'SUPERADMIN';
+      const roleBadge = u.role === 'EDITOR' 
+        ? '<span class="status-badge-pill" style="background:rgba(59,130,246,0.2); color:#93C5FD; font-size:0.75rem;">✍️ EDITOR</span>'
+        : (u.role === 'TREASURY' 
+          ? '<span class="status-badge-pill" style="background:rgba(245,158,11,0.2); color:#FDE68A; font-size:0.75rem;">💰 TESORERÍA</span>' 
+          : '<span class="status-badge-pill" style="background:rgba(197,155,39,0.2); color:var(--bronze-light); font-weight:800; font-size:0.75rem;">👑 SUPERADMIN</span>');
+
+      return `
+        <tr style="border-bottom:1px solid var(--border-subtle);">
+          <td style="padding:12px 16px;">
+            <strong style="color:var(--text-bone); font-size:0.92rem;">${u.full_name}</strong>
+          </td>
+          <td style="padding:12px 16px; font-family:monospace; color:var(--bronze-light);">
+            ${u.username}
+          </td>
+          <td style="padding:12px 16px; font-size:0.82rem; color:var(--text-muted);">
+            ${u.email}
+          </td>
+          <td style="padding:12px 16px;">
+            ${roleBadge}
+          </td>
+          <td style="padding:12px 16px; font-size:0.8rem; color:var(--text-muted);">
+            ${new Date(u.created_at).toLocaleDateString('es-UY')}
+          </td>
+          <td style="padding:12px 16px; text-align:right;">
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; margin-right:4px;" onclick="editUser(${u.id}, '${escape(u.full_name)}', '${u.username}', '${u.email}', '${u.role}')">Editar ✏️</button>
+            ${u.id !== 1 ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteUser(${u.id})">🗑️</button>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading admin users:', err);
+  }
+}
+
+function openNewUserModal() {
+  document.getElementById('user-modal-id').value = '';
+  document.getElementById('user-modal-fullname').value = '';
+  document.getElementById('user-modal-username').value = '';
+  document.getElementById('user-modal-username').disabled = false;
+  document.getElementById('user-modal-email').value = '';
+  document.getElementById('user-modal-role').value = 'EDITOR';
+  document.getElementById('user-modal-password').value = '';
+  document.getElementById('user-modal-password').required = true;
+  document.getElementById('user-modal-password-label').textContent = 'Contraseña';
+  document.getElementById('user-modal-password-hint').textContent = 'Mínimo 6 caracteres.';
+  document.getElementById('user-modal-header-title').textContent = '✨ Crear Cuenta de Acceso';
+
+  const modal = document.getElementById('user-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function editUser(userId, fullNameEscaped, username, email, role) {
+  document.getElementById('user-modal-id').value = userId;
+  document.getElementById('user-modal-fullname').value = unescape(fullNameEscaped);
+  document.getElementById('user-modal-username').value = username;
+  document.getElementById('user-modal-username').disabled = true; // username immutable
+  document.getElementById('user-modal-email').value = email;
+  document.getElementById('user-modal-role').value = role;
+  document.getElementById('user-modal-password').value = '';
+  document.getElementById('user-modal-password').required = false;
+  document.getElementById('user-modal-password-label').textContent = 'Nueva Contraseña (Opcional)';
+  document.getElementById('user-modal-password-hint').textContent = 'Dejar en blanco para mantener la contraseña actual.';
+  document.getElementById('user-modal-header-title').textContent = '✏️ Modificar Usuario y Permisos';
+
+  const modal = document.getElementById('user-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+async function saveUserForm(event) {
+  if (event) event.preventDefault();
+
+  const id = document.getElementById('user-modal-id').value;
+  const fullName = document.getElementById('user-modal-fullname').value.trim();
+  const username = document.getElementById('user-modal-username').value.trim();
+  const email = document.getElementById('user-modal-email').value.trim();
+  const role = document.getElementById('user-modal-role').value;
+  const password = document.getElementById('user-modal-password').value;
+
+  if (!fullName || !email || (!id && (!username || !password))) {
+    alert("Por favor complete todos los campos obligatorios.");
+    return;
+  }
+
+  const payload = { fullName, username, email, role, password };
+
+  try {
+    const url = id ? `${API_BASE}/admin/users/${id}` : `${API_BASE}/admin/users`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Error al guardar el usuario.');
+      return;
+    }
+
+    alert(data.message || 'Usuario guardado exitosamente.');
+    closeModal('user-editor-modal');
+    await loadAdminUsers();
+  } catch (err) {
+    console.error('Error saving user:', err);
+    alert('Error al conectar con el servidor.');
+  }
+}
+
+async function deleteUser(userId) {
+  if (!confirm("¿Estás seguro de que deseas eliminar este usuario de acceso?")) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${userId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Usuario eliminado con éxito.");
+      await loadAdminUsers();
+    } else {
+      alert(data.error || "Error al eliminar usuario.");
     }
   } catch (err) {
     alert("Error de conexión con el backend.");
