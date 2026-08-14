@@ -2,12 +2,19 @@
 -- ANCU - Datos Iniciales y Siembra
 -- ==========================================================
 
+-- 0. Administradores Iniciales
+INSERT INTO admin_users (username, email, password_hash, full_name, role)
+VALUES 
+    ('admin', 'admin@ancu.uy', 'ancu2026admin', 'Comisión Directiva ANCU', 'SUPERADMIN'),
+    ('tesoreria', 'tesoreria@ancu.uy', 'tesoreria2026', 'Tesorería Central ANCU', 'TREASURY')
+ON CONFLICT (username) DO NOTHING;
+
 -- 1. Insertar Rifa Activa 2026
 INSERT INTO raffles (id, title, subtitle, draw_date, draw_method, ticket_price, total_numbers, status)
 VALUES (
     1,
     'Gran Rifa de Colaboración ANCU 2026',
-    'Fondo de Equipamiento y Actividades Institucionales',
+    'Fondo de Equipamiento, Asesoría Jurídica y Actividades Institucionales',
     '2026-08-31 20:00:00-03',
     'Quiniela Nocturna de la Lotería Nacional',
     400.00,
@@ -15,12 +22,14 @@ VALUES (
     'ACTIVE'
 ) ON CONFLICT (id) DO NOTHING;
 
--- 2. Premios Oficiales
-INSERT INTO raffle_prizes (raffle_id, prize_order, title, regulated, note)
+-- 2. Premios Oficiales con Fotografías y Descripciones
+DELETE FROM raffle_prizes WHERE raffle_id = 1;
+
+INSERT INTO raffle_prizes (raffle_id, prize_order, title, description, image_url, estimated_value, regulated, note)
 VALUES 
-    (1, 1, '1 Rifle Deportivo Savage Mark-II F Cal. .22LR', true, 'Requiere THATA vigente para entrega legal'),
-    (1, 2, '1 Pistola Taurus G3C Compact Black Cal. 9mm', true, 'Requiere THATA vigente para entrega legal'),
-    (1, 3, '1 Cuchillo de Supervivencia y Monte Glock FM81', false, 'Entrega directa')
+    (1, 1, 'Rifle Deportivo Savage Mark-II F', 'Calibre .22LR, cerrojo de precisión, culata sintética ergonómica de alta resistencia y cargador extraíble de 10 tiros.', 'https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=600&auto=format&fit=crop&q=80', 750.00, true, 'Requiere THATA vigente y registro legal ante SMA/ANCU.'),
+    (1, 2, 'Pistola Taurus G3C Compact Black', 'Calibre 9mm Parabellum, acabado Black Tenifer anticorrosión, 3 cargadores incluidos y miras ajustables de tres puntos.', 'https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=600&auto=format&fit=crop&q=80', 680.00, true, 'Requiere THATA vigente y registro legal ante SMA/ANCU.'),
+    (1, 3, 'Cuchillo de Monte Glock FM81 con Sierra', 'Acero al carbono fosfatado, sierra dorsal, empuñadura de polímero militar y vaina rígida con clip de retención rápida.', 'https://images.unsplash.com/photo-1593487568720-92097fb460fb?w=600&auto=format&fit=crop&q=80', 160.00, false, 'Entrega directa a domicilio en todo el Uruguay.')
 ON CONFLICT DO NOTHING;
 
 -- 3. Generar los 1000 números de la rifa (000 al 999)

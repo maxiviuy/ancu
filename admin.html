@@ -4,168 +4,312 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Administración y Control | ANCU Backoffice</title>
-  <meta name="description" content="Panel unificado de administración de ANCU. Gestión de rifas, padrón de socios, validación de transferencias, CMS y registro de auditoría.">
-  <link rel="stylesheet" href="css/main.css">
+  <meta name="description" content="Panel unificado de administración de ANCU. Gestión de rifas, premios, fotos, padrón de socios, validación de transferencias y registro de auditoría.">
+  <link rel="stylesheet" href="css/main.css?v=20260814_4">
   <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body style="background:#070C09;">
 
-  <!-- Admin Top Bar -->
-  <header style="background:var(--bg-glass-heavy); border-bottom:1px solid var(--border-medium); padding:14px 24px;">
-    <div style="max-width:1400px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
-      <div style="display:flex; align-items:center; gap:14px;">
-        <div class="logo-symbol" style="width:38px; height:38px;"><img src="assets/logo.png" alt="Logo ANCU" class="brand-logo-img"></div>
-        <div>
-          <strong style="font-family:var(--font-heading); font-size:1.1rem; color:var(--text-bone);">ANCU Backoffice Central</strong>
-          <span style="font-size:0.75rem; color:var(--bronze-light); display:block;">Rol: Super Administrador / Tesorería</span>
+  <!-- Admin Login Screen (Displayed when not logged in) -->
+  <div id="admin-login-screen" style="display:flex; min-height:100vh; align-items:center; justify-content:center; padding:20px;">
+    <div style="max-width:480px; width:100%; background:linear-gradient(135deg, rgba(20,34,24,0.98) 0%, rgba(10,18,13,0.99) 100%); border:1.5px solid var(--border-bronze); border-radius:var(--radius-xl); padding:40px; box-shadow:0 16px 45px rgba(0,0,0,0.8);">
+      <div style="text-align:center; margin-bottom:28px;">
+        <div class="logo-symbol" style="width:54px; height:54px; margin:0 auto 14px auto;">
+          <img src="assets/logo.png" alt="Logo ANCU" class="brand-logo-img">
         </div>
+        <h1 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:800; color:var(--text-bone);">ANCU Backoffice</h1>
+        <p style="font-size:0.85rem; color:var(--bronze-light); margin-top:4px;">Panel de Control y Gestión de Rifas</p>
       </div>
 
-      <div style="display:flex; align-items:center; gap:16px;">
-        <a href="index.html" class="btn btn-secondary btn-sm">← Ver Portal Público</a>
-        <div style="background:rgba(16,185,129,0.15); color:#6EE7B7; border:1px solid rgba(16,185,129,0.3); font-size:0.75rem; font-weight:700; padding:4px 10px; border-radius:999px;">
-          ● Base PostgreSQL Conectada
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" for="admin-user-input">Usuario o Correo Institucional</label>
+          <input type="text" id="admin-user-input" class="form-control" placeholder="admin@ancu.uy" value="admin" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom:24px;">
+          <label class="form-label" for="admin-pass-input">Contraseña de Administrador</label>
+          <input type="password" id="admin-pass-input" class="form-control" placeholder="••••••••" value="ancu2026admin" required>
+        </div>
+
+        <button type="submit" class="btn btn-bronze btn-lg" id="btn-admin-submit" style="width:100%; justify-content:center;">
+          Ingresar al Panel de Control &rarr;
+        </button>
+      </form>
+
+      <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border-subtle); text-align:center;">
+        <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:8px;">Credenciales de demostración iniciales:</span>
+        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="setAdminCredentials('admin', 'ancu2026admin')">🛡️ Super Admin</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="setAdminCredentials('tesoreria', 'tesoreria2026')">💰 Tesorería</button>
         </div>
       </div>
     </div>
-  </header>
+  </div>
 
-  <main style="max-width:1400px; margin:30px auto; padding:0 24px;">
-    
-    <!-- KPIs Dashboard Overview -->
-    <div class="grid-4" style="margin-bottom:30px;">
+  <!-- Admin Main Dashboard (Displayed when logged in) -->
+  <div id="admin-dashboard-view" style="display:none;">
+
+    <!-- Admin Top Bar -->
+    <header style="background:var(--bg-glass-heavy); border-bottom:1px solid var(--border-medium); padding:14px 24px; position:sticky; top:0; z-index:99; backdrop-filter:blur(16px);">
+      <div style="max-width:1440px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div class="logo-symbol" style="width:38px; height:38px;"><img src="assets/logo.png" alt="Logo ANCU" class="brand-logo-img"></div>
+          <div>
+            <strong style="font-family:var(--font-heading); font-size:1.15rem; color:var(--text-bone);">ANCU Backoffice Central</strong>
+            <span style="font-size:0.75rem; color:var(--bronze-light); display:block;" id="admin-role-badge">Sesión: Comisión Directiva (admin)</span>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="background:rgba(16,185,129,0.15); color:#6EE7B7; border:1px solid rgba(16,185,129,0.3); font-size:0.75rem; font-weight:700; padding:5px 12px; border-radius:999px;">
+            ● Base PostgreSQL Conectada
+          </div>
+          <a href="rifas.html" target="_blank" class="btn btn-secondary btn-sm">👁️ Ver Rifa Pública</a>
+          <a href="index.html" class="btn btn-secondary btn-sm">← Portal</a>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="handleAdminLogout()">Cerrar Sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <main style="max-width:1440px; margin:30px auto; padding:0 24px;">
       
-      <div style="background:var(--bg-card); border:1px solid var(--border-bronze); border-radius:var(--radius-lg); padding:22px;">
-        <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Recaudación Rifa Activa</span>
-        <div style="font-size:2rem; font-weight:800; color:var(--bronze-light); margin:6px 0;" id="kpi-revenue">$ 0 <span style="font-size:0.9rem; color:var(--text-bone);">UYU</span></div>
-        <span style="font-size:0.78rem; color:var(--color-available);" id="kpi-sold-count">↑ 0 números vendidos de 1.000</span>
-      </div>
-
-      <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
-        <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Padrón de Socios</span>
-        <div style="font-size:2rem; font-weight:800; color:var(--text-bone); margin:6px 0;" id="kpi-members">0</div>
-        <span style="font-size:0.78rem; color:var(--color-available);" id="kpi-members-status">● Padrón Oficial</span>
-      </div>
-
-      <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
-        <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Transferencias Pendientes</span>
-        <div style="font-size:2rem; font-weight:800; color:var(--color-held); margin:6px 0;" id="kpi-pending-receipts">0</div>
-        <span style="font-size:0.78rem; color:var(--text-muted);">Comprobantes para revisar</span>
-      </div>
-
-      <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
-        <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Impresiones Banners Sponsors</span>
-        <div style="font-size:2rem; font-weight:800; color:var(--text-bone); margin:6px 0;">18.420</div>
-        <span style="font-size:0.78rem; color:var(--bronze-light);">482 clics registrados (CTR 2.6%)</span>
-      </div>
-
-    </div>
-
-    <!-- Management Modules Grid -->
-    <div class="grid-sidebar-right">
-      
-      <!-- Left Column: Raffle & Socios Manager -->
-      <div>
+      <!-- KPIs Dashboard Overview -->
+      <div class="grid-4" style="margin-bottom:30px;">
         
-        <!-- Raffle Administration Box -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:30px; margin-bottom:30px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:14px;">
-            <div>
-              <span class="raffle-tag">Módulo Principal</span>
-              <h2 style="font-family:var(--font-heading); font-size:1.4rem; font-weight:700; color:var(--text-bone);">
-                Gestión de Rifas y Comprobantes
-              </h2>
+        <div style="background:var(--bg-card); border:1px solid var(--border-bronze); border-radius:var(--radius-lg); padding:22px;">
+          <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Recaudación Rifa Activa</span>
+          <div style="font-size:2rem; font-weight:800; color:var(--bronze-light); margin:6px 0;" id="kpi-revenue">$ 0 <span style="font-size:0.9rem; color:var(--text-bone);">UYU</span></div>
+          <span style="font-size:0.78rem; color:var(--color-available);" id="kpi-sold-count">↑ 0 números vendidos de 1.000</span>
+        </div>
+
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
+          <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Padrón de Socios</span>
+          <div style="font-size:2rem; font-weight:800; color:var(--text-bone); margin:6px 0;" id="kpi-members">0</div>
+          <span style="font-size:0.78rem; color:var(--color-available);" id="kpi-members-status">● Padrón Oficial</span>
+        </div>
+
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
+          <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Transferencias Pendientes</span>
+          <div style="font-size:2rem; font-weight:800; color:var(--color-held); margin:6px 0;" id="kpi-pending-receipts">0</div>
+          <span style="font-size:0.78rem; color:var(--text-muted);">Comprobantes para revisar</span>
+        </div>
+
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
+          <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Fecha de Sorteo</span>
+          <div style="font-size:1.25rem; font-weight:800; color:var(--text-bone); margin:10px 0;" id="kpi-draw-date">--</div>
+          <span style="font-size:0.78rem; color:var(--bronze-light);" id="kpi-draw-method">Lotería Nacional</span>
+        </div>
+
+      </div>
+
+      <!-- Main Admin Workbench -->
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:28px; margin-bottom:40px;">
+        
+        <!-- Left Column: Raffle & Prize Editor Suite -->
+        <div>
+          
+          <!-- Raffle Editor Module -->
+          <div style="background:var(--bg-card); border:1.5px solid var(--border-bronze); border-radius:var(--radius-xl); padding:32px; margin-bottom:30px; box-shadow:0 12px 36px rgba(0,0,0,0.4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+              <div>
+                <span class="raffle-tag">Módulo Principal</span>
+                <h2 style="font-family:var(--font-heading); font-size:1.45rem; font-weight:700; color:var(--text-bone);">
+                  🎯 Configuración y Gestión de la Rifa
+                </h2>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                  Modificá las fechas de sorteo, textos, precios y premios con subida de fotos en tiempo real.
+                </p>
+              </div>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openNewRaffleModal()">
+                  ✨ Nueva Campaña de Rifa
+                </button>
+                <a href="/api/admin/export/raffle.csv" class="btn btn-secondary btn-sm" id="btn-export-csv" target="_blank" download>
+                  📥 Exportar CSV para Escribano
+                </a>
+              </div>
             </div>
 
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <a href="/api/admin/export/raffle.csv" class="btn btn-secondary btn-sm" id="btn-export-csv" target="_blank" download>
-                📥 Exportar CSV para Escribano
-              </a>
-              <button type="button" class="btn btn-bronze btn-sm" onclick="alert('La rifa activa actual es: Gran Rifa ANCU 2026.');">
-                + Nueva Rifa
-              </button>
-            </div>
+            <!-- Active Raffle Details Form -->
+            <form id="raffle-config-form" onsubmit="saveRaffleConfig(event)">
+              <div class="grid-2" style="margin-bottom:16px;">
+                <div class="form-group">
+                  <label class="form-label" for="raffle-title-input">Título de la Campaña de Rifa</label>
+                  <input type="text" id="raffle-title-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="raffle-subtitle-input">Subtítulo / Finalidad Institucional</label>
+                  <input type="text" id="raffle-subtitle-input" class="form-control">
+                </div>
+              </div>
+
+              <div class="grid-3" style="margin-bottom:24px;">
+                <div class="form-group">
+                  <label class="form-label" for="raffle-date-input">Fecha y Hora del Sorteo</label>
+                  <input type="datetime-local" id="raffle-date-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="raffle-price-input">Precio por Número ($ UYU)</label>
+                  <input type="number" id="raffle-price-input" class="form-control" min="1" step="10" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="raffle-status-select">Estado de la Campaña</label>
+                  <select id="raffle-status-select" class="form-control">
+                    <option value="ACTIVE">🟢 ACTIVA (En Venta)</option>
+                    <option value="DRAFT">🟡 BORRADOR (Oculta)</option>
+                    <option value="CLOSED">🔴 CERRADA (Sorteada)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom:28px;">
+                <label class="form-label" for="raffle-method-input">Método de Sorteo y Fiscalización</label>
+                <input type="text" id="raffle-method-input" class="form-control" placeholder="Ej: Quiniela Nocturna de la Lotería Nacional / Escribano Público">
+              </div>
+
+              <!-- Prizes Management Section -->
+              <div style="border-top:1px solid var(--border-medium); padding-top:24px; margin-bottom:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                  <h3 style="font-family:var(--font-heading); font-size:1.2rem; font-weight:700; color:var(--bronze-light);">
+                    🏆 Gestión de Premios y Fotografías
+                  </h3>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="addNewPrizeRow()">
+                    + Agregar Otro Premio
+                  </button>
+                </div>
+
+                <div id="prizes-editor-container" style="display:flex; flex-direction:column; gap:20px;">
+                  <!-- Dynamically populated by JS -->
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; gap:12px;">
+                <button type="submit" class="btn btn-bronze btn-lg" id="btn-save-raffle">
+                  💾 Guardar y Publicar en Vivo &rarr;
+                </button>
+              </div>
+            </form>
+
           </div>
 
           <!-- Pending Transfer Approvals (1-Click Validation) -->
-          <h3 style="font-size:1rem; font-weight:700; color:var(--bronze-light); margin-bottom:12px;">
-            ⏳ Transferencias BROU / Prex Pendientes de Validación
-          </h3>
+          <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:30px; margin-bottom:30px;">
+            <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-bone); margin-bottom:6px;">
+              ⏳ Transferencias BROU / Prex Pendientes de Validación
+            </h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">
+              Revisá los comprobantes adjuntados por socios o compradores para aprobar boletos en 1 clic.
+            </p>
 
-          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-md); overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:24px;">
-            <table style="width:100%; min-width:540px; border-collapse:collapse; font-size:0.85rem; text-align:left;">
-              <thead>
-                <tr style="border-bottom:1px solid var(--border-subtle); color:var(--text-muted); background:rgba(255,255,255,0.02);">
-                  <th style="padding:10px 14px;">Tipo / Ref</th>
-                  <th style="padding:10px 14px;">Comprador / Socio</th>
-                  <th style="padding:10px 14px;">Monto</th>
-                  <th style="padding:10px 14px;">Método</th>
-                  <th style="padding:10px 14px; text-align:right;">Acción</th>
-                </tr>
-              </thead>
-              <tbody id="admin-receipts-tbody">
-                <tr>
-                  <td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);">Cargando comprobantes...</td>
-                </tr>
-              </tbody>
-            </table>
+            <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-md); overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:18px;">
+              <table style="width:100%; min-width:540px; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border-subtle); color:var(--text-muted); background:rgba(255,255,255,0.02);">
+                    <th style="padding:10px 14px;">Tipo / Ref</th>
+                    <th style="padding:10px 14px;">Comprador / Socio</th>
+                    <th style="padding:10px 14px;">Monto</th>
+                    <th style="padding:10px 14px;">Método</th>
+                    <th style="padding:10px 14px; text-align:right;">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-receipts-tbody">
+                  <tr>
+                    <td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);">Cargando comprobantes...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Legal Warning Notice for Raffles -->
+            <div style="font-size:0.8rem; color:var(--text-muted); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); padding:12px; border-radius:8px;">
+              ⚖️ <strong>Aviso Legal DNLQ (Decreto-Ley 14.841):</strong> La creación de campañas en la plataforma es técnica y no sustituye la tramitación de expedientes ni autorizaciones ante la Dirección Nacional de Loterías y Quinielas o autoridades departamentales.
+            </div>
           </div>
 
-          <!-- Legal Warning Notice for Raffles -->
-          <div style="font-size:0.8rem; color:var(--text-muted); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); padding:12px; border-radius:8px;">
-            ⚖️ <strong>Aviso Legal DNLQ (Decreto-Ley 14.841):</strong> La creación de campañas en la plataforma es técnica y no sustituye la tramitación de expedientes ni autorizaciones ante la Dirección Nacional de Loterías y Quinielas o autoridades departamentales.
-          </div>
         </div>
 
-        <!-- Sponsors & Ads Manager -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-xl); padding:30px;">
-          <h2 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone); margin-bottom:16px;">
-            📢 Administrador de Auspiciantes y Banners
-          </h2>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:14px; border-radius:var(--radius-md); font-size:0.85rem;">
-              <div>
-                <strong>Armería El Cazador</strong> (Banner Noticias)
-                <div style="font-size:0.75rem; color:var(--text-muted);">Vigencia: 01/08/2026 al 31/12/2026</div>
-              </div>
-              <div>
-                <span style="color:var(--bronze-light); font-weight:700;">6.240 imp / 184 clics</span>
-              </div>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:14px; border-radius:var(--radius-md); font-size:0.85rem;">
-              <div>
-                <strong>Outdoor & 4x4 Uruguay</strong> (Banner Header)
-                <div style="font-size:0.75rem; color:var(--text-muted);">Vigencia: 01/07/2026 al 30/09/2026</div>
-              </div>
-              <div>
-                <span style="color:var(--bronze-light); font-weight:700;">12.180 imp / 298 clics</span>
-              </div>
+        <!-- Right Column: Campaign History & Audit Log -->
+        <div>
+          
+          <!-- Campaign Switcher -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:26px; margin-bottom:24px;">
+            <h3 style="font-family:var(--font-heading); font-size:1.15rem; font-weight:700; color:var(--text-bone); margin-bottom:14px;">
+              📂 Historial de Campañas de Rifas
+            </h3>
+            <div id="admin-raffles-list" style="display:flex; flex-direction:column; gap:10px; max-height:260px; overflow-y:auto;">
+              <!-- Populated by JS -->
             </div>
           </div>
+
+          <!-- Audit Log -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:26px;">
+            <h3 style="font-family:var(--font-heading); font-size:1.15rem; font-weight:700; color:var(--text-bone); margin-bottom:6px;">
+              🛡️ Registro de Auditoría (Audit Log)
+            </h3>
+            <p style="color:var(--text-muted); font-size:0.78rem; margin-bottom:14px;">
+              Trazabilidad obligatoria de acciones administrativas y operaciones económicas.
+            </p>
+
+            <div id="admin-audit-logs" style="max-height:460px; overflow-y:auto; background:rgba(0,0,0,0.35); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
         </div>
 
       </div>
 
-      <!-- Right Column: Audit Log & Security -->
-      <div>
-        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:30px;">
-          <h2 style="font-family:var(--font-heading); font-size:1.25rem; font-weight:700; color:var(--text-bone); margin-bottom:6px;">
-            🛡️ Registro de Auditoría (Audit Log)
-          </h2>
-          <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:16px;">
-            Trazabilidad obligatoria de acciones administrativas y operaciones económicas.
-          </p>
+    </main>
 
-          <div id="admin-audit-logs" style="max-height:420px; overflow-y:auto; background:rgba(0,0,0,0.35); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
-            <!-- Populated by JS -->
-          </div>
-        </div>
+  </div>
+
+  <!-- Modal: Crear Nueva Campaña de Rifa -->
+  <div class="modal-overlay" id="new-raffle-modal">
+    <div class="modal-box" style="max-width:600px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone);">
+          ✨ Nueva Campaña de Rifa
+        </h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('new-raffle-modal')">&times;</button>
       </div>
 
+      <form id="new-raffle-form" onsubmit="handleCreateNewRaffle(event)">
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="new-raffle-title">Título del Sorteo</label>
+          <input type="text" id="new-raffle-title" class="form-control" placeholder="Ej: Rifa Anual ANCU 2027" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="new-raffle-subtitle">Finalidad / Lema</label>
+          <input type="text" id="new-raffle-subtitle" class="form-control" placeholder="Ej: Fondo de Conservación y Obras">
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="new-raffle-date">Fecha y Hora del Sorteo</label>
+            <input type="datetime-local" id="new-raffle-date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-raffle-price">Precio por Número ($ UYU)</label>
+            <input type="number" id="new-raffle-price" class="form-control" value="400" min="1" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" for="new-raffle-method">Método de Sorteo</label>
+          <input type="text" id="new-raffle-method" class="form-control" value="Quiniela Nocturna de la Lotería Nacional" required>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('new-raffle-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-bronze" id="btn-create-raffle-submit">Crear y Generar 1.000 Números &rarr;</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-  </main>
-
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20260814_4"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Plataforma Oficial de Rifas | ANCU</title>
   <meta name="description" content="Plataforma interactiva de rifas de la Asociación Nacional de Cazadores del Uruguay. Selección de números, pagos online y comprobantes con código QR.">
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/main.css?v=20260814_4">
   <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body>
@@ -54,22 +54,22 @@
   <main class="section-sm">
     <div class="container">
       
-      <!-- Top Campaign Header -->
+      <!-- Top Campaign Header (Dynamic from PostgreSQL) -->
       <div style="background:var(--bg-card); border:1px solid var(--border-bronze); border-radius:var(--radius-xl); padding:36px; margin-bottom:30px; position:relative; overflow:hidden;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:20px;">
           <div>
-            <span class="raffle-tag">Rifa Oficial · Campaña 2026</span>
-            <h1 style="font-family:var(--font-heading); font-size:2.4rem; font-weight:800; color:var(--text-bone); margin-bottom:8px;">
+            <span class="raffle-tag" id="raffle-public-tag">Rifa Oficial · Campaña 2026</span>
+            <h1 style="font-family:var(--font-heading); font-size:2.4rem; font-weight:800; color:var(--text-bone); margin-bottom:8px;" id="raffle-public-title">
               Gran Rifa de Colaboración ANCU 2026
             </h1>
-            <p style="color:var(--text-bone-muted); max-width:700px; font-size:1.05rem;">
+            <p style="color:var(--text-bone-muted); max-width:700px; font-size:1.05rem;" id="raffle-public-subtitle">
               Fondo de equipamiento, capacitación en seguridad de tiro y actividades institucionales. Sortea por la <strong>Quiniela Nocturna de la Lotería Nacional</strong> del 31 de Agosto de 2026.
             </p>
           </div>
 
           <div style="background:rgba(10,15,13,0.8); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:20px 28px; text-align:right;">
             <div style="font-size:0.8rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Valor por Número</div>
-            <div style="font-size:2.2rem; font-weight:800; color:var(--bronze-light); line-height:1.1;">$ 400 <span style="font-size:1rem; color:var(--text-bone);">UYU</span></div>
+            <div style="font-size:2.2rem; font-weight:800; color:var(--bronze-light); line-height:1.1;" id="raffle-public-price">$ 400 <span style="font-size:1rem; color:var(--text-bone);">UYU</span></div>
             <div style="font-size:0.75rem; color:var(--color-available); margin-top:4px;">● Pagos con Mercado Pago o Transferencia BROU/Prex</div>
           </div>
         </div>
@@ -78,7 +78,7 @@
         <div class="grid-4" style="margin-top:28px; padding-top:24px; border-top:1px solid var(--border-subtle);">
           <div style="background:rgba(255,255,255,0.03); padding:14px; border-radius:var(--radius-md); text-align:center; border:1px solid var(--border-subtle);">
             <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Total en Juego</div>
-            <div style="font-size:1.4rem; font-weight:700; color:var(--text-bone);">1.000</div>
+            <div style="font-size:1.4rem; font-weight:700; color:var(--text-bone);" id="stat-total">1.000</div>
           </div>
           <div style="background:rgba(16,185,129,0.08); padding:14px; border-radius:var(--radius-md); text-align:center; border:1px solid rgba(16,185,129,0.25);">
             <div style="font-size:0.75rem; color:#6EE7B7; text-transform:uppercase;">Disponibles</div>
@@ -95,56 +95,15 @@
         </div>
       </div>
 
-      <!-- Prizes Details Box -->
+      <!-- Prizes Details Box (Rendered dynamically from PostgreSQL) -->
       <div style="margin-bottom:36px;">
         <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-bottom:18px;">
-          🏆 Premios en Juego
+          🏆 Premios Oficiales en Juego
         </h2>
 
-        <div class="grid-3">
-          <div style="background:var(--bg-card); border:1px solid var(--border-bronze); border-radius:var(--radius-lg); padding:24px; position:relative;">
-            <div style="display:inline-block; background:var(--bronze-primary); color:#0A0F0D; font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:4px; margin-bottom:14px;">
-              1º PREMIO
-            </div>
-            <h3 style="font-size:1.2rem; font-weight:700; color:var(--text-bone); margin-bottom:8px;">
-              Rifle Deportivo Savage Mark-II F
-            </h3>
-            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:12px;">
-              Calibre .22LR, cerrojo de precisión, culata sintética ergonómica de alta resistencia y cargador extraíble.
-            </p>
-            <div style="font-size:0.75rem; background:rgba(245,158,11,0.12); color:#FDE68A; padding:6px 10px; border-radius:6px; border:1px solid rgba(245,158,11,0.25);">
-              ⚠️ Entrega condicionada a THATA y registro vigente ante SMA/ANCU.
-            </div>
-          </div>
-
-          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:24px;">
-            <div style="display:inline-block; background:rgba(255,255,255,0.1); color:var(--text-bone); font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:4px; margin-bottom:14px;">
-              2º PREMIO
-            </div>
-            <h3 style="font-size:1.2rem; font-weight:700; color:var(--text-bone); margin-bottom:8px;">
-              Pistola Taurus G3C Compact
-            </h3>
-            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:12px;">
-              Calibre 9mm Parabellum, acabado Black Tenifer, 3 cargadores incluidos y miras ajustables.
-            </p>
-            <div style="font-size:0.75rem; background:rgba(245,158,11,0.12); color:#FDE68A; padding:6px 10px; border-radius:6px; border:1px solid rgba(245,158,11,0.25);">
-              ⚠️ Entrega condicionada a THATA y registro vigente ante SMA/ANCU.
-            </div>
-          </div>
-
-          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:24px;">
-            <div style="display:inline-block; background:rgba(255,255,255,0.1); color:var(--text-bone); font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:4px; margin-bottom:14px;">
-              3º PREMIO
-            </div>
-            <h3 style="font-size:1.2rem; font-weight:700; color:var(--text-bone); margin-bottom:8px;">
-              Cuchillo de Monte Glock FM81
-            </h3>
-            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:12px;">
-              Acero al carbono fosfatado, sierra dorsal, empuñadura de polímero militar y vaina con retención de seguridad.
-            </p>
-            <div style="font-size:0.75rem; background:rgba(16,185,129,0.12); color:#A7F3D0; padding:6px 10px; border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
-              ✓ Entrega directa a todo el país.
-            </div>
+        <div class="grid-3" id="prizes-container">
+          <div style="padding:40px; text-align:center; color:var(--text-muted); grid-column: 1 / -1;">
+            Cargando premios oficiales desde PostgreSQL...
           </div>
         </div>
       </div>
@@ -345,6 +304,6 @@
     </div>
   </footer>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20260814_4"></script>
 </body>
 </html>

@@ -1,102 +1,91 @@
 /**
- * ANCU - ASOCIACIÓN NACIONAL DE CAZADORES DEL URUGUAY
- * Core Client Engine & Interactive State Management
- * Full Backend API & PostgreSQL Synchronization
+ * ANCU - Portal Oficial y Plataforma Digital
+ * Asociación Nacional de Cazadores del Uruguay
  */
 
 const API_BASE = '/api';
-const APP_STORAGE_KEY = 'ancu_app_state_v2';
 
+// ---------------- Application State ----------------
 const DEFAULT_STATE = {
   activeRaffle: {
     id: 1,
     title: "Gran Rifa de Colaboración ANCU 2026",
     subtitle: "Fondo de Equipamiento y Actividades Institucionales",
-    drawDate: "2026-08-31T20:00:00",
-    drawMethod: "Quiniela Nocturna de la Lotería Nacional",
     ticketPrice: 400,
     totalNumbers: 1000,
+    drawDate: "2026-08-31T20:00:00-03:00",
+    drawMethod: "Quiniela Nocturna de la Lotería Nacional",
     prizes: [
-      { order: 1, title: "1 Rifle Deportivo Savage Mark-II F Cal. .22LR", regulated: true, note: "Requiere THATA vigente para entrega legal" },
-      { order: 2, title: "1 Pistola Taurus G3C Compact Black Cal. 9mm", regulated: true, note: "Requiere THATA vigente para entrega legal" },
-      { order: 3, title: "1 Cuchillo de Supervivencia y Monte Glock FM81", regulated: false, note: "Entrega directa" }
+      {
+        order: 1,
+        title: "Rifle Deportivo Savage Mark-II F",
+        description: "Calibre .22LR, cerrojo de precisión, culata sintética ergonómica de alta resistencia y cargador extraíble de 10 tiros.",
+        imageUrl: "https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=600&auto=format&fit=crop&q=80",
+        estimatedValue: 750,
+        regulated: true,
+        note: "Requiere THATA vigente y registro legal ante SMA/ANCU."
+      },
+      {
+        order: 2,
+        title: "Pistola Taurus G3C Compact Black",
+        description: "Calibre 9mm Parabellum, acabado Black Tenifer anticorrosión, 3 cargadores incluidos y miras ajustables de tres puntos.",
+        imageUrl: "https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=600&auto=format&fit=crop&q=80",
+        estimatedValue: 680,
+        regulated: true,
+        note: "Requiere THATA vigente y registro legal ante SMA/ANCU."
+      },
+      {
+        order: 3,
+        title: "Cuchillo de Monte Glock FM81 con Sierra",
+        description: "Acero al carbono fosfatado, sierra dorsal, empuñadura de polímero militar y vaina rígida con clip de retención rápida.",
+        imageUrl: "https://images.unsplash.com/photo-1593487568720-92097fb460fb?w=600&auto=format&fit=crop&q=80",
+        estimatedValue: 160,
+        regulated: false,
+        note: "Entrega directa a domicilio en todo el Uruguay."
+      }
     ],
     numbers: {}
   },
   selectedNumbers: [],
   cartTimer: null,
-  cartTimeRemaining: 900, // 15 mins
+  cartTimeRemaining: 900, // 15 mins in seconds
   memberUser: {
-    isLoggedIn: true,
+    isLoggedIn: false,
     firstName: "Carlos",
     lastName: "Mendiondo",
     ci: "3.842.190-4",
     memberNumber: "ANCU-0012",
     category: "Socio Pleno Activo",
-    status: "ACTIVE", // ACTIVE or OVERDUE
+    status: "ACTIVE",
     validUntil: "31/12/2026",
     department: "Lavalleja",
     thataNumber: "UY-88421",
     photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80"
   },
-  auditLogs: []
+  adminUser: null,
+  adminPrizesDraft: []
 };
 
-// Generate 1000 numbers fallback
-function generateInitialNumbers() {
-  const numbers = {};
-  for (let i = 0; i < 1000; i++) {
-    const formatted = String(i).padStart(3, '0');
-    numbers[formatted] = { status: 'available' };
-  }
-  return numbers;
-}
-
-let AppState = (function() {
-  const saved = localStorage.getItem(APP_STORAGE_KEY);
+// Cargar o inicializar estado persistente
+let AppState = { ...DEFAULT_STATE };
+try {
+  const saved = localStorage.getItem('ancu_portal_state');
   if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (!parsed.activeRaffle.numbers || Object.keys(parsed.activeRaffle.numbers).length === 0) {
-        parsed.activeRaffle.numbers = generateInitialNumbers();
-      }
-      return parsed;
-    } catch (e) {
-      console.warn("Storage reset due to parse error", e);
-    }
+    const parsed = JSON.parse(saved);
+    AppState = { ...DEFAULT_STATE, ...parsed };
   }
-  const initial = { ...DEFAULT_STATE };
-  initial.activeRaffle.numbers = generateInitialNumbers();
-  return initial;
-})();
+} catch (e) {
+  console.warn('Usando estado por defecto:', e);
+}
 
 function saveState() {
-  localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(AppState));
-}
-
-// ---------------- DOM Ready & Init ----------------
-async function bootstrapApp() {
-  initMobileNavigation();
-  initHundredsTabs();
-  initRaffleSearch();
-  initModalListeners();
-  initNormativaFilters();
-  initMembershipForm();
-
-  // Synchronize with real PostgreSQL backend
-  await syncRaffleFromAPI();
-  await syncMemberFromAPI();
-  await initAdminDashboard();
-
-  renderNumbersGrid(currentHundred);
-  updateCheckoutTray();
-  updateRaffleStats();
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootstrapApp);
-} else {
-  bootstrapApp();
+  try {
+    localStorage.setItem('ancu_portal_state', JSON.stringify({
+      selectedNumbers: AppState.selectedNumbers,
+      memberUser: AppState.memberUser,
+      adminUser: AppState.adminUser
+    }));
+  } catch (e) {}
 }
 
 // ---------------- API Synchronization ----------------
@@ -109,6 +98,8 @@ async function syncRaffleFromAPI() {
       AppState.activeRaffle.id = data.raffle.id;
       AppState.activeRaffle.title = data.raffle.title;
       AppState.activeRaffle.subtitle = data.raffle.subtitle;
+      AppState.activeRaffle.drawDate = data.raffle.drawDate;
+      AppState.activeRaffle.drawMethod = data.raffle.drawMethod;
       AppState.activeRaffle.ticketPrice = data.raffle.ticketPrice;
       AppState.activeRaffle.totalNumbers = data.raffle.totalNumbers;
       AppState.activeRaffle.prizes = data.raffle.prizes || AppState.activeRaffle.prizes;
@@ -123,12 +114,78 @@ async function syncRaffleFromAPI() {
           };
         });
       }
+
+      // Update UI elements in rifas.html if present
+      const titleEl = document.getElementById('raffle-public-title');
+      const subtitleEl = document.getElementById('raffle-public-subtitle');
+      const priceEl = document.getElementById('raffle-public-price');
+      const tagEl = document.getElementById('raffle-public-tag');
+      const totalEl = document.getElementById('stat-total');
+
+      if (titleEl) titleEl.textContent = data.raffle.title;
+      if (subtitleEl) {
+        const formattedDate = new Date(data.raffle.drawDate).toLocaleDateString('es-UY', { day: 'numeric', month: 'long', year: 'numeric' });
+        subtitleEl.innerHTML = `${data.raffle.subtitle || 'Fondo de equipamiento y actividades institucionales.'} Sortea por la <strong>${data.raffle.drawMethod}</strong> el ${formattedDate}.`;
+      }
+      if (priceEl) priceEl.innerHTML = `$ ${data.raffle.ticketPrice} <span style="font-size:1rem; color:var(--text-bone);">UYU</span>`;
+      if (tagEl) tagEl.textContent = `Rifa Oficial · Sorteo ${new Date(data.raffle.drawDate).getFullYear()}`;
+      if (totalEl) totalEl.textContent = data.raffle.totalNumbers.toLocaleString('es-UY');
+
+      // Update KPI stats if present
+      if (data.raffle.stats) {
+        const availEl = document.getElementById('stat-avail');
+        const heldEl = document.getElementById('stat-held');
+        const soldEl = document.getElementById('stat-sold');
+        if (availEl) availEl.textContent = data.raffle.stats.available.toLocaleString('es-UY');
+        if (heldEl) heldEl.textContent = data.raffle.stats.held.toLocaleString('es-UY');
+        if (soldEl) soldEl.textContent = data.raffle.stats.sold.toLocaleString('es-UY');
+      }
+
+      renderPublicPrizes();
       saveState();
-      console.log('🌲 Rifa sincronizada con base de datos PostgreSQL.');
+      console.log('🌲 Rifa y premios sincronizados con PostgreSQL.');
     }
   } catch (err) {
-    console.warn('Usando estado local para rifas (Backend no disponible o sin conexión):', err.message);
+    console.warn('Usando estado local para rifas (Backend offline):', err.message);
+    renderPublicPrizes();
   }
+}
+
+function renderPublicPrizes() {
+  const prizesContainer = document.getElementById('prizes-container');
+  if (!prizesContainer) return;
+
+  const prizes = AppState.activeRaffle.prizes;
+  if (!Array.isArray(prizes) || prizes.length === 0) {
+    prizesContainer.innerHTML = `<div style="padding:30px; text-align:center; color:var(--text-muted); grid-column: 1 / -1;">No hay premios configurados actualmente.</div>`;
+    return;
+  }
+
+  prizesContainer.innerHTML = prizes.map((p, idx) => {
+    const badgeClass = idx === 0 ? 'gold' : (idx === 1 ? 'silver' : 'bronze');
+    const badgeLabel = `${p.order || idx + 1}º PREMIO`;
+    const imgUrl = p.imageUrl || 'assets/logo.png';
+    const hasPhoto = Boolean(p.imageUrl);
+
+    const legalTag = p.regulated
+      ? `<div class="prize-card-legal warning">⚠️ ${p.note || 'Requiere THATA vigente y registro legal ante SMA/ANCU.'}</div>`
+      : `<div class="prize-card-legal ok">✓ ${p.note || 'Entrega directa a domicilio en todo el país.'}</div>`;
+
+    return `
+      <div class="prize-card">
+        <div class="prize-card-img-wrap">
+          <span class="prize-card-badge ${badgeClass}">${badgeLabel}</span>
+          <img src="${imgUrl}" alt="${p.title}" class="prize-card-img" style="${hasPhoto ? '' : 'object-fit:contain; padding:24px; background:#0B120E;'}" onerror="this.src='assets/logo.png'; this.style.objectFit='contain'; this.style.padding='24px';" />
+        </div>
+        <div class="prize-card-body">
+          <h3 class="prize-card-title">${p.title}</h3>
+          <p class="prize-card-desc">${p.description || ''}</p>
+          ${p.estimatedValue ? `<div class="prize-card-meta">Valor comercial ref: USD $${Number(p.estimatedValue).toLocaleString('es-UY')}</div>` : ''}
+          ${legalTag}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 async function syncMemberFromAPI(ci = '3.842.190-4') {
@@ -188,10 +245,10 @@ function initMobileNavigation() {
   });
 }
 
-// ---------------- Raffle Engine Logic ----------------
-let currentHundred = 0;
+// ---------------- Raffle Grid & Hundreds Tabs ----------------
+let currentHundred = 0; // 0 to 9
 
-function initHundredsTabs() {
+function initRaffleGrid() {
   const tabsWrap = document.getElementById('hundreds-tabs-wrap');
   if (!tabsWrap) return;
 
@@ -233,7 +290,7 @@ function renderNumbersGrid(hundredIndex) {
     btn.setAttribute('data-number', formatted);
     btn.setAttribute('aria-label', `Número ${formatted} - Estado: ${item.status}`);
     
-    if (item.status === 'sold') {
+    if (item.status === 'sold' || item.status === 'paid') {
       btn.disabled = true;
       btn.title = "Número ya adquirido";
     } else if (item.status === 'held') {
@@ -269,128 +326,102 @@ function toggleNumberSelection(numberStr) {
   updateCheckoutTray();
 }
 
-function initRaffleSearch() {
-  const searchInput = document.getElementById('raffle-search-input');
-  if (!searchInput) return;
-
-  searchInput.addEventListener('input', (e) => {
-    const val = e.target.value.trim();
-    if (val.length === 0) {
-      renderNumbersGrid(currentHundred);
-      return;
-    }
-
-    const num = parseInt(val, 10);
-    if (!isNaN(num) && num >= 0 && num <= 999) {
-      const targetHundred = Math.floor(num / 100);
-      if (targetHundred !== currentHundred) {
-        currentHundred = targetHundred;
-        initHundredsTabs();
-      }
-      renderNumbersGrid(currentHundred);
-      
-      const formatted = String(num).padStart(3, '0');
-      setTimeout(() => {
-        const targetBtn = document.querySelector(`[data-number="${formatted}"]`);
-        if (targetBtn) {
-          targetBtn.classList.add('search-highlight');
-          targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => targetBtn.classList.remove('search-highlight'), 2000);
-        }
-      }, 100);
-    }
-  });
-}
-
 function selectRandomNumbers(count) {
   const available = [];
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < AppState.activeRaffle.totalNumbers; i++) {
     const formatted = String(i).padStart(3, '0');
     const item = AppState.activeRaffle.numbers[formatted];
-    if (!item || item.status === 'available') {
-      available.push(formatted);
+    if (!item || (item.status !== 'sold' && item.status !== 'paid' && item.status !== 'held')) {
+      if (!AppState.selectedNumbers.includes(formatted)) {
+        available.push(formatted);
+      }
     }
   }
 
   if (available.length === 0) {
-    alert("¡Lo sentimos! Todos los números de esta rifa han sido adquiridos.");
+    alert("No hay números libres disponibles.");
     return;
   }
 
-  const shuffled = [...available].sort(() => 0.5 - Math.random());
-  const picked = shuffled.slice(0, Math.min(count, available.length));
-  AppState.selectedNumbers = picked;
-  
-  const firstNum = parseInt(picked[0], 10);
-  currentHundred = Math.floor(firstNum / 100);
-  initHundredsTabs();
+  const toPick = Math.min(count, available.length, 20 - AppState.selectedNumbers.length);
+  for (let k = 0; k < toPick; k++) {
+    const randIdx = Math.floor(Math.random() * available.length);
+    const chosen = available.splice(randIdx, 1)[0];
+    AppState.selectedNumbers.push(chosen);
+  }
+
   renderNumbersGrid(currentHundred);
   updateCheckoutTray();
 }
 
-function updateCheckoutTray() {
-  const tray = document.getElementById('checkout-tray');
-  const countEl = document.getElementById('tray-count');
-  const pillsEl = document.getElementById('tray-pills');
-  const totalEl = document.getElementById('tray-total');
+function searchRaffleNumber() {
+  const input = document.getElementById('raffle-search-input');
+  if (!input) return;
 
-  if (!tray) return;
+  const raw = input.value.trim();
+  if (raw === '') return;
 
-  if (AppState.selectedNumbers.length === 0) {
-    tray.style.display = 'none';
+  const num = parseInt(raw, 10);
+  if (isNaN(num) || num < 0 || num > 999) {
+    alert("Por favor ingresa un número válido entre 000 y 999.");
     return;
   }
 
-  tray.style.display = 'flex';
-  countEl.textContent = `${AppState.selectedNumbers.length} seleccionado(s)`;
-  totalEl.textContent = `$ ${(AppState.selectedNumbers.length * AppState.activeRaffle.ticketPrice).toLocaleString('es-UY')}`;
+  const formatted = String(num).padStart(3, '0');
+  const hundred = Math.floor(num / 100);
 
-  pillsEl.innerHTML = '';
-  AppState.selectedNumbers.forEach(n => {
-    const pill = document.createElement('span');
-    pill.className = 'selected-pill';
-    pill.innerHTML = `<strong>#${n}</strong> <button type="button" onclick="event.stopPropagation(); toggleNumberSelection('${n}')">&times;</button>`;
-    pillsEl.appendChild(pill);
-  });
+  currentHundred = hundred;
+  initRaffleGrid();
+  renderNumbersGrid(currentHundred);
+
+  setTimeout(() => {
+    const targetBtn = document.querySelector(`.number-cell[data-number="${formatted}"]`);
+    if (targetBtn) {
+      targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetBtn.style.animation = 'pulse 0.6s 3';
+    }
+  }, 100);
 }
 
-function updateRaffleStats() {
-  const total = AppState.activeRaffle.totalNumbers || 1000;
-  let sold = 0;
-  let held = 0;
-  let avail = 0;
+function updateCheckoutTray() {
+  const tray = document.getElementById('checkout-tray');
+  const countBadge = document.getElementById('selected-count');
+  const chipsWrap = document.getElementById('selected-chips');
+  const totalPrice = document.getElementById('total-price');
 
-  Object.values(AppState.activeRaffle.numbers).forEach(item => {
-    if (item.status === 'sold' || item.status === 'paid') sold++;
-    else if (item.status === 'held') held++;
-    else avail++;
-  });
+  if (!tray) return;
 
-  const percent = Math.round((sold / total) * 100);
+  const total = AppState.selectedNumbers.length * AppState.activeRaffle.ticketPrice;
 
-  const statSold = document.getElementById('stat-sold');
-  const statAvail = document.getElementById('stat-avail');
-  const statHeld = document.getElementById('stat-held');
-  const statPercent = document.getElementById('stat-percent');
-  const progressBar = document.getElementById('raffle-progress-bar');
+  if (countBadge) countBadge.textContent = AppState.selectedNumbers.length;
+  if (totalPrice) totalPrice.textContent = `$ ${total.toLocaleString('es-UY')}`;
 
-  if (statSold) statSold.textContent = sold;
-  if (statAvail) statAvail.textContent = avail;
-  if (statHeld) statHeld.textContent = held;
-  if (statPercent) statPercent.textContent = `${percent}% vendido`;
-  if (progressBar) progressBar.style.width = `${percent}%`;
+  if (chipsWrap) {
+    chipsWrap.innerHTML = AppState.selectedNumbers.map(n => `
+      <span class="selected-chip">
+        #${n}
+        <button type="button" onclick="event.stopPropagation(); toggleNumberSelection('${n}')">&times;</button>
+      </span>
+    `).join('');
+  }
+
+  if (AppState.selectedNumbers.length > 0) {
+    tray.classList.add('visible');
+  } else {
+    tray.classList.remove('visible');
+  }
 }
 
-// ---------------- Modal & Checkout Flow ----------------
+// ---------------- Checkout & Payment Modal ----------------
 let currentPaymentMethod = 'mercadopago';
 
 async function openCheckoutModal() {
   if (AppState.selectedNumbers.length === 0) {
-    alert("Por favor selecciona al menos un número.");
+    alert("Selecciona al menos un número para continuar.");
     return;
   }
 
-  // Attempt to acquire server hold lock
+  // Hold tickets in PostgreSQL backend
   try {
     const res = await fetch(`${API_BASE}/raffle/hold`, {
       method: 'POST',
@@ -400,23 +431,26 @@ async function openCheckoutModal() {
         numbers: AppState.selectedNumbers
       })
     });
-    const data = await res.json();
     if (!res.ok) {
-      alert(data.error || 'Algunos números ya no están disponibles.');
+      const errData = await res.json();
+      alert(errData.error || 'Algunos números ya no están disponibles.');
       await syncRaffleFromAPI();
       renderNumbersGrid(currentHundred);
       return;
     }
-  } catch (e) {
-    console.warn('Hold API no disponible, continuando en modo cliente:', e);
+  } catch (err) {
+    console.warn('API Hold offline, continuing local demo:', err);
   }
 
   const modal = document.getElementById('checkout-modal');
   if (!modal) return;
 
-  const modalNumbersList = document.getElementById('modal-selected-numbers');
-  const modalTotal = document.getElementById('modal-total-price');
-  if (modalNumbersList) modalNumbersList.textContent = AppState.selectedNumbers.join(', ');
+  const modalNumbers = document.getElementById('modal-selected-numbers');
+  const modalTotal = document.getElementById('modal-total-amount');
+
+  if (modalNumbers) {
+    modalNumbers.innerHTML = AppState.selectedNumbers.map(n => `<span class="selected-chip" style="margin:2px;">#${n}</span>`).join(' ');
+  }
   if (modalTotal) modalTotal.textContent = `$ ${(AppState.selectedNumbers.length * AppState.activeRaffle.ticketPrice).toLocaleString('es-UY')}`;
 
   startReservationTimer();
@@ -518,64 +552,76 @@ async function submitCheckout(e) {
     orderRef, ticketCode,
     numbers: [...AppState.selectedNumbers],
     total: AppState.selectedNumbers.length * AppState.activeRaffle.ticketPrice,
-    paymentMethod: currentPaymentMethod
+    paymentMethod: currentPaymentMethod,
+    isPaid: currentPaymentMethod === 'mercadopago'
   });
 
   AppState.selectedNumbers = [];
   await syncRaffleFromAPI();
   renderNumbersGrid(currentHundred);
   updateCheckoutTray();
-  updateRaffleStats();
 }
 
 function renderSuccessTicket(data) {
-  const modal = document.getElementById('ticket-modal');
-  if (!modal) return;
+  const modal = document.getElementById('success-ticket-modal');
+  const body = document.getElementById('success-ticket-body');
+  if (!modal || !body) return;
 
-  const ticketContent = document.getElementById('ticket-content');
-  if (ticketContent) {
-    ticketContent.innerHTML = `
-      <div class="ticket-digital" style="background:#0F1A13; border:2px solid var(--bronze-primary); border-radius:18px; padding:28px; color:#F7F5EE; box-shadow:0 12px 32px rgba(0,0,0,0.6);">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(197,155,39,0.3); padding-bottom:14px; margin-bottom:18px;">
+  const dateStr = new Date().toLocaleDateString('es-UY');
+  const numbersFormatted = data.numbers.map(n => `<span style="display:inline-block; background:var(--bronze-primary); color:#000; font-weight:800; padding:3px 8px; border-radius:4px; margin:2px;">#${n}</span>`).join(' ');
+
+  body.innerHTML = `
+    <div class="ticket-certificate" id="printable-ticket">
+      <div class="ticket-header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-size:0.75rem; color:var(--bronze-light); text-transform:uppercase; letter-spacing:0.1em; font-weight:700;">Comprobante Oficial de Participación</div>
-            <div style="font-size:1.15rem; font-weight:800; font-family:var(--font-heading);">${AppState.activeRaffle.title}</div>
+            <h3 style="font-family:var(--font-heading); font-size:1.1rem; color:var(--text-bone); margin-bottom:2px;">
+              Asociación Nacional de Cazadores del Uruguay
+            </h3>
+            <span style="font-size:0.75rem; color:var(--bronze-light); text-transform:uppercase; letter-spacing:0.05em;">
+              Comprobante Oficial de Adquisición de Boletos
+            </span>
           </div>
-          <div style="background:rgba(35,88,60,0.4); border:1px solid var(--forest-light); padding:4px 10px; border-radius:6px; font-size:0.8rem; font-weight:700; color:#8CE0AF;">
-            ${data.paymentMethod === 'mercadopago' ? 'PAGO APROBADO' : 'TRANSFERENCIA REGISTRADA'}
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 110px; gap:20px; align-items:center; margin-bottom:20px;">
-          <div>
-            <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">Titular del Ticket:</div>
-            <div style="font-size:1.1rem; font-weight:700; color:#FFF;">${data.name}</div>
-            <div style="font-size:0.85rem; color:var(--text-bone-muted);">C.I.: <strong>${data.ci}</strong> | Tel: ${data.phone}</div>
-            <div style="font-size:0.85rem; color:var(--text-bone-muted);">Email: ${data.email}</div>
-          </div>
-          <div style="background:#FFF; padding:6px; border-radius:8px; text-align:center;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://ancu.uy/validar?tkt=${data.ticketCode}" alt="QR Verificación" style="width:98px; height:98px; margin:0 auto;" />
-            <div style="font-size:0.6rem; color:#000; font-weight:700; margin-top:2px;">QR OFICIAL</div>
-          </div>
-        </div>
-
-        <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px; margin-bottom:18px;">
-          <div style="font-size:0.8rem; color:var(--bronze-light); font-weight:700; text-transform:uppercase; margin-bottom:8px;">Números Asignados:</div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            ${data.numbers.map(n => `<span style="background:var(--bronze-primary); color:#0A0F0D; font-size:1.1rem; font-weight:800; padding:6px 14px; border-radius:6px;">#${n}</span>`).join('')}
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.1); font-size:0.9rem;">
-            <span>Total Abonado:</span>
-            <strong style="color:var(--bronze-light); font-size:1.1rem;">$ ${data.total.toLocaleString('es-UY')} UYU</strong>
-          </div>
-        </div>
-
-        <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; border-top:1px solid rgba(255,255,255,0.06); padding-top:12px;">
-          <strong>Aviso Legal DNLQ y Normativa de Armas:</strong> Sorteo mediante ${AppState.activeRaffle.drawMethod} el día 31/08/2026. En caso de premios sujetos a tenencia regulada (armas de fuego), la adjudicación final queda supeditada a que el ganador presente THATA y documentación legal vigente ante el SMA/ANCU.
+          <div class="logo-symbol" style="width:40px; height:40px;"><img src="assets/logo.png" alt="Logo ANCU" class="brand-logo-img"></div>
         </div>
       </div>
-    `;
-  }
+
+      <div class="ticket-body" style="padding:20px; background:rgba(0,0,0,0.25); border-radius:var(--radius-md); margin:16px 0;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; font-size:0.85rem;">
+          <div><strong style="color:var(--text-muted);">Titular:</strong> <span style="color:var(--text-bone);">${data.name}</span></div>
+          <div><strong style="color:var(--text-muted);">C.I.:</strong> <span style="color:var(--text-bone);">${data.ci}</span></div>
+          <div><strong style="color:var(--text-muted);">Teléfono:</strong> <span style="color:var(--text-bone);">${data.phone}</span></div>
+          <div><strong style="color:var(--text-muted);">Departamento:</strong> <span style="color:var(--text-bone);">${data.dept || 'Lavalleja'}</span></div>
+          <div><strong style="color:var(--text-muted);">Nº Operación:</strong> <span style="color:var(--bronze-light); font-family:monospace;">${data.orderRef}</span></div>
+          <div><strong style="color:var(--text-muted);">Fecha:</strong> <span>${dateStr}</span></div>
+        </div>
+
+        <div style="margin-top:16px; padding-top:12px; border-top:1px dashed var(--border-medium);">
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Números Asignados:</div>
+          <div style="font-size:1.1rem;">${numbersFormatted}</div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1px solid var(--border-subtle);">
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Monto Total:</div>
+            <div style="font-size:1.4rem; font-weight:800; color:var(--bronze-light);">$ ${data.total.toLocaleString('es-UY')} UYU</div>
+          </div>
+          <div>
+            <span class="status-badge-pill ${data.isPaid ? 'active' : 'pending'}">
+              ${data.isPaid ? '● Pago Acreditado (Mercado Pago)' : '⏳ Pendiente de Acreditación (Transferencia)'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
+        <div>🔒 Sorteo fiscalizado ante Escribano Público. DNLQ Decreto-Ley 14.841.</div>
+        <div style="width:50px; height:50px; background:#fff; padding:2px; border-radius:4px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(data.orderRef)}" alt="QR Verificación" style="width:100%; height:100%;" />
+        </div>
+      </div>
+    </div>
+  `;
 
   modal.classList.add('active');
 }
@@ -647,12 +693,10 @@ async function handleMemberLogin(event) {
     renderDigitalCard();
     updateSessionBar();
 
-    // Smooth scroll to digital card
     const cardEl = document.getElementById('digital-member-card');
     if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (err) {
     console.warn('Error de login API, intentando modo local:', err);
-    // Fallback local lookup
     await syncMemberFromAPI(val);
   } finally {
     if (btn) btn.textContent = 'Ingresar al Portal →';
@@ -807,7 +851,6 @@ async function payMembershipFeeMP() {
     console.warn('API error:', e);
   }
 
-  // Fallback demo
   AppState.memberUser.status = 'ACTIVE';
   saveState();
   renderDigitalCard();
@@ -850,17 +893,95 @@ function initMembershipForm() {
   };
 }
 
-// ---------------- Admin Backoffice Dashboard ----------------
+// ---------------- Admin Backoffice Dashboard & Raffle Editor ----------------
+function setAdminCredentials(user, pass) {
+  const u = document.getElementById('admin-user-input');
+  const p = document.getElementById('admin-pass-input');
+  if (u) u.value = user;
+  if (p) p.value = pass;
+}
+
+async function handleAdminLogin(event) {
+  if (event) event.preventDefault();
+  const u = document.getElementById('admin-user-input')?.value.trim();
+  const p = document.getElementById('admin-pass-input')?.value;
+
+  if (!u || !p) {
+    alert("Por favor ingrese usuario y contraseña.");
+    return;
+  }
+
+  const btn = document.getElementById('btn-admin-submit');
+  if (btn) btn.textContent = 'Autenticando...';
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Credenciales incorrectas.');
+      if (btn) btn.textContent = 'Ingresar al Panel de Control →';
+      return;
+    }
+
+    AppState.adminUser = data.admin;
+    saveState();
+    checkAdminAuthView();
+    await initAdminDashboard();
+  } catch (err) {
+    console.error('Error in admin login:', err);
+    alert('Error al conectar con el servidor.');
+  } finally {
+    if (btn) btn.textContent = 'Ingresar al Panel de Control →';
+  }
+}
+
+function handleAdminLogout() {
+  if (confirm("¿Deseas cerrar la sesión administrativa?")) {
+    AppState.adminUser = null;
+    saveState();
+    checkAdminAuthView();
+  }
+}
+
+function checkAdminAuthView() {
+  const loginScreen = document.getElementById('admin-login-screen');
+  const dashboardView = document.getElementById('admin-dashboard-view');
+  const roleBadge = document.getElementById('admin-role-badge');
+
+  if (!loginScreen || !dashboardView) return;
+
+  if (AppState.adminUser) {
+    loginScreen.style.display = 'none';
+    dashboardView.style.display = 'block';
+    if (roleBadge) {
+      roleBadge.textContent = `Sesión: ${AppState.adminUser.fullName} (${AppState.adminUser.username}) · Rol: ${AppState.adminUser.role}`;
+    }
+  } else {
+    loginScreen.style.display = 'flex';
+    dashboardView.style.display = 'none';
+  }
+}
+
 async function initAdminDashboard() {
   const revenueEl = document.getElementById('kpi-revenue');
   const soldCountEl = document.getElementById('kpi-sold-count');
   const membersEl = document.getElementById('kpi-members');
   const membersStatusEl = document.getElementById('kpi-members-status');
   const pendingReceiptsEl = document.getElementById('kpi-pending-receipts');
+  const drawDateEl = document.getElementById('kpi-draw-date');
+  const drawMethodEl = document.getElementById('kpi-draw-method');
   const receiptsTbody = document.getElementById('admin-receipts-tbody');
   const auditList = document.getElementById('admin-audit-logs');
 
   if (!revenueEl && !receiptsTbody) return;
+
+  checkAdminAuthView();
+  if (!AppState.adminUser) return;
 
   try {
     const summaryRes = await fetch(`${API_BASE}/admin/summary`);
@@ -872,6 +993,30 @@ async function initAdminDashboard() {
       if (membersStatusEl) membersStatusEl.textContent = `● ${summary.members.active} socios activos (${summary.members.overdue} con cuota vencida)`;
       if (pendingReceiptsEl) pendingReceiptsEl.textContent = summary.pendingReceipts;
 
+      if (summary.activeRaffle) {
+        const d = new Date(summary.activeRaffle.draw_date);
+        if (drawDateEl) drawDateEl.textContent = d.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' });
+        if (drawMethodEl) drawMethodEl.textContent = summary.activeRaffle.draw_method || 'Lotería Nacional';
+
+        // Populate Raffle Form
+        const titleInput = document.getElementById('raffle-title-input');
+        const subInput = document.getElementById('raffle-subtitle-input');
+        const dateInput = document.getElementById('raffle-date-input');
+        const priceInput = document.getElementById('raffle-price-input');
+        const statusSelect = document.getElementById('raffle-status-select');
+        const methodInput = document.getElementById('raffle-method-input');
+
+        if (titleInput) titleInput.value = summary.activeRaffle.title || '';
+        if (subInput) subInput.value = summary.activeRaffle.subtitle || '';
+        if (dateInput && summary.activeRaffle.draw_date) {
+          const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+          dateInput.value = localIso;
+        }
+        if (priceInput) priceInput.value = parseFloat(summary.activeRaffle.ticket_price) || 400;
+        if (statusSelect) statusSelect.value = summary.activeRaffle.status || 'ACTIVE';
+        if (methodInput) methodInput.value = summary.activeRaffle.draw_method || '';
+      }
+
       if (auditList && summary.recentAuditLogs) {
         auditList.innerHTML = summary.recentAuditLogs.map(l => `
           <div style="padding:10px 14px; border-bottom:1px solid var(--border-subtle); font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
@@ -879,6 +1024,40 @@ async function initAdminDashboard() {
             <small style="color:var(--text-muted);">${l.ip_address}</small>
           </div>
         `).join('');
+      }
+    }
+
+    // Load Raffles list and Prizes
+    const rafflesRes = await fetch(`${API_BASE}/admin/raffles`);
+    if (rafflesRes.ok) {
+      const { raffles } = await rafflesRes.json();
+      const listEl = document.getElementById('admin-raffles-list');
+      if (listEl && Array.isArray(raffles)) {
+        listEl.innerHTML = raffles.map(r => `
+          <div style="background:rgba(0,0,0,0.3); border:1px solid ${r.status === 'ACTIVE' ? 'var(--border-bronze)' : 'var(--border-subtle)'}; padding:12px; border-radius:var(--radius-md); font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="color:${r.status === 'ACTIVE' ? 'var(--bronze-light)' : 'var(--text-bone)'};">${r.title}</strong>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Sorteo: ${new Date(r.draw_date).toLocaleDateString('es-UY')} · $ ${r.ticket_price} UYU</div>
+            </div>
+            <div>
+              <span class="status-badge-pill ${r.status === 'ACTIVE' ? 'active' : 'pending'}" style="font-size:0.72rem;">${r.status}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const activeRaffle = raffles.find(r => r.status === 'ACTIVE') || raffles[0];
+      if (activeRaffle && Array.isArray(activeRaffle.prizes)) {
+        AppState.adminPrizesDraft = activeRaffle.prizes.map((p, idx) => ({
+          order: p.prize_order || idx + 1,
+          title: p.title || '',
+          description: p.description || '',
+          imageUrl: p.image_url || '',
+          estimatedValue: parseFloat(p.estimated_value || 0),
+          regulated: p.regulated === true,
+          note: p.note || ''
+        }));
+        renderAdminPrizesEditor();
       }
     }
 
@@ -916,6 +1095,233 @@ async function initAdminDashboard() {
     }
   } catch (err) {
     console.warn('Error al cargar datos del panel admin:', err);
+  }
+}
+
+function renderAdminPrizesEditor() {
+  const container = document.getElementById('prizes-editor-container');
+  if (!container) return;
+
+  if (AppState.adminPrizesDraft.length === 0) {
+    AppState.adminPrizesDraft = [
+      { order: 1, title: '1º Premio Principal', description: '', imageUrl: '', estimatedValue: 0, regulated: true, note: 'Requiere THATA' },
+      { order: 2, title: '2º Premio', description: '', imageUrl: '', estimatedValue: 0, regulated: true, note: 'Requiere THATA' },
+      { order: 3, title: '3º Premio', description: '', imageUrl: '', estimatedValue: 0, regulated: false, note: 'Entrega directa' }
+    ];
+  }
+
+  container.innerHTML = AppState.adminPrizesDraft.map((p, idx) => {
+    const previewImg = p.imageUrl || 'assets/logo.png';
+    return `
+      <div class="admin-prize-row" data-index="${idx}">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <span style="font-weight:800; color:var(--bronze-light); font-size:0.9rem;">
+            🏆 PREMIO Nº ${idx + 1}
+          </span>
+          ${idx >= 3 ? `<button type="button" class="btn btn-secondary btn-sm" style="color:#F87171;" onclick="removePrizeRow(${idx})">Eliminar ✕</button>` : ''}
+        </div>
+
+        <div style="display:grid; grid-template-columns: 140px 1fr; gap:18px;">
+          <div>
+            <img src="${previewImg}" id="prize-img-preview-${idx}" class="admin-prize-preview-img" alt="Foto Premio" onerror="this.src='assets/logo.png';" />
+            <label class="btn btn-secondary btn-sm" style="width:100%; margin-top:8px; font-size:0.75rem; cursor:pointer;">
+              📷 Subir Foto
+              <input type="file" accept="image/*" style="display:none;" onchange="handlePrizeImageUpload(event, ${idx})">
+            </label>
+          </div>
+
+          <div>
+            <div class="grid-2" style="margin-bottom:10px;">
+              <div class="form-group">
+                <label class="form-label" style="font-size:0.78rem;">Título del Premio</label>
+                <input type="text" class="form-control prize-input-title" value="${p.title}" oninput="AppState.adminPrizesDraft[${idx}].title = this.value" placeholder="Ej: Rifle Deportivo Savage" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:0.78rem;">Valor Comercial Estimado (USD)</label>
+                <input type="number" class="form-control prize-input-val" value="${p.estimatedValue || 0}" oninput="AppState.adminPrizesDraft[${idx}].estimatedValue = parseFloat(this.value) || 0" placeholder="750">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:10px;">
+              <label class="form-label" style="font-size:0.78rem;">Descripción Técnica y Accesorios</label>
+              <textarea class="form-control prize-input-desc" rows="2" oninput="AppState.adminPrizesDraft[${idx}].description = this.value" placeholder="Calibre, acabados, miras, accesorios incluidos...">${p.description || ''}</textarea>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+              <label style="font-size:0.8rem; color:var(--text-bone); display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" ${p.regulated ? 'checked' : ''} onchange="AppState.adminPrizesDraft[${idx}].regulated = this.checked">
+                Requiere THATA vigente (Arma de Fuego)
+              </label>
+
+              <div style="flex:1; min-width:200px;">
+                <input type="text" class="form-control" style="font-size:0.8rem; padding:6px 10px;" value="${p.note || ''}" oninput="AppState.adminPrizesDraft[${idx}].note = this.value" placeholder="Nota de entrega (ej. Entrega directa en todo el país)">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function handlePrizeImageUpload(event, index) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/upload-prize-image`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Error al subir la imagen.');
+      return;
+    }
+
+    AppState.adminPrizesDraft[index].imageUrl = data.imageUrl;
+    const preview = document.getElementById(`prize-img-preview-${index}`);
+    if (preview) preview.src = data.imageUrl;
+
+    alert(`¡Fotografía subida con éxito para el Premio Nº ${index + 1}!`);
+  } catch (err) {
+    console.error('Error uploading image:', err);
+    alert('Error al conectar con el servidor para subir la imagen.');
+  }
+}
+
+function addNewPrizeRow() {
+  const nextOrder = AppState.adminPrizesDraft.length + 1;
+  AppState.adminPrizesDraft.push({
+    order: nextOrder,
+    title: `Premio Especial Nº ${nextOrder}`,
+    description: '',
+    imageUrl: '',
+    estimatedValue: 100,
+    regulated: false,
+    note: 'Entrega directa'
+  });
+  renderAdminPrizesEditor();
+}
+
+function removePrizeRow(index) {
+  if (confirm(`¿Deseas eliminar el Premio Nº ${index + 1}?`)) {
+    AppState.adminPrizesDraft.splice(index, 1);
+    renderAdminPrizesEditor();
+  }
+}
+
+async function saveRaffleConfig(event) {
+  if (event) event.preventDefault();
+
+  const title = document.getElementById('raffle-title-input')?.value.trim();
+  const subtitle = document.getElementById('raffle-subtitle-input')?.value.trim();
+  const dateVal = document.getElementById('raffle-date-input')?.value;
+  const priceVal = parseFloat(document.getElementById('raffle-price-input')?.value) || 400;
+  const status = document.getElementById('raffle-status-select')?.value || 'ACTIVE';
+  const method = document.getElementById('raffle-method-input')?.value.trim() || 'Quiniela Nocturna de la Lotería Nacional';
+
+  if (!title || !dateVal) {
+    alert("Por favor complete los campos obligatorios del sorteo.");
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-raffle');
+  if (btn) btn.textContent = 'Guardando en PostgreSQL...';
+
+  try {
+    // 1. Guardar Rifa
+    const raffleRes = await fetch(`${API_BASE}/admin/raffles/1`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        subtitle,
+        drawDate: new Date(dateVal).toISOString(),
+        drawMethod: method,
+        ticketPrice: priceVal,
+        status
+      })
+    });
+
+    if (!raffleRes.ok) throw new Error('Error al actualizar cabecera de la rifa.');
+
+    // 2. Guardar Premios
+    const prizesRes = await fetch(`${API_BASE}/admin/raffles/1/prizes`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prizes: AppState.adminPrizesDraft })
+    });
+
+    if (!prizesRes.ok) throw new Error('Error al actualizar los premios.');
+
+    alert("🎉 ¡Campaña de Rifa, Premios y Fotografías guardados con éxito en PostgreSQL y publicados en vivo!");
+    await initAdminDashboard();
+    await syncRaffleFromAPI();
+  } catch (err) {
+    console.error('Error saving raffle config:', err);
+    alert('Error al guardar los cambios: ' + err.message);
+  } finally {
+    if (btn) btn.textContent = '💾 Guardar y Publicar en Vivo →';
+  }
+}
+
+function openNewRaffleModal() {
+  const modal = document.getElementById('new-raffle-modal');
+  if (modal) modal.classList.add('active');
+}
+
+async function handleCreateNewRaffle(event) {
+  if (event) event.preventDefault();
+
+  const title = document.getElementById('new-raffle-title')?.value.trim();
+  const subtitle = document.getElementById('new-raffle-subtitle')?.value.trim();
+  const drawDate = document.getElementById('new-raffle-date')?.value;
+  const ticketPrice = parseFloat(document.getElementById('new-raffle-price')?.value) || 400;
+  const drawMethod = document.getElementById('new-raffle-method')?.value.trim();
+
+  if (!title || !drawDate || !drawMethod) {
+    alert("Complete todos los campos del nuevo sorteo.");
+    return;
+  }
+
+  const btn = document.getElementById('btn-create-raffle-submit');
+  if (btn) btn.textContent = 'Creando sorteo...';
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/raffles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        subtitle,
+        drawDate: new Date(drawDate).toISOString(),
+        drawMethod,
+        ticketPrice,
+        totalNumbers: 1000,
+        status: 'ACTIVE'
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Error al crear la nueva rifa.');
+      return;
+    }
+
+    alert(`🎉 ${data.message}`);
+    closeModal('new-raffle-modal');
+    await initAdminDashboard();
+    await syncRaffleFromAPI();
+  } catch (err) {
+    console.error('Error creating raffle:', err);
+    alert('Error al conectar con el servidor.');
+  } finally {
+    if (btn) btn.textContent = 'Crear y Generar 1.000 Números →';
   }
 }
 
@@ -971,3 +1377,31 @@ function initNormativaFilters() {
     });
   });
 }
+
+// ---------------- Initialization on DOM Ready ----------------
+document.addEventListener('DOMContentLoaded', async () => {
+  initMobileNavigation();
+  initModalListeners();
+  initNormativaFilters();
+  initMembershipForm();
+
+  // Load active raffle & numbers
+  await syncRaffleFromAPI();
+  initRaffleGrid();
+  renderNumbersGrid(currentHundred);
+  updateCheckoutTray();
+
+  // Search input listener
+  const searchInput = document.getElementById('raffle-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchRaffleNumber();
+    });
+  }
+
+  // Load Member Digital Card
+  renderDigitalCard();
+
+  // Load Admin Dashboard if on admin.html
+  await initAdminDashboard();
+});

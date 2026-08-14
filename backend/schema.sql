@@ -3,6 +3,17 @@
 -- Asociación Nacional de Cazadores del Uruguay
 -- ==========================================================
 
+-- 0. Tabla de Administradores del Sistema
+CREATE TABLE IF NOT EXISTS admin_users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'ADMIN', -- 'SUPERADMIN', 'ADMIN', 'TREASURY'
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 1. Tabla de Rifas
 CREATE TABLE IF NOT EXISTS raffles (
     id SERIAL PRIMARY KEY,
@@ -12,9 +23,21 @@ CREATE TABLE IF NOT EXISTS raffles (
     draw_method VARCHAR(255) NOT NULL,
     ticket_price NUMERIC(10,2) NOT NULL DEFAULT 400.00,
     total_numbers INTEGER NOT NULL DEFAULT 1000,
-    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, PAUSED, FINISHED
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE', -- 'ACTIVE', 'DRAFT', 'CLOSED', 'FINISHED'
+    banner_image_url TEXT,
+    winning_number_1 VARCHAR(10),
+    winning_number_2 VARCHAR(10),
+    winning_number_3 VARCHAR(10),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Campos adicionales asegurados en raffles
+ALTER TABLE raffles ADD COLUMN IF NOT EXISTS banner_image_url TEXT;
+ALTER TABLE raffles ADD COLUMN IF NOT EXISTS winning_number_1 VARCHAR(10);
+ALTER TABLE raffles ADD COLUMN IF NOT EXISTS winning_number_2 VARCHAR(10);
+ALTER TABLE raffles ADD COLUMN IF NOT EXISTS winning_number_3 VARCHAR(10);
+ALTER TABLE raffles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
 -- 2. Premios de Rifa
 CREATE TABLE IF NOT EXISTS raffle_prizes (
@@ -22,9 +45,17 @@ CREATE TABLE IF NOT EXISTS raffle_prizes (
     raffle_id INTEGER REFERENCES raffles(id) ON DELETE CASCADE,
     prize_order INTEGER NOT NULL,
     title VARCHAR(255) NOT NULL,
+    description TEXT,
+    image_url TEXT,
+    estimated_value NUMERIC(10,2) DEFAULT 0.00,
     regulated BOOLEAN NOT NULL DEFAULT FALSE,
     note TEXT
 );
+
+-- Campos adicionales asegurados en raffle_prizes
+ALTER TABLE raffle_prizes ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE raffle_prizes ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE raffle_prizes ADD COLUMN IF NOT EXISTS estimated_value NUMERIC(10,2) DEFAULT 0.00;
 
 -- 3. Números y Boletos de la Rifa
 CREATE TABLE IF NOT EXISTS raffle_tickets (
