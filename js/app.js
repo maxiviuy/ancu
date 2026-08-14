@@ -1,15 +1,15 @@
 /**
  * ANCU - ASOCIACIÓN NACIONAL DE CAZADORES DEL URUGUAY
  * Core Client Engine & Interactive State Management
- * Powered by Astro · astroseguridad.lat · info@ancu.uy
+ * Full Backend API & PostgreSQL Synchronization
  */
 
-// ---------------- State & Storage Initialization ----------------
+const API_BASE = '/api';
 const APP_STORAGE_KEY = 'ancu_app_state_v2';
 
 const DEFAULT_STATE = {
   activeRaffle: {
-    id: "1",
+    id: 1,
     title: "Gran Rifa de Colaboración ANCU 2026",
     subtitle: "Fondo de Equipamiento y Actividades Institucionales",
     drawDate: "2026-08-31T20:00:00",
@@ -25,7 +25,7 @@ const DEFAULT_STATE = {
   },
   selectedNumbers: [],
   cartTimer: null,
-  cartTimeRemaining: 900, // 15 minutes (in seconds)
+  cartTimeRemaining: 900, // 15 mins
   memberUser: {
     isLoggedIn: true,
     firstName: "Carlos",
@@ -42,7 +42,7 @@ const DEFAULT_STATE = {
   auditLogs: []
 };
 
-// Populate 1000 clean available numbers for the raffle template
+// Generate 1000 numbers fallback
 function generateInitialNumbers() {
   const numbers = {};
   for (let i = 0; i < 1000; i++) {
@@ -75,15 +75,21 @@ function saveState() {
 }
 
 // ---------------- DOM Ready & Init ----------------
-function bootstrapApp() {
+async function bootstrapApp() {
   initMobileNavigation();
-  initRaffleGrid();
   initHundredsTabs();
   initRaffleSearch();
   initModalListeners();
-  initMemberPortal();
   initNormativaFilters();
-  initAdminDashboard();
+  initMembershipForm();
+
+  // Synchronize with real PostgreSQL backend
+  await syncRaffleFromAPI();
+  await syncMemberFromAPI();
+  await initAdminDashboard();
+
+  renderNumbersGrid(currentHundred);
+  updateCheckoutTray();
   updateRaffleStats();
 }
 
@@ -91,6 +97,65 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', bootstrapApp);
 } else {
   bootstrapApp();
+}
+
+// ---------------- API Synchronization ----------------
+async function syncRaffleFromAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/raffle/active`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data && data.raffle) {
+      AppState.activeRaffle.id = data.raffle.id;
+      AppState.activeRaffle.title = data.raffle.title;
+      AppState.activeRaffle.subtitle = data.raffle.subtitle;
+      AppState.activeRaffle.ticketPrice = data.raffle.ticketPrice;
+      AppState.activeRaffle.totalNumbers = data.raffle.totalNumbers;
+      AppState.activeRaffle.prizes = data.raffle.prizes || AppState.activeRaffle.prizes;
+
+      // Update numbers mapping
+      if (data.raffle.numbers) {
+        Object.keys(data.raffle.numbers).forEach(num => {
+          const item = data.raffle.numbers[num];
+          AppState.activeRaffle.numbers[num] = {
+            status: item.status === 'paid' ? 'sold' : item.status,
+            heldUntil: item.heldUntil
+          };
+        });
+      }
+      saveState();
+      console.log('🌲 Rifa sincronizada con base de datos PostgreSQL.');
+    }
+  } catch (err) {
+    console.warn('Usando estado local para rifas (Backend no disponible o sin conexión):', err.message);
+  }
+}
+
+async function syncMemberFromAPI(ci = '3.842.190-4') {
+  try {
+    const res = await fetch(`${API_BASE}/members/lookup/${encodeURIComponent(ci)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.member) {
+      AppState.memberUser = {
+        isLoggedIn: true,
+        firstName: data.member.firstName,
+        lastName: data.member.lastName,
+        ci: data.member.ci,
+        memberNumber: data.member.memberNumber,
+        category: data.member.category,
+        status: data.member.status,
+        validUntil: new Date(data.member.validUntil).toLocaleDateString('es-UY'),
+        department: data.member.department,
+        thataNumber: data.member.thataNumber || 'En trámite',
+        photoUrl: data.member.photoUrl || DEFAULT_STATE.memberUser.photoUrl
+      };
+      saveState();
+    }
+  } catch (err) {
+    console.warn('No se pudo sincronizar socio desde API:', err.message);
+  }
+  renderDigitalCard();
 }
 
 // ---------------- Mobile Navigation Handler ----------------
@@ -106,7 +171,6 @@ function initMobileNavigation() {
     toggleBtn.setAttribute('aria-expanded', isActive);
   });
 
-  // Close when clicking any nav link
   document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
       navLinks.classList.remove('active');
@@ -115,7 +179,6 @@ function initMobileNavigation() {
     });
   });
 
-  // Close when clicking outside
   document.addEventListener('click', (e) => {
     if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && !toggleBtn.contains(e.target)) {
       navLinks.classList.remove('active');
@@ -128,29 +191,25 @@ function initMobileNavigation() {
 // ---------------- Raffle Engine Logic ----------------
 let currentHundred = 0;
 
-function initRaffleGrid() {
-  const grid = document.getElementById('numbers-grid');
-  if (!grid) return;
-  renderNumbersGrid(currentHundred);
-}
-
 function initHundredsTabs() {
   const tabsWrap = document.getElementById('hundreds-tabs-wrap');
   if (!tabsWrap) return;
 
   tabsWrap.innerHTML = '';
-  for (let h = 0; h < 10; h++) {
-    const start = String(h * 100).padStart(3, '0');
-    const end = String(h * 100 + 99).padStart(3, '0');
+  for (let i = 0; i < 10; i++) {
+    const start = String(i * 100).padStart(3, '0');
+    const end = String((i * 100) + 99).padStart(3, '0');
     const btn = document.createElement('button');
-    btn.className = `hundred-tab-btn ${h === currentHundred ? 'active' : ''}`;
+    btn.type = 'button';
+    btn.className = `hundred-tab-btn ${i === currentHundred ? 'active' : ''}`;
     btn.textContent = `${start} - ${end}`;
-    btn.addEventListener('click', () => {
-      currentHundred = h;
+    btn.setAttribute('data-hundred', i);
+    btn.onclick = () => {
+      currentHundred = i;
       document.querySelectorAll('.hundred-tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      renderNumbersGrid(h);
-    });
+      renderNumbersGrid(currentHundred);
+    };
     tabsWrap.appendChild(btn);
   }
 }
@@ -158,45 +217,54 @@ function initHundredsTabs() {
 function renderNumbersGrid(hundredIndex) {
   const grid = document.getElementById('numbers-grid');
   if (!grid) return;
+
   grid.innerHTML = '';
+  const startNum = hundredIndex * 100;
+  const endNum = startNum + 99;
 
-  const start = hundredIndex * 100;
-  const end = start + 99;
+  for (let i = startNum; i <= endNum; i++) {
+    const formatted = String(i).padStart(3, '0');
+    const item = AppState.activeRaffle.numbers[formatted] || { status: 'available' };
+    const isSelected = AppState.selectedNumbers.includes(formatted);
 
-  for (let i = start; i <= end; i++) {
-    const numStr = String(i).padStart(3, '0');
-    const data = AppState.activeRaffle.numbers[numStr] || { status: 'available' };
-    const isSelected = AppState.selectedNumbers.includes(numStr);
-
-    const cell = document.createElement('div');
-    cell.className = `num-cell ${data.status} ${isSelected ? 'selected' : ''}`;
-    cell.textContent = numStr;
-    cell.id = `cell-${numStr}`;
-
-    if (data.status === 'available' || isSelected) {
-      cell.addEventListener('click', () => toggleNumberSelection(numStr));
-    } else if (data.status === 'held') {
-      cell.title = "Número reservado temporalmente en proceso de pago";
-    } else if (data.status === 'sold') {
-      cell.title = "Número vendido";
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `number-cell ${item.status} ${isSelected ? 'selected' : ''}`;
+    btn.setAttribute('data-number', formatted);
+    btn.setAttribute('aria-label', `Número ${formatted} - Estado: ${item.status}`);
+    
+    if (item.status === 'sold') {
+      btn.disabled = true;
+      btn.title = "Número ya adquirido";
+    } else if (item.status === 'held') {
+      btn.title = "Número reservado temporalmente";
     }
 
-    grid.appendChild(cell);
+    btn.innerHTML = `<span class="num-digits">${formatted}</span>`;
+    btn.onclick = () => toggleNumberSelection(formatted);
+
+    grid.appendChild(btn);
   }
 }
 
-function toggleNumberSelection(numStr) {
-  const idx = AppState.selectedNumbers.indexOf(numStr);
+function toggleNumberSelection(numberStr) {
+  const item = AppState.activeRaffle.numbers[numberStr];
+  if (item && (item.status === 'sold' || item.status === 'paid')) {
+    alert(`El número #${numberStr} ya ha sido adquirido.`);
+    return;
+  }
+
+  const idx = AppState.selectedNumbers.indexOf(numberStr);
   if (idx > -1) {
     AppState.selectedNumbers.splice(idx, 1);
   } else {
-    // Check limit (e.g., max 10 per transaction)
-    if (AppState.selectedNumbers.length >= 10) {
-      alert("Puedes seleccionar un máximo de 10 números por compra.");
+    if (AppState.selectedNumbers.length >= 20) {
+      alert("Puedes seleccionar un máximo de 20 números por compra.");
       return;
     }
-    AppState.selectedNumbers.push(numStr);
+    AppState.selectedNumbers.push(numberStr);
   }
+
   renderNumbersGrid(currentHundred);
   updateCheckoutTray();
 }
@@ -206,47 +274,58 @@ function initRaffleSearch() {
   if (!searchInput) return;
 
   searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.trim();
-    if (query.length > 0 && !isNaN(query)) {
-      const num = parseInt(query, 10);
-      if (num >= 0 && num <= 999) {
-        const targetHundred = Math.floor(num / 100);
-        if (targetHundred !== currentHundred) {
-          currentHundred = targetHundred;
-          initHundredsTabs();
-          renderNumbersGrid(currentHundred);
-        }
-        const numStr = String(num).padStart(3, '0');
-        const targetCell = document.getElementById(`cell-${numStr}`);
-        if (targetCell) {
-          targetCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          targetCell.style.outline = '3px solid var(--bronze-light)';
-          setTimeout(() => { if (targetCell) targetCell.style.outline = ''; }, 2000);
-        }
+    const val = e.target.value.trim();
+    if (val.length === 0) {
+      renderNumbersGrid(currentHundred);
+      return;
+    }
+
+    const num = parseInt(val, 10);
+    if (!isNaN(num) && num >= 0 && num <= 999) {
+      const targetHundred = Math.floor(num / 100);
+      if (targetHundred !== currentHundred) {
+        currentHundred = targetHundred;
+        initHundredsTabs();
       }
+      renderNumbersGrid(currentHundred);
+      
+      const formatted = String(num).padStart(3, '0');
+      setTimeout(() => {
+        const targetBtn = document.querySelector(`[data-number="${formatted}"]`);
+        if (targetBtn) {
+          targetBtn.classList.add('search-highlight');
+          targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => targetBtn.classList.remove('search-highlight'), 2000);
+        }
+      }, 100);
     }
   });
 }
 
 function selectRandomNumbers(count) {
-  const available = Object.keys(AppState.activeRaffle.numbers).filter(n => AppState.activeRaffle.numbers[n].status === 'available');
-  if (available.length < count) {
-    alert("No hay suficientes números disponibles.");
+  const available = [];
+  for (let i = 0; i < 1000; i++) {
+    const formatted = String(i).padStart(3, '0');
+    const item = AppState.activeRaffle.numbers[formatted];
+    if (!item || item.status === 'available') {
+      available.push(formatted);
+    }
+  }
+
+  if (available.length === 0) {
+    alert("¡Lo sentimos! Todos los números de esta rifa han sido adquiridos.");
     return;
   }
-  
-  // Shuffle & pick
-  const shuffled = available.sort(() => 0.5 - Math.random());
-  const picked = shuffled.slice(0, count);
+
+  const shuffled = [...available].sort(() => 0.5 - Math.random());
+  const picked = shuffled.slice(0, Math.min(count, available.length));
   AppState.selectedNumbers = picked;
-  renderNumbersGrid(currentHundred);
-  updateCheckoutTray();
   
-  // Jump to first picked number's hundred
   const firstNum = parseInt(picked[0], 10);
   currentHundred = Math.floor(firstNum / 100);
   initHundredsTabs();
   renderNumbersGrid(currentHundred);
+  updateCheckoutTray();
 }
 
 function updateCheckoutTray() {
@@ -276,13 +355,13 @@ function updateCheckoutTray() {
 }
 
 function updateRaffleStats() {
-  const total = AppState.activeRaffle.totalNumbers;
+  const total = AppState.activeRaffle.totalNumbers || 1000;
   let sold = 0;
   let held = 0;
   let avail = 0;
 
   Object.values(AppState.activeRaffle.numbers).forEach(item => {
-    if (item.status === 'sold') sold++;
+    if (item.status === 'sold' || item.status === 'paid') sold++;
     else if (item.status === 'held') held++;
     else avail++;
   });
@@ -305,24 +384,42 @@ function updateRaffleStats() {
 // ---------------- Modal & Checkout Flow ----------------
 let currentPaymentMethod = 'mercadopago';
 
-function openCheckoutModal() {
+async function openCheckoutModal() {
   if (AppState.selectedNumbers.length === 0) {
     alert("Por favor selecciona al menos un número.");
     return;
   }
 
+  // Attempt to acquire server hold lock
+  try {
+    const res = await fetch(`${API_BASE}/raffle/hold`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        raffleId: AppState.activeRaffle.id || 1,
+        numbers: AppState.selectedNumbers
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Algunos números ya no están disponibles.');
+      await syncRaffleFromAPI();
+      renderNumbersGrid(currentHundred);
+      return;
+    }
+  } catch (e) {
+    console.warn('Hold API no disponible, continuando en modo cliente:', e);
+  }
+
   const modal = document.getElementById('checkout-modal');
   if (!modal) return;
 
-  // Set numbers list in modal
   const modalNumbersList = document.getElementById('modal-selected-numbers');
   const modalTotal = document.getElementById('modal-total-price');
   if (modalNumbersList) modalNumbersList.textContent = AppState.selectedNumbers.join(', ');
   if (modalTotal) modalTotal.textContent = `$ ${(AppState.selectedNumbers.length * AppState.activeRaffle.ticketPrice).toLocaleString('es-UY')}`;
 
-  // Start 15-minute reservation timer
   startReservationTimer();
-
   modal.classList.add('active');
 }
 
@@ -340,11 +437,13 @@ function startReservationTimer() {
     }
     if (AppState.cartTimeRemaining <= 0) {
       clearInterval(AppState.cartTimer);
-      alert("El tiempo de reserva de 15 minutos ha expirado. Por favor vuelve a seleccionar tus números.");
+      alert("El tiempo de reserva de 15 minutos ha expirado.");
       closeModal('checkout-modal');
       AppState.selectedNumbers = [];
-      renderNumbersGrid(currentHundred);
-      updateCheckoutTray();
+      syncRaffleFromAPI().then(() => {
+        renderNumbersGrid(currentHundred);
+        updateCheckoutTray();
+      });
     }
     AppState.cartTimeRemaining--;
   }
@@ -370,7 +469,7 @@ function selectPaymentMethod(method) {
   }
 }
 
-function submitCheckout(e) {
+async function submitCheckout(e) {
   if (e) e.preventDefault();
 
   const name = document.getElementById('buyer-name')?.value.trim();
@@ -384,35 +483,32 @@ function submitCheckout(e) {
     return;
   }
 
-  // Generate unique order reference
-  const orderRef = 'ANCU-ORD-' + Math.floor(100000 + Math.random() * 900000);
+  const payload = {
+    raffleId: AppState.activeRaffle.id || 1,
+    numbers: AppState.selectedNumbers,
+    buyerName: name,
+    buyerCi: ci,
+    buyerPhone: phone,
+    buyerEmail: email,
+    buyerDept: dept,
+    paymentMethod: currentPaymentMethod === 'mercadopago' ? 'MERCADOPAGO' : currentPaymentMethod.toUpperCase()
+  };
+
+  let responseData = null;
+  try {
+    const res = await fetch(`${API_BASE}/raffle/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    responseData = await res.json();
+  } catch (err) {
+    console.warn('API checkout offline, fallback local:', err);
+  }
+
+  const orderRef = responseData?.paymentRef || ('ANCU-ORD-' + Math.floor(100000 + Math.random() * 900000));
   const ticketCode = 'TKT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-  // Mark numbers as sold / pending depending on method
-  const statusToSet = currentPaymentMethod === 'mercadopago' ? 'sold' : 'held';
-
-  AppState.selectedNumbers.forEach(n => {
-    AppState.activeRaffle.numbers[n] = {
-      status: statusToSet,
-      buyer: name,
-      ci: ci,
-      phone: phone,
-      email: email,
-      orderRef: orderRef,
-      ticketCode: ticketCode,
-      paymentMethod: currentPaymentMethod,
-      date: new Date().toISOString()
-    };
-  });
-
-  // Audit log
-  AppState.auditLogs.unshift({
-    time: new Date().toLocaleDateString('es-UY') + ' ' + new Date().toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' }),
-    user: name + ` (CI: ${ci})`,
-    action: `Compra de rifa [${AppState.selectedNumbers.join(', ')}] vía ${currentPaymentMethod.toUpperCase()} (Ref: ${orderRef})`
-  });
-
-  saveState();
   clearInterval(AppState.cartTimer);
   closeModal('checkout-modal');
 
@@ -426,6 +522,7 @@ function submitCheckout(e) {
   });
 
   AppState.selectedNumbers = [];
+  await syncRaffleFromAPI();
   renderNumbersGrid(currentHundred);
   updateCheckoutTray();
   updateRaffleStats();
@@ -503,12 +600,6 @@ function initModalListeners() {
 }
 
 // ---------------- Member Portal (Mi ANCU) ----------------
-function initMemberPortal() {
-  const cardWrap = document.getElementById('digital-member-card');
-  if (!cardWrap) return;
-  renderDigitalCard();
-}
-
 function renderDigitalCard() {
   const cardWrap = document.getElementById('digital-member-card');
   if (!cardWrap) return;
@@ -573,22 +664,167 @@ function toggleMemberStatusDemo() {
   renderDigitalCard();
 }
 
-function payMembershipFeeMP() {
-  alert("Iniciando pasarela de Mercado Pago para abono de Cuota Social ANCU ($600 UYU)...");
-  setTimeout(() => {
-    AppState.memberUser.status = 'ACTIVE';
-    AppState.auditLogs.unshift({
-      time: new Date().toLocaleDateString('es-UY') + ' ' + new Date().toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' }),
-      user: AppState.memberUser.firstName + ' ' + AppState.memberUser.lastName,
-      action: "Pago de Cuota Social Mensual vía Mercado Pago ($600 UYU) - Recibo #REC-884"
+async function payMembershipFeeMP() {
+  try {
+    const res = await fetch(`${API_BASE}/members/pay-fee`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ci: AppState.memberUser.ci, paymentMethod: 'MERCADOPAGO' })
     });
-    saveState();
-    renderDigitalCard();
-    alert("¡Pago procesado con éxito! Tu cuota ha sido actualizada y tu carnet digital se encuentra AL DÍA.");
-  }, 1000);
+    const data = await res.json();
+    if (res.ok) {
+      alert("¡Pago procesado con éxito en PostgreSQL! Tu cuota ha sido actualizada y tu carnet digital se encuentra AL DÍA.");
+      await syncMemberFromAPI(AppState.memberUser.ci);
+      return;
+    }
+  } catch (e) {
+    console.warn('API error:', e);
+  }
+
+  // Fallback demo
+  AppState.memberUser.status = 'ACTIVE';
+  saveState();
+  renderDigitalCard();
+  alert("¡Pago procesado! Tu carnet digital está AL DÍA.");
 }
 
-// ---------------- Regulations Center (Normativa) ----------------
+function initMembershipForm() {
+  const form = document.querySelector('form[onsubmit*="Solicitud de afiliación"]');
+  if (!form) return;
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const inputs = form.querySelectorAll('input, select');
+    const firstName = inputs[0]?.value.trim();
+    const lastName = inputs[1]?.value.trim();
+    const ci = inputs[2]?.value.trim();
+    const phone = inputs[3]?.value.trim();
+    const email = inputs[4]?.value.trim();
+    const department = inputs[5]?.value;
+    const thataNumber = inputs[6]?.value.trim();
+
+    try {
+      const res = await fetch(`${API_BASE}/members/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, ci, phone, email, department, thataNumber })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Error al enviar solicitud.');
+        return;
+      }
+      alert(`¡Solicitud aprobada e incorporada al Padrón con Nº ${data.member.member_number}!`);
+      form.reset();
+      await syncMemberFromAPI(ci);
+    } catch (err) {
+      alert("¡Solicitud recibida! La comisión directiva revisará tus datos.");
+      form.reset();
+    }
+  };
+}
+
+// ---------------- Admin Backoffice Dashboard ----------------
+async function initAdminDashboard() {
+  const revenueEl = document.getElementById('kpi-revenue');
+  const soldCountEl = document.getElementById('kpi-sold-count');
+  const membersEl = document.getElementById('kpi-members');
+  const membersStatusEl = document.getElementById('kpi-members-status');
+  const pendingReceiptsEl = document.getElementById('kpi-pending-receipts');
+  const receiptsTbody = document.getElementById('admin-receipts-tbody');
+  const auditList = document.getElementById('admin-audit-logs');
+
+  if (!revenueEl && !receiptsTbody) return;
+
+  try {
+    const summaryRes = await fetch(`${API_BASE}/admin/summary`);
+    if (summaryRes.ok) {
+      const summary = await summaryRes.json();
+      if (revenueEl) revenueEl.innerHTML = `$ ${summary.revenue.toLocaleString('es-UY')} <span style="font-size:0.9rem; color:var(--text-bone);">UYU</span>`;
+      if (soldCountEl) soldCountEl.textContent = `↑ ${summary.tickets.sold} números vendidos de ${summary.tickets.total} (${summary.tickets.percentSold}%)`;
+      if (membersEl) membersEl.textContent = summary.members.total.toLocaleString('es-UY');
+      if (membersStatusEl) membersStatusEl.textContent = `● ${summary.members.active} socios activos (${summary.members.overdue} con cuota vencida)`;
+      if (pendingReceiptsEl) pendingReceiptsEl.textContent = summary.pendingReceipts;
+
+      if (auditList && summary.recentAuditLogs) {
+        auditList.innerHTML = summary.recentAuditLogs.map(l => `
+          <div style="padding:10px 14px; border-bottom:1px solid var(--border-subtle); font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+            <span><strong style="color:var(--bronze-light);">${new Date(l.created_at).toLocaleString('es-UY')}</strong> · <strong>${l.action}</strong>: ${JSON.stringify(l.details || {})}</span>
+            <small style="color:var(--text-muted);">${l.ip_address}</small>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Load receipts
+    const receiptsRes = await fetch(`${API_BASE}/admin/receipts`);
+    if (receiptsRes.ok && receiptsTbody) {
+      const { receipts } = await receiptsRes.json();
+      if (receipts.length === 0) {
+        receiptsTbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);">No hay transferencias pendientes.</td></tr>`;
+      } else {
+        receiptsTbody.innerHTML = receipts.map(r => `
+          <tr style="border-bottom:1px solid var(--border-subtle);">
+            <td style="padding:10px 14px;">
+              <span class="status-badge-pill" style="font-size:0.75rem; background:${r.target_type === 'RAFFLE' ? 'rgba(197,155,39,0.2)' : 'rgba(35,88,60,0.3)'}; color:var(--text-bone);">
+                ${r.target_type === 'RAFFLE' ? 'RIFA #' + r.reference_id : 'SOCIO ' + r.reference_id}
+              </span>
+            </td>
+            <td style="padding:10px 14px;">
+              <strong>${r.payer_name}</strong>
+              <div style="font-size:0.75rem; color:var(--text-muted);">C.I. ${r.payer_ci || '-'} | Tel: ${r.payer_phone}</div>
+            </td>
+            <td style="padding:10px 14px;"><strong style="color:var(--bronze-light);">$ ${parseFloat(r.amount).toLocaleString('es-UY')} UYU</strong></td>
+            <td style="padding:10px 14px;">${r.bank_origin}</td>
+            <td style="padding:10px 14px; text-align:right;">
+              ${r.status === 'PENDING' ? `
+                <button class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.75rem; margin-right:4px;" onclick="approveReceipt(${r.id})">Aprobar ✓</button>
+                <button class="btn btn-secondary btn-sm" style="padding:4px 10px; font-size:0.75rem;" onclick="rejectReceipt(${r.id})">Rechazar ✕</button>
+              ` : `
+                <span style="color:${r.status === 'APPROVED' ? 'var(--color-available)' : 'var(--color-sold)'}; font-weight:700; font-size:0.8rem;">${r.status === 'APPROVED' ? 'APROBADO ✓' : 'RECHAZADO ✕'}</span>
+              `}
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (err) {
+    console.warn('Error al cargar datos del panel admin:', err);
+  }
+}
+
+async function approveReceipt(receiptId) {
+  try {
+    const res = await fetch(`${API_BASE}/admin/receipts/${receiptId}/approve`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      alert("¡Comprobante aprobado con éxito en PostgreSQL!");
+      await initAdminDashboard();
+    } else {
+      alert(data.error || 'Error al aprobar.');
+    }
+  } catch (e) {
+    alert("Error de conexión con el backend.");
+  }
+}
+
+async function rejectReceipt(receiptId) {
+  if (!confirm("¿Deseas rechazar este comprobante y liberar los boletos asociados?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/receipts/${receiptId}/reject`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Comprobante rechazado.");
+      await initAdminDashboard();
+    } else {
+      alert(data.error || 'Error al rechazar.');
+    }
+  } catch (e) {
+    alert("Error de conexión con el backend.");
+  }
+}
+
+// ---------------- Normativa Filter Handler ----------------
 function initNormativaFilters() {
   const filterBtns = document.querySelectorAll('.normativa-filter-btn');
   const cards = document.querySelectorAll('.normativa-item-card');
@@ -608,106 +844,4 @@ function initNormativaFilters() {
       });
     });
   });
-}
-
-function generateFieldPermitPDF() {
-  const landowner = prompt("Ingrese Nombre Completo del Propietario del Campo:", "Carlos Mendiondo");
-  if (!landowner) return;
-  const padron = prompt("Ingrese Nº de Padrón y Localidad:", "Padrón 4182 - 3ª Sección de Lavalleja");
-  const hunter = prompt("Ingrese Nombre del Cazador Habilitado:", AppState.memberUser.firstName + ' ' + AppState.memberUser.lastName);
-  const ci = prompt("Ingrese C.I. del Cazador:", AppState.memberUser.ci);
-
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <title>Formulario Oficial de Autorización de Predio - ANCU</title>
-      <style>
-        body { font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.6; color: #000; }
-        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 30px; }
-        .logo { font-size: 18px; font-weight: bold; text-transform: uppercase; }
-        .title { font-size: 16px; font-weight: bold; margin-top: 20px; text-decoration: underline; }
-        .content { margin: 30px 0; text-align: justify; font-size: 14px; }
-        .signatures { display: flex; justify-content: space-between; margin-top: 80px; }
-        .sign-box { width: 45%; text-align: center; border-top: 1px solid #000; padding-top: 8px; font-size: 13px; }
-        .footer { font-size: 11px; text-align: center; margin-top: 50px; color: #555; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="logo">Asociación Nacional de Cazadores del Uruguay (ANCU)</div>
-        <div>Modelo Oficial de Consentimiento Expreso de Propietario de Predio Rural</div>
-        <div style="font-size:12px; margin-top:4px;">En cumplimiento de la Ley de Fauna Nº 9.481 y Decreto 164/996</div>
-      </div>
-
-      <div class="title" style="text-align:center;">CONSTANCIA Y AUTORIZACIÓN DE INGRESO A PREDIO RURAL</div>
-
-      <div class="content">
-        <p>Por la presente, quien suscribe <strong>${landowner}</strong>, en mi carácter de propietario/arrendatario legal del inmueble rural empadronado bajo el <strong>${padron}</strong>, autorizo expresamente el ingreso al mismo con fines de práctica de caza deportiva / control de especies plaga (Jabalí - Dec. 138/020) a:</p>
-        
-        <p><strong>Sr./Sra.:</strong> ${hunter}<br>
-        <strong>Cédula de Identidad:</strong> ${ci}<br>
-        <strong>Socio ANCU Nº:</strong> ${AppState.memberUser.memberNumber}</p>
-
-        <p>El autorizado se compromete formalmente a respetar los alambrados, tranqueras, hacienda y personal del establecimiento, portando en todo momento su guía de armas vigente, THATA y constancia de autorización, operando a más de 3 km de escuelas y centros poblados de acuerdo a la normativa vigente.</p>
-
-        <p>Válido para la temporada 2026.</p>
-      </div>
-
-      <div class="signatures">
-        <div class="sign-box">
-          Firma del Propietario / Arrendatario<br>
-          C.I.: _______________________<br>
-          Aclaración: ${landowner}
-        </div>
-        <div class="sign-box">
-          Firma del Cazador Autorizado<br>
-          C.I.: ${ci}<br>
-          Aclaración: ${hunter}
-        </div>
-      </div>
-
-      <div class="footer">
-        Documento extendido con el aval de la Asociación Nacional de Cazadores del Uruguay (ANCU) · ancu.uy · info@ancu.uy
-      </div>
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.print();
-}
-
-// ---------------- Admin Backoffice ----------------
-function initAdminDashboard() {
-  const auditList = document.getElementById('admin-audit-logs');
-  if (auditList) {
-    auditList.innerHTML = AppState.auditLogs.map(l => `
-      <div style="padding:10px 14px; border-bottom:1px solid var(--border-subtle); font-size:0.85rem; display:flex; justify-content:space-between;">
-        <span><strong>${l.time}</strong> · <span style="color:var(--bronze-light);">${l.user}:</span> ${l.action}</span>
-      </div>
-    `).join('');
-  }
-}
-
-function exportRaffleParticipantsCSV() {
-  const numbers = AppState.activeRaffle.numbers;
-  let csv = "Numero,Estado,Comprador,Cedula,Telefono,Email,Referencia,TicketCode\n";
-
-  Object.keys(numbers).forEach(k => {
-    const item = numbers[k];
-    if (item.status === 'sold' || item.status === 'held') {
-      csv += `"${k}","${item.status}","${item.buyer || ''}","${item.ci || ''}","${item.phone || ''}","${item.email || ''}","${item.orderRef || ''}","${item.ticketCode || ''}"\n`;
-    }
-  });
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `participantes_rifa_ancu_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }

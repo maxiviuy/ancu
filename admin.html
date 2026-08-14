@@ -37,19 +37,19 @@
       
       <div style="background:var(--bg-card); border:1px solid var(--border-bronze); border-radius:var(--radius-lg); padding:22px;">
         <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Recaudación Rifa Activa</span>
-        <div style="font-size:2rem; font-weight:800; color:var(--bronze-light); margin:6px 0;">$ 169.200 <span style="font-size:0.9rem; color:var(--text-bone);">UYU</span></div>
-        <span style="font-size:0.78rem; color:var(--color-available);">↑ 423 números vendidos de 1.000</span>
+        <div style="font-size:2rem; font-weight:800; color:var(--bronze-light); margin:6px 0;" id="kpi-revenue">$ 0 <span style="font-size:0.9rem; color:var(--text-bone);">UYU</span></div>
+        <span style="font-size:0.78rem; color:var(--color-available);" id="kpi-sold-count">↑ 0 números vendidos de 1.000</span>
       </div>
 
       <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
-        <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Padrón de Socios Activos</span>
-        <div style="font-size:2rem; font-weight:800; color:var(--text-bone); margin:6px 0;">2.418</div>
-        <span style="font-size:0.78rem; color:var(--color-available);">● 94% al día con su cuota</span>
+        <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Padrón de Socios</span>
+        <div style="font-size:2rem; font-weight:800; color:var(--text-bone); margin:6px 0;" id="kpi-members">0</div>
+        <span style="font-size:0.78rem; color:var(--color-available);" id="kpi-members-status">● Padrón Oficial</span>
       </div>
 
       <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:22px;">
         <span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Transferencias Pendientes</span>
-        <div style="font-size:2rem; font-weight:800; color:var(--color-held); margin:6px 0;">6</div>
+        <div style="font-size:2rem; font-weight:800; color:var(--color-held); margin:6px 0;" id="kpi-pending-receipts">0</div>
         <span style="font-size:0.78rem; color:var(--text-muted);">Comprobantes para revisar</span>
       </div>
 
@@ -78,10 +78,10 @@
             </div>
 
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="exportRaffleParticipantsCSV()">
+              <a href="/api/admin/export/raffle.csv" class="btn btn-secondary btn-sm" id="btn-export-csv" target="_blank" download>
                 📥 Exportar CSV para Escribano
-              </button>
-              <button type="button" class="btn btn-bronze btn-sm" onclick="alert('Abriendo creador de nueva campaña de rifa...');">
+              </a>
+              <button type="button" class="btn btn-bronze btn-sm" onclick="alert('La rifa activa actual es: Gran Rifa ANCU 2026.');">
                 + Nueva Rifa
               </button>
             </div>
@@ -96,31 +96,16 @@
             <table style="width:100%; min-width:540px; border-collapse:collapse; font-size:0.85rem; text-align:left;">
               <thead>
                 <tr style="border-bottom:1px solid var(--border-subtle); color:var(--text-muted); background:rgba(255,255,255,0.02);">
-                  <th style="padding:10px 14px;">Nº Rifa</th>
-                  <th style="padding:10px 14px;">Comprador</th>
+                  <th style="padding:10px 14px;">Tipo / Ref</th>
+                  <th style="padding:10px 14px;">Comprador / Socio</th>
                   <th style="padding:10px 14px;">Monto</th>
                   <th style="padding:10px 14px;">Método</th>
                   <th style="padding:10px 14px; text-align:right;">Acción</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr style="border-bottom:1px solid var(--border-subtle);">
-                  <td style="padding:10px 14px;"><strong style="color:var(--bronze-light);">#228</strong></td>
-                  <td style="padding:10px 14px;">Diego Díaz (CI: 4.819.201-1)</td>
-                  <td style="padding:10px 14px;">$ 400 UYU</td>
-                  <td style="padding:10px 14px;">BROU 000725433</td>
-                  <td style="padding:10px 14px; text-align:right;">
-                    <button class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.75rem;" onclick="this.closest('tr').remove(); alert('Transferencia aprobada. El número #228 pasa a VENDIDO y se generó el ticket oficial.');">Aprobar ✓</button>
-                  </td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--border-subtle);">
-                  <td style="padding:10px 14px;"><strong style="color:var(--bronze-light);">#905</strong></td>
-                  <td style="padding:10px 14px;">Claudio D. Correa (CI: 3.112.445-8)</td>
-                  <td style="padding:10px 14px;">$ 400 UYU</td>
-                  <td style="padding:10px 14px;">PREX 43062</td>
-                  <td style="padding:10px 14px; text-align:right;">
-                    <button class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.75rem;" onclick="this.closest('tr').remove(); alert('Transferencia aprobada. El número #905 pasa a VENDIDO y se generó el ticket oficial.');">Aprobar ✓</button>
-                  </td>
+              <tbody id="admin-receipts-tbody">
+                <tr>
+                  <td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);">Cargando comprobantes...</td>
                 </tr>
               </tbody>
             </table>
