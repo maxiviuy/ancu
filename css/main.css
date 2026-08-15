@@ -1897,12 +1897,29 @@ button, input, select, textarea {
   .section-sm {
     padding: 36px 0;
   }
+  .hero-section {
+    padding: 44px 0 28px 0;
+  }
   .hero-title {
     font-size: 2.1rem;
     line-height: 1.2;
   }
   .hero-lead {
     font-size: 1rem;
+  }
+  .hero-actions {
+    margin-bottom: 22px;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .hero-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+  .hero-portal-shortcut-wrap {
+    margin-top: 0;
+    margin-bottom: 0;
   }
   .section-heading {
     font-size: 1.75rem;
@@ -1935,7 +1952,7 @@ button, input, select, textarea {
   }
   .pillars-grid {
     grid-template-columns: 1fr;
-    margin-top: 20px;
+    margin-top: 22px;
     gap: 16px;
   }
   .news-grid {
