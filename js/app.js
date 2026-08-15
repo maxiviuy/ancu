@@ -1563,21 +1563,51 @@ function openNewUserModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editUser(userId) {
-  const u = (AppState.adminUsers || []).find(item => item.id == userId);
-  if (!u) return;
+async function editUser(userId) {
+  let u = (AppState.adminUsers || []).find(item => item.id == userId);
+  if (!u) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/users`);
+      if (res.ok) {
+        const data = await res.json();
+        AppState.adminUsers = data.users || [];
+        u = AppState.adminUsers.find(item => item.id == userId);
+      }
+    } catch (e) {
+      console.error('Error buscando usuario:', e);
+    }
+  }
 
-  document.getElementById('user-modal-id').value = u.id;
-  document.getElementById('user-modal-fullname').value = u.full_name || '';
-  document.getElementById('user-modal-username').value = u.username || '';
-  document.getElementById('user-modal-username').disabled = true; // username immutable
-  document.getElementById('user-modal-email').value = u.email || '';
-  document.getElementById('user-modal-role').value = u.role || 'EDITOR';
-  document.getElementById('user-modal-password').value = '';
-  document.getElementById('user-modal-password').required = false;
-  document.getElementById('user-modal-password-label').textContent = 'Nueva Contraseña (Opcional)';
-  document.getElementById('user-modal-password-hint').textContent = 'Dejar en blanco para mantener la contraseña actual.';
-  document.getElementById('user-modal-header-title').textContent = '✏️ Modificar Usuario y Permisos';
+  if (!u) {
+    alert("No se pudo cargar el usuario #" + userId);
+    return;
+  }
+
+  const idEl = document.getElementById('user-modal-id');
+  const nameEl = document.getElementById('user-modal-fullname');
+  const usernameEl = document.getElementById('user-modal-username');
+  const emailEl = document.getElementById('user-modal-email');
+  const roleEl = document.getElementById('user-modal-role');
+  const passEl = document.getElementById('user-modal-password');
+  const passLabelEl = document.getElementById('user-modal-password-label');
+  const passHintEl = document.getElementById('user-modal-password-hint');
+  const headTitleEl = document.getElementById('user-modal-header-title');
+
+  if (idEl) idEl.value = u.id;
+  if (nameEl) nameEl.value = u.full_name || '';
+  if (usernameEl) {
+    usernameEl.value = u.username || '';
+    usernameEl.disabled = true; // username immutable
+  }
+  if (emailEl) emailEl.value = u.email || '';
+  if (roleEl) roleEl.value = u.role || 'EDITOR';
+  if (passEl) {
+    passEl.value = '';
+    passEl.required = false;
+  }
+  if (passLabelEl) passLabelEl.textContent = 'Nueva Contraseña (Opcional)';
+  if (passHintEl) passHintEl.textContent = 'Dejar en blanco para mantener la contraseña actual.';
+  if (headTitleEl) headTitleEl.textContent = '✏️ Modificar Usuario y Permisos';
 
   const modal = document.getElementById('user-editor-modal');
   if (modal) modal.classList.add('active');
@@ -1979,21 +2009,48 @@ function openNewAuthorityModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editAuthority(id) {
-  const a = (AppState.adminAuthorities || []).find(item => item.id == id);
-  if (!a) return;
+async function editAuthority(id) {
+  let a = (AppState.adminAuthorities || []).find(item => item.id == id);
+  if (!a) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/authorities`);
+      if (res.ok) {
+        const data = await res.json();
+        AppState.adminAuthorities = data.authorities || [];
+        a = AppState.adminAuthorities.find(item => item.id == id);
+      }
+    } catch (e) {
+      console.error('Error buscando autoridad:', e);
+    }
+  }
+
+  if (!a) {
+    alert("No se pudo cargar la información de la autoridad #" + id);
+    return;
+  }
 
   adminAuthorityPhotoFile = null;
-  document.getElementById('authority-modal-id').value = a.id;
-  document.getElementById('authority-modal-name').value = a.name || '';
-  document.getElementById('authority-modal-role').value = a.role_title || '';
-  document.getElementById('authority-modal-bio').value = a.bio || '';
-  document.getElementById('authority-modal-photo-url').value = a.photo_url || '';
-  document.getElementById('authority-modal-preview-img').src = a.photo_url || 'assets/logo.png';
-  document.getElementById('authority-modal-mandate').value = a.mandate_period || '2024 – 2027';
-  document.getElementById('authority-modal-order').value = a.display_order || 1;
-  document.getElementById('authority-modal-status').value = a.status || 'ACTIVE';
-  document.getElementById('authority-modal-header-title').textContent = '✏️ Modificar Autoridad Institucional';
+  const idEl = document.getElementById('authority-modal-id');
+  const nameEl = document.getElementById('authority-modal-name');
+  const roleEl = document.getElementById('authority-modal-role');
+  const bioEl = document.getElementById('authority-modal-bio');
+  const photoUrlEl = document.getElementById('authority-modal-photo-url');
+  const previewImgEl = document.getElementById('authority-modal-preview-img');
+  const mandateEl = document.getElementById('authority-modal-mandate');
+  const orderEl = document.getElementById('authority-modal-order');
+  const statusEl = document.getElementById('authority-modal-status');
+  const titleEl = document.getElementById('authority-modal-header-title');
+
+  if (idEl) idEl.value = a.id;
+  if (nameEl) nameEl.value = a.name || '';
+  if (roleEl) roleEl.value = a.role_title || '';
+  if (bioEl) bioEl.value = a.bio || '';
+  if (photoUrlEl) photoUrlEl.value = a.photo_url || '';
+  if (previewImgEl) previewImgEl.src = a.photo_url || 'assets/logo.png';
+  if (mandateEl) mandateEl.value = a.mandate_period || '2024 – 2027';
+  if (orderEl) orderEl.value = a.display_order || 1;
+  if (statusEl) statusEl.value = a.status || 'ACTIVE';
+  if (titleEl) titleEl.textContent = '✏️ Modificar Autoridad Institucional';
 
   const modal = document.getElementById('authority-editor-modal');
   if (modal) modal.classList.add('active');
@@ -2300,26 +2357,58 @@ function openNewActivityModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editActivity(id) {
-  const act = (AppState.adminActivities || []).find(item => item.id == id);
-  if (!act) return;
+async function editActivity(id) {
+  let act = (AppState.adminActivities || []).find(item => item.id == id);
+  if (!act) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/activities`);
+      if (res.ok) {
+        const data = await res.json();
+        AppState.adminActivities = data.activities || [];
+        act = AppState.adminActivities.find(item => item.id == id);
+      }
+    } catch (e) {
+      console.error('Error buscando actividad:', e);
+    }
+  }
+
+  if (!act) {
+    alert("No se pudo cargar la actividad #" + id);
+    return;
+  }
 
   adminActivityImageFile = null;
-  document.getElementById('activity-modal-id').value = act.id;
-  document.getElementById('activity-modal-title').value = act.title || '';
-  document.getElementById('activity-modal-category').value = act.category || 'Capacitación';
-  document.getElementById('activity-modal-date').value = act.event_date ? act.event_date.substring(0, 10) : '';
-  document.getElementById('activity-modal-time').value = act.event_time || '';
-  document.getElementById('activity-modal-location').value = act.location || '';
-  document.getElementById('activity-modal-dept').value = act.department || 'Lavalleja';
-  document.getElementById('activity-modal-price-members').value = act.price_members || 0;
-  document.getElementById('activity-modal-price-gen').value = act.price_general || 0;
-  document.getElementById('activity-modal-capacity').value = act.capacity || 30;
-  document.getElementById('activity-modal-status').value = act.registration_status || 'OPEN';
-  document.getElementById('activity-modal-desc').value = act.description || '';
-  document.getElementById('activity-modal-image-url').value = act.image_url || '';
-  document.getElementById('activity-modal-preview-img').src = act.image_url || 'assets/hero_uruguay_monte.jpg';
-  document.getElementById('activity-modal-header-title').textContent = '✏️ Modificar Actividad';
+  const idEl = document.getElementById('activity-modal-id');
+  const titleEl = document.getElementById('activity-modal-title');
+  const catEl = document.getElementById('activity-modal-category');
+  const dateEl = document.getElementById('activity-modal-date');
+  const timeEl = document.getElementById('activity-modal-time');
+  const locEl = document.getElementById('activity-modal-location');
+  const deptEl = document.getElementById('activity-modal-dept');
+  const pMemEl = document.getElementById('activity-modal-price-members');
+  const pGenEl = document.getElementById('activity-modal-price-gen');
+  const capEl = document.getElementById('activity-modal-capacity');
+  const statusEl = document.getElementById('activity-modal-status');
+  const descEl = document.getElementById('activity-modal-desc');
+  const imgUrlEl = document.getElementById('activity-modal-image-url');
+  const previewImgEl = document.getElementById('activity-modal-preview-img');
+  const headTitleEl = document.getElementById('activity-modal-header-title');
+
+  if (idEl) idEl.value = act.id;
+  if (titleEl) titleEl.value = act.title || '';
+  if (catEl) catEl.value = act.category || 'Capacitación';
+  if (dateEl) dateEl.value = act.event_date ? act.event_date.substring(0, 10) : '';
+  if (timeEl) timeEl.value = act.event_time || '';
+  if (locEl) locEl.value = act.location || '';
+  if (deptEl) deptEl.value = act.department || 'Lavalleja';
+  if (pMemEl) pMemEl.value = act.price_members || 0;
+  if (pGenEl) pGenEl.value = act.price_general || 0;
+  if (capEl) capEl.value = act.capacity || 30;
+  if (statusEl) statusEl.value = act.registration_status || 'OPEN';
+  if (descEl) descEl.value = act.description || '';
+  if (imgUrlEl) imgUrlEl.value = act.image_url || '';
+  if (previewImgEl) previewImgEl.src = act.image_url || 'assets/hero_uruguay_monte.jpg';
+  if (headTitleEl) headTitleEl.textContent = '✏️ Modificar Actividad';
 
   const modal = document.getElementById('activity-editor-modal');
   if (modal) modal.classList.add('active');
@@ -2485,21 +2574,48 @@ function openNewBenefitModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editBenefit(id) {
-  const b = (AppState.adminBenefits || []).find(item => item.id == id);
-  if (!b) return;
+async function editBenefit(id) {
+  let b = (AppState.adminBenefits || []).find(item => item.id == id);
+  if (!b) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/benefits`);
+      if (res.ok) {
+        const data = await res.json();
+        AppState.adminBenefits = data.benefits || [];
+        b = AppState.adminBenefits.find(item => item.id == id);
+      }
+    } catch (e) {
+      console.error('Error buscando convenio:', e);
+    }
+  }
+
+  if (!b) {
+    alert("No se pudo cargar el convenio #" + id);
+    return;
+  }
 
   adminBenefitLogoFile = null;
-  document.getElementById('benefit-modal-id').value = b.id;
-  document.getElementById('benefit-modal-name').value = b.partner_name || '';
-  document.getElementById('benefit-modal-discount').value = b.discount_text || '';
-  document.getElementById('benefit-modal-category').value = b.category || 'Armerías';
-  document.getElementById('benefit-modal-dept').value = b.department || 'Montevideo';
-  document.getElementById('benefit-modal-address').value = b.address || '';
-  document.getElementById('benefit-modal-web').value = b.website_url || '';
-  document.getElementById('benefit-modal-logo-url').value = b.logo_url || '';
-  document.getElementById('benefit-modal-preview-img').src = b.logo_url || 'assets/logo.png';
-  document.getElementById('benefit-modal-header-title').textContent = '✏️ Modificar Convenio';
+  const idEl = document.getElementById('benefit-modal-id');
+  const nameEl = document.getElementById('benefit-modal-name');
+  const discEl = document.getElementById('benefit-modal-discount');
+  const catEl = document.getElementById('benefit-modal-category');
+  const deptEl = document.getElementById('benefit-modal-dept');
+  const addrEl = document.getElementById('benefit-modal-address');
+  const webEl = document.getElementById('benefit-modal-web');
+  const logoEl = document.getElementById('benefit-modal-logo-url');
+  const previewImgEl = document.getElementById('benefit-modal-preview-img');
+  const headTitleEl = document.getElementById('benefit-modal-header-title');
+
+  if (idEl) idEl.value = b.id;
+  if (nameEl) nameEl.value = b.partner_name || '';
+  if (discEl) discEl.value = b.discount_text || '';
+  if (catEl) catEl.value = b.category || 'Armerías';
+  if (deptEl) deptEl.value = b.department || 'Montevideo';
+  if (addrEl) addrEl.value = b.address || '';
+  if (webEl) webEl.value = b.website_url || '';
+  if (logoEl) logoEl.value = b.logo_url || '';
+  if (previewImgEl) previewImgEl.src = b.logo_url || 'assets/logo.png';
+  if (headTitleEl) headTitleEl.textContent = '✏️ Modificar Convenio';
 
   const modal = document.getElementById('benefit-editor-modal');
   if (modal) modal.classList.add('active');
