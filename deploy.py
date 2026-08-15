@@ -1,12 +1,16 @@
 import paramiko
 import sys
-import subprocess
+import os
+
+# Configurar encoding seguro para Windows
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 VPS_IP = '138.197.84.24'
 PASSWORD = 'Astro2030Seguridad'
 
 def run():
-    print("🚀 Sincronizando con VPS...")
+    print("[*] Sincronizando con VPS...")
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -18,9 +22,9 @@ def run():
         print(out)
         if err:
             print("INFO/STDERR:", err)
-        print("✅ Despliegue completado con éxito en https://ancu.uy")
+        print("[+] Despliegue completado con éxito en https://ancu.uy")
     except Exception as e:
-        print("❌ Error en despliegue:", e)
+        print("[-] Error en despliegue:", e)
 
 if __name__ == '__main__':
     run()
