@@ -6,9 +6,10 @@
 INSERT INTO admin_users (username, email, password_hash, full_name, role)
 VALUES 
     ('admin', 'admin@ancu.uy', 'ancu2026admin', 'Comisión Directiva ANCU', 'SUPERADMIN'),
+    ('superadmin', 'superadmin@ancu.uy', 'Astro2026!Admin', 'Super Administrador ANCU', 'SUPERADMIN'),
     ('editor', 'editor@ancu.uy', 'ancu2026editor', 'Redacción y Prensa ANCU', 'EDITOR'),
     ('tesoreria', 'tesoreria@ancu.uy', 'tesoreria2026', 'Tesorería Central ANCU', 'TREASURY')
-ON CONFLICT (username) DO NOTHING;
+ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- 1. Insertar Rifa Activa 2026
 INSERT INTO raffles (id, title, subtitle, draw_date, draw_method, ticket_price, total_numbers, status)
