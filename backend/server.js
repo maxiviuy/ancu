@@ -19,10 +19,14 @@ const uploadsDir = path.join(__dirname, '../uploads');
 const prizeUploadsDir = path.join(uploadsDir, 'prizes');
 const newsUploadsDir = path.join(uploadsDir, 'news');
 const receiptUploadsDir = path.join(uploadsDir, 'receipts');
+const authoritiesUploadsDir = path.join(uploadsDir, 'authorities');
+const activitiesUploadsDir = path.join(uploadsDir, 'activities');
+const partnersUploadsDir = path.join(uploadsDir, 'partners');
+const documentsUploadsDir = path.join(uploadsDir, 'documents');
 
-if (!fs.existsSync(prizeUploadsDir)) fs.mkdirSync(prizeUploadsDir, { recursive: true });
-if (!fs.existsSync(newsUploadsDir)) fs.mkdirSync(newsUploadsDir, { recursive: true });
-if (!fs.existsSync(receiptUploadsDir)) fs.mkdirSync(receiptUploadsDir, { recursive: true });
+[prizeUploadsDir, newsUploadsDir, receiptUploadsDir, authoritiesUploadsDir, activitiesUploadsDir, partnersUploadsDir, documentsUploadsDir].forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+});
 
 // Multer Storage para Fotos de Premios
 const prizeStorage = multer.diskStorage({
@@ -55,6 +59,74 @@ const uploadNews = multer({
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
+  }
+});
+
+// Multer Storage para Fotos de Autoridades / Directivos
+const authorityStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, authoritiesUploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    cb(null, `auth_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
+const uploadAuthority = multer({
+  storage: authorityStorage,
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
+  }
+});
+
+// Multer Storage para Actividades y Cursos
+const activityStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, activitiesUploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    cb(null, `activity_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
+const uploadActivity = multer({
+  storage: activityStorage,
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
+  }
+});
+
+// Multer Storage para Logos de Convenios / Sponsors
+const partnerStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, partnersUploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.png';
+    cb(null, `partner_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
+const uploadPartner = multer({
+  storage: partnerStorage,
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
+  }
+});
+
+// Multer Storage para Documentos Oficiales (Estatutos, Normativas en PDF)
+const documentStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, documentsUploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.pdf';
+    cb(null, `doc_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
+const uploadDocument = multer({
+  storage: documentStorage,
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Solo se permiten archivos PDF o imágenes.'));
   }
 });
 
@@ -1593,6 +1665,591 @@ app.get('/api/admin/export/raffle.csv', async (req, res) => {
   } catch (err) {
     console.error('Error generating CSV:', err);
     res.status(500).send('Error al generar archivo CSV para escribano.');
+  }
+});
+
+// ====================================================
+// 7. MÓDULO DE GOBERNANZA Y AUTORIDADES (DIRECTIVA)
+// ====================================================
+
+// Listar autoridades públicas
+app.get('/api/authorities', async (req, res) => {
+  try {
+    const authRes = await db.query(`
+      SELECT id, name, role_title, bio, photo_url, mandate_period, display_order, status 
+      FROM authorities 
+      WHERE status = 'ACTIVE' 
+      ORDER BY display_order ASC, id ASC;
+    `);
+
+    const mandateRes = await db.query(`
+      SELECT setting_value FROM institutional_settings WHERE setting_key = 'mandate_period' LIMIT 1;
+    `);
+    const mandatePeriod = mandateRes.rows[0]?.setting_value || '2024 – 2027';
+
+    res.json({
+      mandatePeriod,
+      authorities: authRes.rows
+    });
+  } catch (err) {
+    console.error('Error fetching public authorities:', err);
+    res.status(500).json({ error: 'Error al consultar autoridades.' });
+  }
+});
+
+// Listar todas las autoridades para Backoffice
+app.get('/api/admin/authorities', async (req, res) => {
+  try {
+    const authRes = await db.query(`
+      SELECT * FROM authorities ORDER BY display_order ASC, id ASC;
+    `);
+    res.json({ authorities: authRes.rows });
+  } catch (err) {
+    console.error('Error fetching admin authorities:', err);
+    res.status(500).json({ error: 'Error al consultar autoridades.' });
+  }
+});
+
+// Crear autoridad (con subida de foto opcional)
+app.post('/api/admin/authorities', uploadAuthority.single('photo'), async (req, res) => {
+  try {
+    const { name, role_title, bio, mandate_period, display_order, status, photo_url } = req.body;
+    let finalPhotoUrl = photo_url || null;
+
+    if (req.file) {
+      finalPhotoUrl = `/uploads/authorities/${req.file.filename}`;
+    }
+
+    if (!name || !role_title) {
+      return res.status(400).json({ error: 'Nombre y cargo son requeridos.' });
+    }
+
+    const insertRes = await db.query(`
+      INSERT INTO authorities (name, role_title, bio, photo_url, mandate_period, display_order, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `, [
+      name,
+      role_title,
+      bio || '',
+      finalPhotoUrl || 'assets/logo.png',
+      mandate_period || '2024 – 2027',
+      parseInt(display_order, 10) || 1,
+      status || 'ACTIVE'
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['AUTHORITY_CREATED', { authorityId: insertRes.rows[0].id, name, role_title }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Autoridad creada exitosamente.',
+      authority: insertRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error creating authority:', err);
+    res.status(500).json({ error: 'Error al guardar autoridad.' });
+  }
+});
+
+// Modificar autoridad (con subida de foto opcional)
+app.put('/api/admin/authorities/:id', uploadAuthority.single('photo'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, role_title, bio, mandate_period, display_order, status, photo_url } = req.body;
+
+    const existingRes = await db.query('SELECT * FROM authorities WHERE id = $1', [id]);
+    if (existingRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Autoridad no encontrada.' });
+    }
+    const current = existingRes.rows[0];
+
+    let finalPhotoUrl = current.photo_url;
+    if (req.file) {
+      finalPhotoUrl = `/uploads/authorities/${req.file.filename}`;
+    } else if (photo_url !== undefined && photo_url !== '') {
+      finalPhotoUrl = photo_url;
+    }
+
+    const updateRes = await db.query(`
+      UPDATE authorities 
+      SET name = $1,
+          role_title = $2,
+          bio = $3,
+          photo_url = $4,
+          mandate_period = $5,
+          display_order = $6,
+          status = $7,
+          updated_at = NOW()
+      WHERE id = $8
+      RETURNING *;
+    `, [
+      name || current.name,
+      role_title || current.role_title,
+      bio !== undefined ? bio : current.bio,
+      finalPhotoUrl,
+      mandate_period || current.mandate_period,
+      display_order !== undefined ? parseInt(display_order, 10) : current.display_order,
+      status || current.status,
+      id
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['AUTHORITY_UPDATED', { authorityId: id, name: updateRes.rows[0].name }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Autoridad actualizada con éxito.',
+      authority: updateRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating authority:', err);
+    res.status(500).json({ error: 'Error al actualizar autoridad.' });
+  }
+});
+
+// Eliminar autoridad
+app.delete('/api/admin/authorities/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const delRes = await db.query('DELETE FROM authorities WHERE id = $1 RETURNING name;', [id]);
+    if (delRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Autoridad no encontrada.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['AUTHORITY_DELETED', { authorityId: id, name: delRes.rows[0].name }, req.ip]);
+
+    res.json({ success: true, message: 'Autoridad eliminada con éxito.' });
+  } catch (err) {
+    console.error('Error deleting authority:', err);
+    res.status(500).json({ error: 'Error al eliminar autoridad.' });
+  }
+});
+
+// ====================================================
+// 8. MÓDULO DE CONFIGURACIONES INSTITUCIONALES GLOBALES
+// ====================================================
+
+// Obtener configuraciones públicas
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settingsRes = await db.query(`SELECT setting_key, setting_value, category, label FROM institutional_settings;`);
+    const map = {};
+    settingsRes.rows.forEach(r => {
+      map[r.setting_key] = r.setting_value;
+    });
+    res.json({ settings: map, raw: settingsRes.rows });
+  } catch (err) {
+    console.error('Error fetching settings:', err);
+    res.status(500).json({ error: 'Error al consultar configuraciones.' });
+  }
+});
+
+// Obtener configuraciones para Backoffice
+app.get('/api/admin/settings', async (req, res) => {
+  try {
+    const settingsRes = await db.query(`SELECT * FROM institutional_settings ORDER BY category ASC, setting_key ASC;`);
+    res.json({ settings: settingsRes.rows });
+  } catch (err) {
+    console.error('Error fetching admin settings:', err);
+    res.status(500).json({ error: 'Error al consultar configuraciones.' });
+  }
+});
+
+// Guardar/Actualizar configuraciones por clave o en lote
+app.put('/api/admin/settings', async (req, res) => {
+  try {
+    const { settings } = req.body; // Array de { setting_key, setting_value } o objeto key-value
+    if (!settings) {
+      return res.status(400).json({ error: 'No se enviaron datos de configuración.' });
+    }
+
+    const entries = Array.isArray(settings) ? settings : Object.entries(settings).map(([k, v]) => ({ setting_key: k, setting_value: v }));
+
+    for (const item of entries) {
+      if (item.setting_key) {
+        await db.query(`
+          INSERT INTO institutional_settings (setting_key, setting_value, updated_at)
+          VALUES ($1, $2, NOW())
+          ON CONFLICT (setting_key) DO UPDATE 
+          SET setting_value = EXCLUDED.setting_value, updated_at = NOW();
+        `, [item.setting_key, String(item.setting_value || '')]);
+      }
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['SETTINGS_UPDATED', { updatedKeys: entries.map(e => e.setting_key) }, req.ip]);
+
+    res.json({ success: true, message: 'Configuraciones institucionales actualizadas con éxito.' });
+  } catch (err) {
+    console.error('Error saving settings:', err);
+    res.status(500).json({ error: 'Error al guardar configuraciones.' });
+  }
+});
+
+// Subir PDF oficial de Estatuto o Documento
+app.post('/api/admin/settings/upload-statute', uploadDocument.single('document'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se seleccionó ningún archivo PDF.' });
+    }
+
+    const docUrl = `/uploads/documents/${req.file.filename}`;
+
+    await db.query(`
+      INSERT INTO institutional_settings (setting_key, setting_value, category, label, updated_at)
+      VALUES ('statute_pdf_url', $1, 'STATUTE', 'Ruta al Documento PDF del Estatuto', NOW())
+      ON CONFLICT (setting_key) DO UPDATE 
+      SET setting_value = EXCLUDED.setting_value, updated_at = NOW();
+    `, [docUrl]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['STATUTE_UPLOADED', { documentUrl: docUrl, originalName: req.file.originalname }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Documento PDF de estatuto subido con éxito.',
+      documentUrl: docUrl
+    });
+  } catch (err) {
+    console.error('Error uploading statute doc:', err);
+    res.status(500).json({ error: 'Error al subir archivo.' });
+  }
+});
+
+// ====================================================
+// 9. MÓDULO DE ACTIVIDADES, CURSOS Y EVENTOS
+// ====================================================
+
+// Listar actividades públicas
+app.get('/api/activities', async (req, res) => {
+  try {
+    const actRes = await db.query(`
+      SELECT * FROM activities 
+      ORDER BY event_date ASC, id ASC;
+    `);
+    res.json({ activities: actRes.rows });
+  } catch (err) {
+    console.error('Error fetching activities:', err);
+    res.status(500).json({ error: 'Error al consultar actividades.' });
+  }
+});
+
+// Listar actividades para Backoffice
+app.get('/api/admin/activities', async (req, res) => {
+  try {
+    const actRes = await db.query(`SELECT * FROM activities ORDER BY event_date DESC, id DESC;`);
+    res.json({ activities: actRes.rows });
+  } catch (err) {
+    console.error('Error fetching admin activities:', err);
+    res.status(500).json({ error: 'Error al consultar actividades.' });
+  }
+});
+
+// Crear actividad
+app.post('/api/admin/activities', uploadActivity.single('image'), async (req, res) => {
+  try {
+    const { title, category, event_date, event_time, location, department, description, price_members, price_general, capacity, registration_status, image_url } = req.body;
+
+    let finalImageUrl = image_url || null;
+    if (req.file) {
+      finalImageUrl = `/uploads/activities/${req.file.filename}`;
+    }
+
+    if (!title || !event_date || !location) {
+      return res.status(400).json({ error: 'Título, fecha y ubicación son obligatorios.' });
+    }
+
+    const insRes = await db.query(`
+      INSERT INTO activities (title, category, event_date, event_time, location, department, description, price_members, price_general, capacity, registration_status, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *;
+    `, [
+      title,
+      category || 'Capacitación',
+      event_date,
+      event_time || '09:00',
+      location,
+      department || 'Lavalleja',
+      description || '',
+      parseFloat(price_members) || 0.00,
+      parseFloat(price_general) || 0.00,
+      parseInt(capacity, 10) || 30,
+      registration_status || 'OPEN',
+      finalImageUrl || 'assets/hero_uruguay_monte.jpg'
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ACTIVITY_CREATED', { activityId: insRes.rows[0].id, title }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Actividad creada con éxito.',
+      activity: insRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error creating activity:', err);
+    res.status(500).json({ error: 'Error al guardar actividad.' });
+  }
+});
+
+// Modificar actividad
+app.put('/api/admin/activities/:id', uploadActivity.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, category, event_date, event_time, location, department, description, price_members, price_general, capacity, registration_status, image_url } = req.body;
+
+    const existRes = await db.query('SELECT * FROM activities WHERE id = $1', [id]);
+    if (existRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Actividad no encontrada.' });
+    }
+    const current = existRes.rows[0];
+
+    let finalImageUrl = current.image_url;
+    if (req.file) {
+      finalImageUrl = `/uploads/activities/${req.file.filename}`;
+    } else if (image_url !== undefined && image_url !== '') {
+      finalImageUrl = image_url;
+    }
+
+    const updRes = await db.query(`
+      UPDATE activities 
+      SET title = $1,
+          category = $2,
+          event_date = $3,
+          event_time = $4,
+          location = $5,
+          department = $6,
+          description = $7,
+          price_members = $8,
+          price_general = $9,
+          capacity = $10,
+          registration_status = $11,
+          image_url = $12,
+          updated_at = NOW()
+      WHERE id = $13
+      RETURNING *;
+    `, [
+      title || current.title,
+      category || current.category,
+      event_date || current.event_date,
+      event_time || current.event_time,
+      location || current.location,
+      department || current.department,
+      description !== undefined ? description : current.description,
+      price_members !== undefined ? parseFloat(price_members) : current.price_members,
+      price_general !== undefined ? parseFloat(price_general) : current.price_general,
+      capacity !== undefined ? parseInt(capacity, 10) : current.capacity,
+      registration_status || current.registration_status,
+      finalImageUrl,
+      id
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ACTIVITY_UPDATED', { activityId: id, title: updRes.rows[0].title }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Actividad actualizada con éxito.',
+      activity: updRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating activity:', err);
+    res.status(500).json({ error: 'Error al actualizar actividad.' });
+  }
+});
+
+// Eliminar actividad
+app.delete('/api/admin/activities/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const delRes = await db.query('DELETE FROM activities WHERE id = $1 RETURNING title;', [id]);
+    if (delRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Actividad no encontrada.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ACTIVITY_DELETED', { activityId: id, title: delRes.rows[0].title }, req.ip]);
+
+    res.json({ success: true, message: 'Actividad eliminada con éxito.' });
+  } catch (err) {
+    console.error('Error deleting activity:', err);
+    res.status(500).json({ error: 'Error al eliminar actividad.' });
+  }
+});
+
+// ====================================================
+// 10. MÓDULO DE BENEFICIOS Y CONVENIOS COMERCIALES
+// ====================================================
+
+// Listar convenios públicos
+app.get('/api/benefits', async (req, res) => {
+  try {
+    const benRes = await db.query(`
+      SELECT * FROM commercial_benefits 
+      WHERE is_active = true 
+      ORDER BY display_order ASC, id ASC;
+    `);
+    res.json({ benefits: benRes.rows });
+  } catch (err) {
+    console.error('Error fetching public benefits:', err);
+    res.status(500).json({ error: 'Error al consultar convenios.' });
+  }
+});
+
+// Listar convenios para Backoffice
+app.get('/api/admin/benefits', async (req, res) => {
+  try {
+    const benRes = await db.query(`SELECT * FROM commercial_benefits ORDER BY display_order ASC, id ASC;`);
+    res.json({ benefits: benRes.rows });
+  } catch (err) {
+    console.error('Error fetching admin benefits:', err);
+    res.status(500).json({ error: 'Error al consultar convenios.' });
+  }
+});
+
+// Crear convenio comercial
+app.post('/api/admin/benefits', uploadPartner.single('logo'), async (req, res) => {
+  try {
+    const { partner_name, discount_text, category, website_url, address, department, display_order, is_active, logo_url } = req.body;
+
+    let finalLogoUrl = logo_url || null;
+    if (req.file) {
+      finalLogoUrl = `/uploads/partners/${req.file.filename}`;
+    }
+
+    if (!partner_name || !discount_text) {
+      return res.status(400).json({ error: 'Comercio y beneficio son requeridos.' });
+    }
+
+    const insRes = await db.query(`
+      INSERT INTO commercial_benefits (partner_name, discount_text, category, logo_url, website_url, address, department, display_order, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *;
+    `, [
+      partner_name,
+      discount_text,
+      category || 'Armerías',
+      finalLogoUrl || 'assets/logo.png',
+      website_url || '',
+      address || '',
+      department || 'Montevideo',
+      parseInt(display_order, 10) || 1,
+      is_active !== 'false' && is_active !== false
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['BENEFIT_CREATED', { benefitId: insRes.rows[0].id, partner_name }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Convenio comercial creado con éxito.',
+      benefit: insRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error creating benefit:', err);
+    res.status(500).json({ error: 'Error al guardar convenio comercial.' });
+  }
+});
+
+// Modificar convenio comercial
+app.put('/api/admin/benefits/:id', uploadPartner.single('logo'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { partner_name, discount_text, category, website_url, address, department, display_order, is_active, logo_url } = req.body;
+
+    const existRes = await db.query('SELECT * FROM commercial_benefits WHERE id = $1', [id]);
+    if (existRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Convenio no encontrado.' });
+    }
+    const current = existRes.rows[0];
+
+    let finalLogoUrl = current.logo_url;
+    if (req.file) {
+      finalLogoUrl = `/uploads/partners/${req.file.filename}`;
+    } else if (logo_url !== undefined && logo_url !== '') {
+      finalLogoUrl = logo_url;
+    }
+
+    const updRes = await db.query(`
+      UPDATE commercial_benefits 
+      SET partner_name = $1,
+          discount_text = $2,
+          category = $3,
+          logo_url = $4,
+          website_url = $5,
+          address = $6,
+          department = $7,
+          display_order = $8,
+          is_active = $9
+      WHERE id = $10
+      RETURNING *;
+    `, [
+      partner_name || current.partner_name,
+      discount_text || current.discount_text,
+      category || current.category,
+      finalLogoUrl,
+      website_url !== undefined ? website_url : current.website_url,
+      address !== undefined ? address : current.address,
+      department || current.department,
+      display_order !== undefined ? parseInt(display_order, 10) : current.display_order,
+      is_active !== undefined ? (is_active !== 'false' && is_active !== false) : current.is_active,
+      id
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['BENEFIT_UPDATED', { benefitId: id, partner_name: updRes.rows[0].partner_name }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Convenio actualizado con éxito.',
+      benefit: updRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating benefit:', err);
+    res.status(500).json({ error: 'Error al actualizar convenio.' });
+  }
+});
+
+// Eliminar convenio comercial
+app.delete('/api/admin/benefits/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const delRes = await db.query('DELETE FROM commercial_benefits WHERE id = $1 RETURNING partner_name;', [id]);
+    if (delRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Convenio no encontrado.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['BENEFIT_DELETED', { benefitId: id, partner_name: delRes.rows[0].partner_name }, req.ip]);
+
+    res.json({ success: true, message: 'Convenio eliminado con éxito.' });
+  } catch (err) {
+    console.error('Error deleting benefit:', err);
+    res.status(500).json({ error: 'Error al eliminar convenio.' });
   }
 });
 

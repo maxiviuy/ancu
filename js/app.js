@@ -1118,6 +1118,13 @@ function switchAdminTab(tabName) {
 
   if (btn) btn.classList.add('active');
   if (content) content.style.display = 'block';
+
+  if (tabName === 'authorities') loadAdminAuthorities();
+  if (tabName === 'settings') loadAdminSettings();
+  if (tabName === 'activities') loadAdminActivities();
+  if (tabName === 'benefits') loadAdminBenefits();
+  if (tabName === 'users') loadAdminUsers();
+  if (tabName === 'news') loadAdminNews();
 }
 
 function checkAdminAuthView() {
@@ -1255,6 +1262,12 @@ async function initAdminDashboard() {
 
     // Load Admin Users if SuperAdmin
     await loadAdminUsers();
+
+    // Load Governance, Settings, Activities and Benefits
+    await loadAdminAuthorities();
+    await loadAdminSettings();
+    await loadAdminActivities();
+    await loadAdminBenefits();
 
     // Load receipts
     const receiptsRes = await fetch(`${API_BASE}/admin/receipts`);
@@ -1880,6 +1893,874 @@ async function rejectReceipt(receiptId) {
   }
 }
 
+// ====================================================
+// GOBERNANZA & AUTORIDADES (ADMIN & PUBLIC)
+// ====================================================
+
+let adminAuthorityPhotoFile = null;
+
+async function loadAdminAuthorities() {
+  const container = document.getElementById('admin-authorities-grid');
+  const mandateInput = document.getElementById('admin-mandate-period-input');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/authorities`);
+    if (!res.ok) return;
+    const { authorities } = await res.json();
+
+    // Check mandate
+    const setRes = await fetch(`${API_BASE}/settings`);
+    if (setRes.ok) {
+      const { settings } = await setRes.json();
+      if (mandateInput && settings.mandate_period) {
+        mandateInput.value = settings.mandate_period;
+      }
+    }
+
+    if (!authorities || authorities.length === 0) {
+      container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted);">No hay directivos registrados. Haz click en "Agregar Directivo".</div>`;
+      return;
+    }
+
+    container.innerHTML = authorities.map(a => `
+      <div class="pillar-card" style="text-align:center; position:relative; background:var(--bg-card); border:1px solid ${a.status === 'ACTIVE' ? 'var(--border-bronze)' : 'var(--border-subtle)'};">
+        <div style="position:absolute; top:12px; right:12px; display:flex; gap:6px;">
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="editAuthority(${a.id}, '${escape(a.name)}', '${escape(a.role_title)}', '${escape(a.bio || '')}', '${escape(a.photo_url || '')}', '${escape(a.mandate_period || '')}', ${a.display_order || 1}, '${a.status}')">✏️</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteAuthority(${a.id})">🗑️</button>
+        </div>
+
+        <div style="width:84px; height:84px; border-radius:50%; margin:0 auto 14px auto; overflow:hidden; border:2px solid var(--border-bronze); background:#000;">
+          <img src="${a.photo_url || 'assets/logo.png'}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='assets/logo.png';" alt="${a.name}" />
+        </div>
+
+        <span style="font-size:0.75rem; font-weight:700; color:var(--bronze-light); text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:4px;">
+          ${a.role_title}
+        </span>
+        <h4 style="font-size:1.15rem; font-weight:700; color:var(--text-bone); margin-bottom:6px;">
+          ${a.name}
+        </h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4; margin-bottom:10px;">
+          ${a.bio || 'Sin descripción ingresada.'}
+        </p>
+        <div style="font-size:0.72rem; color:var(--text-muted);">
+          Mandato: <strong>${a.mandate_period}</strong> · Orden: <strong>#${a.display_order}</strong> · <span style="color:${a.status === 'ACTIVE' ? 'var(--color-available)' : 'var(--text-muted)'};">${a.status === 'ACTIVE' ? 'Activo' : 'Histórico'}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Error loading authorities in admin:', err);
+  }
+}
+
+function openNewAuthorityModal() {
+  adminAuthorityPhotoFile = null;
+  document.getElementById('authority-modal-id').value = '';
+  document.getElementById('authority-modal-name').value = '';
+  document.getElementById('authority-modal-role').value = '';
+  document.getElementById('authority-modal-mandate').value = document.getElementById('admin-mandate-period-input')?.value || '2024 – 2027';
+  document.getElementById('authority-modal-order').value = '1';
+  document.getElementById('authority-modal-status').value = 'ACTIVE';
+  document.getElementById('authority-modal-bio').value = '';
+  document.getElementById('authority-modal-photo-url').value = '';
+  document.getElementById('authority-modal-preview-img').src = 'assets/logo.png';
+  document.getElementById('authority-modal-header-title').textContent = '✨ Agregar Miembro de Comisión Directiva';
+
+  const modal = document.getElementById('authority-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function editAuthority(id, nameEsc, roleEsc, bioEsc, photoEsc, mandateEsc, order, status) {
+  adminAuthorityPhotoFile = null;
+  document.getElementById('authority-modal-id').value = id;
+  document.getElementById('authority-modal-name').value = unescape(nameEsc);
+  document.getElementById('authority-modal-role').value = unescape(roleEsc);
+  document.getElementById('authority-modal-bio').value = unescape(bioEsc);
+  const photoUrl = unescape(photoEsc);
+  document.getElementById('authority-modal-photo-url').value = photoUrl;
+  document.getElementById('authority-modal-preview-img').src = photoUrl || 'assets/logo.png';
+  document.getElementById('authority-modal-mandate').value = unescape(mandateEsc);
+  document.getElementById('authority-modal-order').value = order;
+  document.getElementById('authority-modal-status').value = status;
+  document.getElementById('authority-modal-header-title').textContent = '✏️ Modificar Autoridad Institucional';
+
+  const modal = document.getElementById('authority-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function handleAuthorityPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  adminAuthorityPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('authority-modal-preview-img').src = e.target.result;
+    document.getElementById('authority-modal-photo-url').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveAuthorityForm(event) {
+  if (event) event.preventDefault();
+
+  const id = document.getElementById('authority-modal-id').value;
+  const name = document.getElementById('authority-modal-name').value.trim();
+  const roleTitle = document.getElementById('authority-modal-role').value.trim();
+  const bio = document.getElementById('authority-modal-bio').value.trim();
+  const mandatePeriod = document.getElementById('authority-modal-mandate').value.trim();
+  const displayOrder = document.getElementById('authority-modal-order').value;
+  const status = document.getElementById('authority-modal-status').value;
+  const photoUrl = document.getElementById('authority-modal-photo-url').value.trim();
+
+  if (!name || !roleTitle) {
+    alert("Por favor ingrese el nombre y el cargo de la autoridad.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('role_title', roleTitle);
+  formData.append('bio', bio);
+  formData.append('mandate_period', mandatePeriod);
+  formData.append('display_order', displayOrder);
+  formData.append('status', status);
+  if (photoUrl) formData.append('photo_url', photoUrl);
+  if (adminAuthorityPhotoFile) formData.append('photo', adminAuthorityPhotoFile);
+
+  const btn = document.getElementById('btn-save-authority-submit');
+  if (btn) btn.textContent = 'Guardando...';
+
+  try {
+    const url = id ? `${API_BASE}/admin/authorities/${id}` : `${API_BASE}/admin/authorities`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Error al guardar autoridad.');
+      return;
+    }
+
+    alert(data.message || 'Autoridad guardada exitosamente.');
+    closeModal('authority-editor-modal');
+    await loadAdminAuthorities();
+  } catch (err) {
+    console.error('Error saving authority:', err);
+    alert('Error al conectar con el servidor.');
+  } finally {
+    if (btn) btn.textContent = 'Guardar Autoridad →';
+  }
+}
+
+async function deleteAuthority(id) {
+  if (!confirm("¿Deseas eliminar este directivo de la nómina oficial?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/authorities/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Autoridad eliminada con éxito.");
+      await loadAdminAuthorities();
+    } else {
+      alert(data.error || "Error al eliminar.");
+    }
+  } catch (err) {
+    alert("Error de conexión con el backend.");
+  }
+}
+
+async function saveMandatePeriod() {
+  const period = document.getElementById('admin-mandate-period-input')?.value.trim();
+  if (!period) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: [{ setting_key: 'mandate_period', setting_value: period }] })
+    });
+    if (res.ok) {
+      alert("Período de mandato actualizado exitosamente.");
+      await loadAdminAuthorities();
+    } else {
+      alert("Error al actualizar el período.");
+    }
+  } catch (err) {
+    alert("Error al conectar con el servidor.");
+  }
+}
+
+function openStatuteModal() {
+  const modal = document.getElementById('statute-upload-modal');
+  if (modal) modal.classList.add('active');
+}
+
+async function handleStatuteUploadSubmit(event) {
+  if (event) event.preventDefault();
+  const fileInput = document.getElementById('statute-file-input');
+  if (!fileInput || !fileInput.files[0]) {
+    alert("Seleccione un archivo PDF.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('document', fileInput.files[0]);
+
+  const btn = document.getElementById('btn-upload-statute-submit');
+  if (btn) btn.textContent = 'Subiendo documento...';
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings/upload-statute`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(`✅ ${data.message}`);
+      closeModal('statute-upload-modal');
+      fileInput.value = '';
+    } else {
+      alert(data.error || 'Error al subir el estatuto.');
+    }
+  } catch (err) {
+    console.error('Error uploading statute:', err);
+    alert('Error de conexión con el backend.');
+  } finally {
+    if (btn) btn.textContent = 'Subir y Actualizar Documento →';
+  }
+}
+
+// ====================================================
+// CONFIGURACIÓN INSTITUCIONAL GLOBAL (ADMIN & PUBLIC)
+// ====================================================
+
+async function loadAdminSettings() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings`);
+    if (!res.ok) return;
+    const { settings } = await res.json();
+
+    const map = {};
+    settings.forEach(s => map[s.setting_key] = s.setting_value);
+
+    const topAnn = document.getElementById('setting-top-announcement');
+    const fee = document.getElementById('setting-membership-fee');
+    const statSum = document.getElementById('setting-statute-summary');
+    const brou = document.getElementById('setting-brou-account');
+    const prex = document.getElementById('setting-prex-account');
+    const email = document.getElementById('setting-contact-email');
+    const phone = document.getElementById('setting-contact-phone');
+
+    if (topAnn && map.top_announcement_text) topAnn.value = map.top_announcement_text;
+    if (fee && map.membership_fee_amount) fee.value = map.membership_fee_amount;
+    if (statSum && map.statute_summary) statSum.value = map.statute_summary;
+    if (brou && map.brou_account_info) brou.value = map.brou_account_info;
+    if (prex && map.prex_account_info) prex.value = map.prex_account_info;
+    if (email && map.contact_email) email.value = map.contact_email;
+    if (phone && map.contact_phone) phone.value = map.contact_phone;
+  } catch (err) {
+    console.error('Error loading admin settings:', err);
+  }
+}
+
+async function saveInstitutionalSettingsForm(event) {
+  if (event) event.preventDefault();
+
+  const topAnnouncement = document.getElementById('setting-top-announcement')?.value.trim();
+  const membershipFee = document.getElementById('setting-membership-fee')?.value.trim();
+  const statuteSummary = document.getElementById('setting-statute-summary')?.value.trim();
+  const brouAccount = document.getElementById('setting-brou-account')?.value.trim();
+  const prexAccount = document.getElementById('setting-prex-account')?.value.trim();
+  const contactEmail = document.getElementById('setting-contact-email')?.value.trim();
+  const contactPhone = document.getElementById('setting-contact-phone')?.value.trim();
+
+  const payload = [
+    { setting_key: 'top_announcement_text', setting_value: topAnnouncement },
+    { setting_key: 'membership_fee_amount', setting_value: membershipFee },
+    { setting_key: 'statute_summary', setting_value: statuteSummary },
+    { setting_key: 'brou_account_info', setting_value: brouAccount },
+    { setting_key: 'prex_account_info', setting_value: prexAccount },
+    { setting_key: 'contact_email', setting_value: contactEmail },
+    { setting_key: 'contact_phone', setting_value: contactPhone }
+  ];
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: payload })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert("✅ Parámetros institucionales guardados y sincronizados en vivo.");
+      await loadAdminSettings();
+    } else {
+      alert(data.error || 'Error al guardar configuraciones.');
+    }
+  } catch (err) {
+    console.error('Error saving settings:', err);
+    alert('Error al conectar con el servidor.');
+  }
+}
+
+// ====================================================
+// ACTIVIDADES & CURSOS (ADMIN & PUBLIC)
+// ====================================================
+
+let adminActivityImageFile = null;
+
+async function loadAdminActivities() {
+  const tbody = document.getElementById('admin-activities-tbody');
+  if (!tbody) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/activities`);
+    if (!res.ok) return;
+    const { activities } = await res.json();
+
+    if (!activities || activities.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:20px; text-align:center; color:var(--text-muted);">No hay actividades registradas.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = activities.map(act => {
+      const d = new Date(act.event_date);
+      const dateStr = d.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' });
+      const statusBadge = act.registration_status === 'OPEN'
+        ? '<span class="status-badge-pill active" style="font-size:0.72rem;">🟢 Abiertas</span>'
+        : (act.registration_status === 'FULL'
+          ? '<span class="status-badge-pill" style="background:rgba(245,158,11,0.2); color:#FBBF24; font-size:0.72rem;">🟠 Agotado</span>'
+          : '<span class="status-badge-pill" style="background:rgba(239,68,68,0.2); color:#F87171; font-size:0.72rem;">🔴 Finalizado</span>');
+
+      return `
+        <tr style="border-bottom:1px solid var(--border-subtle);">
+          <td style="padding:12px 16px;">
+            <strong style="color:var(--text-bone); font-size:0.92rem;">${act.title}</strong>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${act.description ? act.description.substring(0, 70) + '...' : ''}</div>
+          </td>
+          <td style="padding:12px 16px;">
+            <span style="font-size:0.8rem; background:rgba(255,255,255,0.06); padding:4px 8px; border-radius:var(--radius-sm); color:var(--bronze-light);">${act.category}</span>
+          </td>
+          <td style="padding:12px 16px; font-size:0.82rem; color:var(--text-bone);">
+            <strong>${dateStr}</strong>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${act.event_time || ''}</div>
+          </td>
+          <td style="padding:12px 16px; font-size:0.82rem; color:var(--text-muted);">
+            ${act.location}, ${act.department}
+          </td>
+          <td style="padding:12px 16px; font-size:0.82rem;">
+            <strong style="color:var(--color-available);">${parseFloat(act.price_members) === 0 ? 'Gratis' : '$ ' + act.price_members}</strong> / 
+            <span style="color:var(--text-muted);">$ ${act.price_general}</span>
+          </td>
+          <td style="padding:12px 16px;">
+            ${statusBadge}
+          </td>
+          <td style="padding:12px 16px; text-align:right;">
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; margin-right:4px;" onclick="editActivity(${act.id}, '${escape(act.title)}', '${act.category}', '${act.event_date}', '${escape(act.event_time || '')}', '${escape(act.location)}', '${act.department}', '${escape(act.description || '')}', ${act.price_members}, ${act.price_general}, ${act.capacity}, '${act.registration_status}', '${escape(act.image_url || '')}')">Editar ✏️</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteActivity(${act.id})">🗑️</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading activities in admin:', err);
+  }
+}
+
+function openNewActivityModal() {
+  adminActivityImageFile = null;
+  document.getElementById('activity-modal-id').value = '';
+  document.getElementById('activity-modal-title').value = '';
+  document.getElementById('activity-modal-category').value = 'Capacitación';
+  document.getElementById('activity-modal-date').value = '';
+  document.getElementById('activity-modal-time').value = '09:00 a 16:00 hs';
+  document.getElementById('activity-modal-location').value = '';
+  document.getElementById('activity-modal-dept').value = 'Lavalleja';
+  document.getElementById('activity-modal-price-members').value = '0';
+  document.getElementById('activity-modal-price-gen').value = '800';
+  document.getElementById('activity-modal-capacity').value = '30';
+  document.getElementById('activity-modal-status').value = 'OPEN';
+  document.getElementById('activity-modal-desc').value = '';
+  document.getElementById('activity-modal-image-url').value = '';
+  document.getElementById('activity-modal-preview-img').src = 'assets/hero_uruguay_monte.jpg';
+  document.getElementById('activity-modal-header-title').textContent = '✨ Nueva Actividad o Capacitación';
+
+  const modal = document.getElementById('activity-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function editActivity(id, titleEsc, category, eventDate, timeEsc, locEsc, dept, descEsc, priceMem, priceGen, capacity, regStatus, imgEsc) {
+  adminActivityImageFile = null;
+  document.getElementById('activity-modal-id').value = id;
+  document.getElementById('activity-modal-title').value = unescape(titleEsc);
+  document.getElementById('activity-modal-category').value = category;
+  document.getElementById('activity-modal-date').value = eventDate ? eventDate.substring(0, 10) : '';
+  document.getElementById('activity-modal-time').value = unescape(timeEsc);
+  document.getElementById('activity-modal-location').value = unescape(locEsc);
+  document.getElementById('activity-modal-dept').value = dept;
+  document.getElementById('activity-modal-price-members').value = priceMem;
+  document.getElementById('activity-modal-price-gen').value = priceGen;
+  document.getElementById('activity-modal-capacity').value = capacity;
+  document.getElementById('activity-modal-status').value = regStatus;
+  document.getElementById('activity-modal-desc').value = unescape(descEsc);
+  const imgUrl = unescape(imgEsc);
+  document.getElementById('activity-modal-image-url').value = imgUrl;
+  document.getElementById('activity-modal-preview-img').src = imgUrl || 'assets/hero_uruguay_monte.jpg';
+  document.getElementById('activity-modal-header-title').textContent = '✏️ Modificar Actividad';
+
+  const modal = document.getElementById('activity-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function handleActivityImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  adminActivityImageFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('activity-modal-preview-img').src = e.target.result;
+    document.getElementById('activity-modal-image-url').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveActivityForm(event) {
+  if (event) event.preventDefault();
+
+  const id = document.getElementById('activity-modal-id').value;
+  const title = document.getElementById('activity-modal-title').value.trim();
+  const category = document.getElementById('activity-modal-category').value;
+  const eventDate = document.getElementById('activity-modal-date').value;
+  const eventTime = document.getElementById('activity-modal-time').value.trim();
+  const location = document.getElementById('activity-modal-location').value.trim();
+  const department = document.getElementById('activity-modal-dept').value;
+  const priceMembers = document.getElementById('activity-modal-price-members').value;
+  const priceGeneral = document.getElementById('activity-modal-price-gen').value;
+  const capacity = document.getElementById('activity-modal-capacity').value;
+  const registrationStatus = document.getElementById('activity-modal-status').value;
+  const description = document.getElementById('activity-modal-desc').value.trim();
+  const imageUrl = document.getElementById('activity-modal-image-url').value.trim();
+
+  if (!title || !eventDate || !location) {
+    alert("Por favor complete los campos requeridos.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('category', category);
+  formData.append('event_date', eventDate);
+  formData.append('event_time', eventTime);
+  formData.append('location', location);
+  formData.append('department', department);
+  formData.append('price_members', priceMembers);
+  formData.append('price_general', priceGeneral);
+  formData.append('capacity', capacity);
+  formData.append('registration_status', registrationStatus);
+  formData.append('description', description);
+  if (imageUrl) formData.append('image_url', imageUrl);
+  if (adminActivityImageFile) formData.append('image', adminActivityImageFile);
+
+  const btn = document.getElementById('btn-save-activity-submit');
+  if (btn) btn.textContent = 'Guardando...';
+
+  try {
+    const url = id ? `${API_BASE}/admin/activities/${id}` : `${API_BASE}/admin/activities`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Error al guardar la actividad.');
+      return;
+    }
+
+    alert(data.message || 'Actividad guardada con éxito.');
+    closeModal('activity-editor-modal');
+    await loadAdminActivities();
+  } catch (err) {
+    console.error('Error saving activity:', err);
+    alert('Error al conectar con el servidor.');
+  } finally {
+    if (btn) btn.textContent = 'Guardar Actividad →';
+  }
+}
+
+async function deleteActivity(id) {
+  if (!confirm("¿Deseas eliminar esta actividad del calendario?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/activities/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Actividad eliminada con éxito.");
+      await loadAdminActivities();
+    } else {
+      alert(data.error || "Error al eliminar actividad.");
+    }
+  } catch (err) {
+    alert("Error de conexión con el backend.");
+  }
+}
+
+// ====================================================
+// CONVENIOS Y BENEFICIOS (ADMIN & PUBLIC)
+// ====================================================
+
+let adminBenefitLogoFile = null;
+
+async function loadAdminBenefits() {
+  const container = document.getElementById('admin-benefits-grid');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/benefits`);
+    if (!res.ok) return;
+    const { benefits } = await res.json();
+
+    if (!benefits || benefits.length === 0) {
+      container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted);">No hay convenios comerciales cargados.</div>`;
+      return;
+    }
+
+    container.innerHTML = benefits.map(b => `
+      <div class="pillar-card" style="background:var(--bg-card); border:1px solid var(--border-medium); position:relative;">
+        <div style="position:absolute; top:12px; right:12px; display:flex; gap:6px;">
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="editBenefit(${b.id}, '${escape(b.partner_name)}', '${escape(b.discount_text)}', '${b.category}', '${escape(b.website_url || '')}', '${escape(b.address || '')}', '${b.department}', ${b.display_order || 1}, ${b.is_active}, '${escape(b.logo_url || '')}')">✏️</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteBenefit(${b.id})">🗑️</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="width:50px; height:50px; border-radius:var(--radius-sm); border:1px solid var(--border-bronze); background:#0A0F0D; display:flex; align-items:center; justify-content:center; padding:4px; overflow:hidden;">
+            <img src="${b.logo_url || 'assets/logo.png'}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${b.partner_name}" onerror="this.src='assets/logo.png';" />
+          </div>
+          <div>
+            <span style="font-size:0.75rem; color:var(--bronze-light); font-weight:700; text-transform:uppercase;">${b.category}</span>
+            <h4 style="font-size:1.05rem; font-weight:700; color:var(--text-bone);">${b.partner_name}</h4>
+          </div>
+        </div>
+
+        <div style="background:rgba(35,88,60,0.25); border:1px solid rgba(52,126,87,0.4); padding:10px; border-radius:var(--radius-sm); margin-bottom:10px; font-size:0.85rem; color:#A7F3D0; font-weight:600;">
+          🎁 ${b.discount_text}
+        </div>
+
+        <div style="font-size:0.78rem; color:var(--text-muted);">
+          📍 ${b.address ? b.address + ' (' + b.department + ')' : b.department}
+          ${b.website_url ? `<br>🌐 <a href="${b.website_url}" target="_blank" style="color:var(--bronze-light); text-decoration:underline;">Ver web</a>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Error loading admin benefits:', err);
+  }
+}
+
+function openNewBenefitModal() {
+  adminBenefitLogoFile = null;
+  document.getElementById('benefit-modal-id').value = '';
+  document.getElementById('benefit-modal-name').value = '';
+  document.getElementById('benefit-modal-discount').value = '';
+  document.getElementById('benefit-modal-category').value = 'Armerías';
+  document.getElementById('benefit-modal-dept').value = 'Montevideo';
+  document.getElementById('benefit-modal-address').value = '';
+  document.getElementById('benefit-modal-web').value = '';
+  document.getElementById('benefit-modal-logo-url').value = '';
+  document.getElementById('benefit-modal-preview-img').src = 'assets/logo.png';
+  document.getElementById('benefit-modal-header-title').textContent = '✨ Nuevo Convenio Comercial';
+
+  const modal = document.getElementById('benefit-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function editBenefit(id, nameEsc, discEsc, cat, webEsc, addrEsc, dept, order, active, logoEsc) {
+  adminBenefitLogoFile = null;
+  document.getElementById('benefit-modal-id').value = id;
+  document.getElementById('benefit-modal-name').value = unescape(nameEsc);
+  document.getElementById('benefit-modal-discount').value = unescape(discEsc);
+  document.getElementById('benefit-modal-category').value = cat;
+  document.getElementById('benefit-modal-web').value = unescape(webEsc);
+  document.getElementById('benefit-modal-address').value = unescape(addrEsc);
+  document.getElementById('benefit-modal-dept').value = dept;
+  const logoUrl = unescape(logoEsc);
+  document.getElementById('benefit-modal-logo-url').value = logoUrl;
+  document.getElementById('benefit-modal-preview-img').src = logoUrl || 'assets/logo.png';
+  document.getElementById('benefit-modal-header-title').textContent = '✏️ Modificar Convenio';
+
+  const modal = document.getElementById('benefit-editor-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function handleBenefitLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  adminBenefitLogoFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('benefit-modal-preview-img').src = e.target.result;
+    document.getElementById('benefit-modal-logo-url').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveBenefitForm(event) {
+  if (event) event.preventDefault();
+
+  const id = document.getElementById('benefit-modal-id').value;
+  const partnerName = document.getElementById('benefit-modal-name').value.trim();
+  const discountText = document.getElementById('benefit-modal-discount').value.trim();
+  const category = document.getElementById('benefit-modal-category').value;
+  const department = document.getElementById('benefit-modal-dept').value;
+  const address = document.getElementById('benefit-modal-address').value.trim();
+  const websiteUrl = document.getElementById('benefit-modal-web').value.trim();
+  const logoUrl = document.getElementById('benefit-modal-logo-url').value.trim();
+
+  if (!partnerName || !discountText) {
+    alert("Por favor ingrese el nombre del comercio y el beneficio otorgado.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('partner_name', partnerName);
+  formData.append('discount_text', discountText);
+  formData.append('category', category);
+  formData.append('department', department);
+  formData.append('address', address);
+  formData.append('website_url', websiteUrl);
+  if (logoUrl) formData.append('logo_url', logoUrl);
+  if (adminBenefitLogoFile) formData.append('logo', adminBenefitLogoFile);
+
+  const btn = document.getElementById('btn-save-benefit-submit');
+  if (btn) btn.textContent = 'Guardando...';
+
+  try {
+    const url = id ? `${API_BASE}/admin/benefits/${id}` : `${API_BASE}/admin/benefits`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Error al guardar el convenio.');
+      return;
+    }
+
+    alert(data.message || 'Convenio guardado con éxito.');
+    closeModal('benefit-editor-modal');
+    await loadAdminBenefits();
+  } catch (err) {
+    console.error('Error saving benefit:', err);
+    alert('Error al conectar con el servidor.');
+  } finally {
+    if (btn) btn.textContent = 'Guardar Convenio →';
+  }
+}
+
+async function deleteBenefit(id) {
+  if (!confirm("¿Deseas eliminar este convenio comercial?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/benefits/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Convenio eliminado con éxito.");
+      await loadAdminBenefits();
+    } else {
+      alert(data.error || "Error al eliminar convenio.");
+    }
+  } catch (err) {
+    alert("Error de conexión con el backend.");
+  }
+}
+
+// ====================================================
+// PUBLIC FRONTEND HYDRATION LOADERS
+// ====================================================
+
+async function loadPublicSettings() {
+  try {
+    const res = await fetch(`${API_BASE}/settings`);
+    if (!res.ok) return;
+    const { settings } = await res.json();
+
+    // 1. Top Bar Announcement
+    if (settings.top_announcement_text) {
+      document.querySelectorAll('.top-bar-badge').forEach(badge => {
+        badge.innerHTML = `<span class="dot"></span> ${settings.top_announcement_text}`;
+      });
+    }
+
+    // 2. Contact Phone & Email
+    if (settings.contact_email) {
+      document.querySelectorAll('a[href^="mailto:"]').forEach(link => {
+        if (!link.classList.contains('no-auto-sync')) {
+          link.href = `mailto:${settings.contact_email}`;
+          link.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> ${settings.contact_email}`;
+        }
+      });
+    }
+
+    // 3. Membership Fee Sync
+    if (settings.membership_fee_amount) {
+      document.querySelectorAll('.membership-fee-display').forEach(el => {
+        el.textContent = `$ ${settings.membership_fee_amount} UYU`;
+      });
+    }
+
+    // 4. Statute Download links
+    if (settings.statute_pdf_url) {
+      document.querySelectorAll('.statute-download-link').forEach(link => {
+        link.href = settings.statute_pdf_url;
+      });
+    }
+
+    // 5. Bank Accounts
+    if (settings.brou_account_info) {
+      document.querySelectorAll('.brou-account-display').forEach(el => {
+        el.textContent = settings.brou_account_info;
+      });
+    }
+    if (settings.prex_account_info) {
+      document.querySelectorAll('.prex-account-display').forEach(el => {
+        el.textContent = settings.prex_account_info;
+      });
+    }
+  } catch (err) {
+    console.warn('Configuraciones operando en modo estático/fallback:', err);
+  }
+}
+
+async function loadPublicAuthorities() {
+  const container = document.getElementById('public-authorities-grid');
+  const mandateEl = document.getElementById('public-mandate-period');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/authorities`);
+    if (!res.ok) return;
+    const { authorities, mandatePeriod } = await res.json();
+
+    if (mandateEl && mandatePeriod) {
+      mandateEl.innerHTML = `Período de Mandato Estatutario: <strong>${mandatePeriod}</strong>`;
+    }
+
+    if (authorities && authorities.length > 0) {
+      container.innerHTML = authorities.map(a => `
+        <div class="pillar-card" style="text-align:center;">
+          <div style="width:100px; height:100px; border-radius:50%; margin:0 auto 18px auto; overflow:hidden; border:2px solid var(--border-bronze); background:#0A0F0D;">
+            <img src="${a.photo_url || 'assets/logo.png'}" alt="${a.role_title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='assets/logo.png';" />
+          </div>
+          <span style="font-size:0.75rem; font-weight:700; color:var(--bronze-light); text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:4px;">
+            ${a.role_title}
+          </span>
+          <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-bone); margin-bottom:8px;">
+            ${a.name}
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted);">
+            ${a.bio || ''}
+          </p>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.warn('Autoridades operando en modo estático/fallback:', err);
+  }
+}
+
+async function loadPublicActivities() {
+  const container = document.getElementById('public-activities-container');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/activities`);
+    if (!res.ok) return;
+    const { activities } = await res.json();
+
+    if (activities && activities.length > 0) {
+      container.innerHTML = activities.map(act => {
+        const d = new Date(act.event_date);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = d.toLocaleDateString('es-UY', { month: 'short' }).toUpperCase();
+
+        const badgeClass = act.registration_status === 'OPEN' ? 'style="color:var(--color-available);"' : 'style="color:var(--text-muted);"';
+        const statusText = act.registration_status === 'OPEN' ? '🟢 Cupos Disponibles' : (act.registration_status === 'FULL' ? '🟠 Cupos Agotados' : '🔴 Finalizado');
+
+        return `
+          <div class="activity-card" style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); overflow:hidden; display:grid; grid-template-columns: 240px 1fr; margin-bottom:24px; box-shadow:var(--shadow-md);">
+            <div style="background-image:url('${act.image_url || 'assets/hero_uruguay_monte.jpg'}'); background-size:cover; background-position:center; min-height:180px; position:relative;">
+              <div style="position:absolute; top:16px; left:16px; background:rgba(10,15,13,0.92); border:1.5px solid var(--border-bronze); border-radius:var(--radius-md); padding:8px 14px; text-align:center;">
+                <span style="font-size:1.4rem; font-weight:800; color:var(--bronze-light); display:block; line-height:1;">${day}</span>
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-bone);">${month}</span>
+              </div>
+            </div>
+            <div style="padding:28px 32px; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                  <span class="raffle-tag" style="margin-bottom:0;">${act.category}</span>
+                  <span ${badgeClass} style="font-size:0.8rem; font-weight:700;">${statusText}</span>
+                </div>
+                <h3 style="font-family:var(--font-heading); font-size:1.35rem; font-weight:700; color:var(--text-bone); margin-bottom:10px;">
+                  ${act.title}
+                </h3>
+                <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.5; margin-bottom:16px;">
+                  ${act.description}
+                </p>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-subtle); padding-top:14px; flex-wrap:wrap; gap:12px;">
+                <div style="font-size:0.82rem; color:var(--text-muted);">
+                  📍 <strong>${act.location}, ${act.department}</strong> · 🕒 ${act.event_time || '09:00 hs'}
+                </div>
+                <div style="display:flex; align-items:center; gap:16px;">
+                  <div style="text-align:right;">
+                    <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Socios ANCU:</span>
+                    <strong style="color:var(--color-available); font-size:0.95rem;">${parseFloat(act.price_members) === 0 ? 'Sin Costo' : '$ ' + act.price_members}</strong>
+                  </div>
+                  <a href="contacto.html" class="btn btn-secondary btn-sm">Inscribirse &rarr;</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  } catch (err) {
+    console.warn('Actividades operando en modo estático/fallback:', err);
+  }
+}
+
+async function loadPublicBenefits() {
+  const container = document.getElementById('public-benefits-grid');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/benefits`);
+    if (!res.ok) return;
+    const { benefits } = await res.json();
+
+    if (benefits && benefits.length > 0) {
+      container.innerHTML = benefits.map(b => `
+        <div class="pillar-card" style="background:var(--bg-card); border:1px solid var(--border-medium); display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+              <div style="width:48px; height:48px; border-radius:var(--radius-sm); border:1.5px solid var(--border-bronze); background:#0A0F0D; display:flex; align-items:center; justify-content:center; padding:4px;">
+                <img src="${b.logo_url || 'assets/logo.png'}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${b.partner_name}" onerror="this.src='assets/logo.png';" />
+              </div>
+              <div>
+                <span style="font-size:0.75rem; color:var(--bronze-light); font-weight:700; text-transform:uppercase;">${b.category}</span>
+                <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-bone);">${b.partner_name}</h3>
+              </div>
+            </div>
+            <div style="background:rgba(35,88,60,0.25); border:1px solid rgba(52,126,87,0.4); padding:12px; border-radius:var(--radius-md); margin-bottom:12px; font-size:0.9rem; color:#A7F3D0; font-weight:600;">
+              🎁 ${b.discount_text}
+            </div>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-subtle); padding-top:10px;">
+            📍 ${b.address ? b.address + ' (' + b.department + ')' : b.department}
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.warn('Convenios operando en modo estático/fallback:', err);
+  }
+}
+
 // ---------------- Normativa Filter Handler ----------------
 function initNormativaFilters() {
   const filterBtns = document.querySelectorAll('.normativa-filter-btn');
@@ -1908,6 +2789,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   initModalListeners();
   initNormativaFilters();
   initMembershipForm();
+
+  // Load global settings, top bar & fees across all pages
+  await loadPublicSettings();
+
+  // Load public authorities on autoridades.html
+  await loadPublicAuthorities();
+
+  // Load public activities on actividades.html
+  await loadPublicActivities();
+
+  // Load public benefits on socios.html
+  await loadPublicBenefits();
 
   // Load news from PostgreSQL
   await syncNewsFromAPI();

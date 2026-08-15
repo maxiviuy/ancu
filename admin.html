@@ -82,6 +82,18 @@
         <button type="button" class="btn btn-tab" id="tab-btn-news" onclick="switchAdminTab('news')">
           📰 Gestor de Noticias & CMS
         </button>
+        <button type="button" class="btn btn-tab" id="tab-btn-authorities" onclick="switchAdminTab('authorities')">
+          🏛️ Gobernanza & Directivos
+        </button>
+        <button type="button" class="btn btn-tab" id="tab-btn-settings" onclick="switchAdminTab('settings')">
+          ⚙️ Configuración Institucional
+        </button>
+        <button type="button" class="btn btn-tab" id="tab-btn-activities" onclick="switchAdminTab('activities')">
+          📅 Actividades & Cursos
+        </button>
+        <button type="button" class="btn btn-tab" id="tab-btn-benefits" onclick="switchAdminTab('benefits')">
+          🎁 Convenios & Beneficios
+        </button>
         <button type="button" class="btn btn-tab admin-only-tab" id="tab-btn-receipts" onclick="switchAdminTab('receipts')">
           ⏳ Transferencias & Comprobantes
         </button>
@@ -348,6 +360,206 @@
         </div>
       </section>
 
+      <!-- ================= TAB 3: GOBERNANZA Y AUTORIDADES ================= -->
+      <section id="admin-tab-authorities" class="admin-tab-content" style="display:none;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag">Gobernanza Institucional</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.45rem; font-weight:700; color:var(--text-bone);">
+                🏛️ Comisión Directiva & Estatutos
+              </h2>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                Modificá las autoridades electas, cargos, fotos de perfil, biografías y período estatutario de mandato.
+              </p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-bronze btn-sm" onclick="openNewAuthorityModal()">
+                ✨ Agregar Directivo / Autoridad
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openStatuteModal()">
+                📄 Subir Estatuto Oficial (PDF)
+              </button>
+            </div>
+          </div>
+
+          <!-- Mandate Period Quick Editor -->
+          <div style="background:rgba(0,0,0,0.35); border:1px solid var(--border-bronze); border-radius:var(--radius-lg); padding:18px 24px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:40px; height:40px; border-radius:50%; background:rgba(197,155,39,0.15); border:1.5px solid var(--border-bronze); display:flex; align-items:center; justify-content:center; color:var(--bronze-light); font-size:1.2rem;">
+                📜
+              </div>
+              <div>
+                <strong style="color:var(--text-bone); font-size:0.95rem; display:block;">Período de Mandato Estatutario Vigente</strong>
+                <span style="font-size:0.8rem; color:var(--text-muted);">Aparece en portada y en la sección institucional de la web.</span>
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="text" id="admin-mandate-period-input" class="form-control" style="width:180px; font-weight:700; text-align:center;" value="2024 – 2027">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="saveMandatePeriod()">Guardar Período</button>
+            </div>
+          </div>
+
+          <!-- Authorities Cards Grid -->
+          <div id="admin-authorities-grid" class="grid-3" style="margin-top:16px;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: CONFIGURACIÓN INSTITUCIONAL ================= -->
+      <section id="admin-tab-settings" class="admin-tab-content" style="display:none;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag">Parámetros Globales</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.45rem; font-weight:700; color:var(--text-bone);">
+                ⚙️ Configuración Institucional, Cuentas y Valores
+              </h2>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                Personalizá cuotas sociales, cuentas bancarias para transferencias y avisos de temporada.
+              </p>
+            </div>
+            <button type="button" class="btn btn-bronze btn-sm" onclick="saveInstitutionalSettingsForm(event)">
+              💾 Guardar Todas las Configuraciones
+            </button>
+          </div>
+
+          <form id="institutional-settings-form" onsubmit="saveInstitutionalSettingsForm(event)">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:24px;">
+              
+              <!-- Left Column: Announcements & Membership Fee -->
+              <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:20px;">
+                <h3 style="font-size:1.05rem; font-weight:700; color:var(--bronze-light); margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                  📢 Avisos en Barra Superior & Cuotas
+                </h3>
+
+                <div class="form-group" style="margin-bottom:16px;">
+                  <label class="form-label" for="setting-top-announcement">Texto de la Barra Superior de Avisos (Top Banner)</label>
+                  <input type="text" id="setting-top-announcement" name="top_announcement_text" class="form-control" placeholder="Ej: Temporada Oficial 2026 Habilitada" required>
+                  <small style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:4px;">Se muestra en la franja superior de todas las páginas del portal.</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom:16px;">
+                  <label class="form-label" for="setting-membership-fee">Valor de la Cuota Social Mensual ($ UYU)</label>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.1rem; color:var(--bronze-light); font-weight:800;">$</span>
+                    <input type="number" id="setting-membership-fee" name="membership_fee_amount" class="form-control" value="600" min="1" required style="font-weight:700;">
+                    <span style="color:var(--text-bone); font-size:0.9rem;">UYU / mes</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="setting-statute-summary">Resumen del Estatuto Social</label>
+                  <textarea id="setting-statute-summary" name="statute_summary" class="form-control" rows="3" placeholder="Resumen institucional para la web..."></textarea>
+                </div>
+              </div>
+
+              <!-- Right Column: Banking Accounts & Official Contact -->
+              <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:20px;">
+                <h3 style="font-size:1.05rem; font-weight:700; color:var(--bronze-light); margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                  🏦 Cuentas Bancarias & Canales de Contacto
+                </h3>
+
+                <div class="form-group" style="margin-bottom:16px;">
+                  <label class="form-label" for="setting-brou-account">Datos de Cuenta BROU (Caja de Ahorro / Cta Cte)</label>
+                  <input type="text" id="setting-brou-account" name="brou_account_info" class="form-control" placeholder="Caja de Ahorro BROU: 001558921-00001 (Titular: ANCU)">
+                </div>
+
+                <div class="form-group" style="margin-bottom:16px;">
+                  <label class="form-label" for="setting-prex-account">Datos de Cuenta Prex</label>
+                  <input type="text" id="setting-prex-account" name="prex_account_info" class="form-control" placeholder="Cuenta Prex: 1234-5678-9012 (Titular: ANCU)">
+                </div>
+
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="setting-contact-email">Correo Oficial</label>
+                    <input type="email" id="setting-contact-email" name="contact_email" class="form-control" placeholder="info@ancu.uy">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="setting-contact-phone">WhatsApp / Teléfono</label>
+                    <input type="text" id="setting-contact-phone" name="contact_phone" class="form-control" placeholder="099 123 456">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+              <button type="submit" class="btn btn-bronze">
+                💾 Guardar Todos los Parámetros &rarr;
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: ACTIVIDADES Y CURSOS ================= -->
+      <section id="admin-tab-activities" class="admin-tab-content" style="display:none;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag">Calendario & Eventos</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.45rem; font-weight:700; color:var(--text-bone);">
+                📅 Cursos, Capacitaciones y Jornadas de Campo
+              </h2>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                Gestioná los encuentros de tiro, jornadas de muestreo científico y asambleas institucionales.
+              </p>
+            </div>
+            <button type="button" class="btn btn-bronze btn-sm" onclick="openNewActivityModal()">
+              ✨ Nueva Actividad o Curso
+            </button>
+          </div>
+
+          <div id="admin-activities-table-wrap" style="overflow-x:auto;">
+            <table style="width:100%; min-width:800px; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border-subtle); color:var(--text-muted); background:rgba(255,255,255,0.02);">
+                  <th style="padding:12px 16px;">Actividad / Curso</th>
+                  <th style="padding:12px 16px;">Categoría</th>
+                  <th style="padding:12px 16px;">Fecha y Horario</th>
+                  <th style="padding:12px 16px;">Ubicación</th>
+                  <th style="padding:12px 16px;">Arancel (Socio / Gen.)</th>
+                  <th style="padding:12px 16px;">Inscripciones</th>
+                  <th style="padding:12px 16px; text-align:right;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="admin-activities-tbody">
+                <tr>
+                  <td colspan="7" style="padding:20px; text-align:center; color:var(--text-muted);">Cargando actividades...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 6: CONVENIOS Y BENEFICIOS ================= -->
+      <section id="admin-tab-benefits" class="admin-tab-content" style="display:none;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag">Padrón de Socios</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.45rem; font-weight:700; color:var(--text-bone);">
+                🎁 Directorio de Convenios Comerciales & Armerías
+              </h2>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                Armerías, tiendas de camping y comercios con descuentos exclusivos para socios al día de ANCU.
+              </p>
+            </div>
+            <button type="button" class="btn btn-bronze btn-sm" onclick="openNewBenefitModal()">
+              ✨ Nuevo Convenio Comercial
+            </button>
+          </div>
+
+          <div id="admin-benefits-grid" class="grid-3" style="margin-top:16px;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
+
       <!-- ================= TAB 5: AUDITORÍA ================= -->
       <section id="admin-tab-audit" class="admin-tab-content" style="display:none;">
         <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px;">
@@ -545,6 +757,308 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20260814_6"></script>
+  <!-- Modal: Crear / Editar Directivo o Autoridad -->
+  <div class="modal-overlay" id="authority-editor-modal">
+    <div class="modal-box" style="max-width:640px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone);" id="authority-modal-header-title">
+          ✨ Agregar Miembro de Comisión Directiva
+        </h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('authority-editor-modal')">&times;</button>
+      </div>
+
+      <form id="authority-editor-form" onsubmit="saveAuthorityForm(event)">
+        <input type="hidden" id="authority-modal-id" value="">
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="authority-modal-name">Nombre y Apellido *</label>
+            <input type="text" id="authority-modal-name" class="form-control" placeholder="Ej: Julio M. Graña" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="authority-modal-role">Cargo Oficial *</label>
+            <input type="text" id="authority-modal-role" class="form-control" placeholder="Ej: Presidente / Secretario General" required>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="authority-modal-mandate">Mandato</label>
+            <input type="text" id="authority-modal-mandate" class="form-control" value="2024 – 2027">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="authority-modal-order">Orden de Grilla</label>
+            <input type="number" id="authority-modal-order" class="form-control" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="authority-modal-status">Estado</label>
+            <select id="authority-modal-status" class="form-control">
+              <option value="ACTIVE">🟢 Activo en Ejercicio</option>
+              <option value="HISTORICAL">⚪ Mandato Histórico</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Photo Upload with Preview -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
+          <label class="form-label" style="margin-bottom:8px;">Fotografía de Perfil</label>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <img src="assets/logo.png" id="authority-modal-preview-img" style="width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--border-bronze); background:#000;" alt="Foto">
+            <div style="flex:1;">
+              <input type="text" id="authority-modal-photo-url" class="form-control" placeholder="URL o subir foto..." style="margin-bottom:8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer; display:inline-flex;">
+                📷 Subir Foto desde Dispositivo
+                <input type="file" id="authority-modal-file" accept="image/*" style="display:none;" onchange="handleAuthorityPhotoUpload(event)">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:18px;">
+          <label class="form-label" for="authority-modal-bio">Resumen del Rol / Biografía Institucional</label>
+          <textarea id="authority-modal-bio" class="form-control" rows="2" placeholder="Representante legal ante ministerios y comisiones técnicas de fauna..."></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('authority-editor-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-bronze" id="btn-save-authority-submit">Guardar Autoridad &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear / Editar Actividad o Curso -->
+  <div class="modal-overlay" id="activity-editor-modal">
+    <div class="modal-box" style="max-width:680px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone);" id="activity-modal-header-title">
+          ✨ Nueva Actividad o Capacitación
+        </h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('activity-editor-modal')">&times;</button>
+      </div>
+
+      <form id="activity-editor-form" onsubmit="saveActivityForm(event)">
+        <input type="hidden" id="activity-modal-id" value="">
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="activity-modal-title">Nombre de la Actividad o Encuentro *</label>
+          <input type="text" id="activity-modal-title" class="form-control" placeholder="Ej: Curso de Seguridad, Balística y Manejo Defensivo" required>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-category">Categoría</label>
+            <select id="activity-modal-category" class="form-control">
+              <option value="Capacitación">Capacitación y Cursos</option>
+              <option value="Tiro y Balística">Tiro y Balística</option>
+              <option value="Muestreo Científico">Muestreo Científico</option>
+              <option value="Asamblea">Asamblea Institucional</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-date">Fecha *</label>
+            <input type="date" id="activity-modal-date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-time">Horario</label>
+            <input type="text" id="activity-modal-time" class="form-control" placeholder="09:00 a 16:00 hs">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-location">Lugar / Polígono / Establecimiento *</label>
+            <input type="text" id="activity-modal-location" class="form-control" placeholder="Ej: Polígono Departamental" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-dept">Departamento</label>
+            <select id="activity-modal-dept" class="form-control">
+              <option value="Lavalleja">Lavalleja</option>
+              <option value="Montevideo">Montevideo</option>
+              <option value="Canelones">Canelones</option>
+              <option value="Maldonado">Maldonado</option>
+              <option value="Rocha">Rocha</option>
+              <option value="Treinta y Tres">Treinta y Tres</option>
+              <option value="Cerro Largo">Cerro Largo</option>
+              <option value="Rivera">Rivera</option>
+              <option value="Tacuarembó">Tacuarembó</option>
+              <option value="Durazno">Durazno</option>
+              <option value="Florida">Florida</option>
+              <option value="Flores">Flores</option>
+              <option value="San José">San José</option>
+              <option value="Colonia">Colonia</option>
+              <option value="Soriano">Soriano</option>
+              <option value="Río Negro">Río Negro</option>
+              <option value="Paysandú">Paysandú</option>
+              <option value="Salto">Salto</option>
+              <option value="Artigas">Artigas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-price-members">Arancel Socios ($)</label>
+            <input type="number" id="activity-modal-price-members" class="form-control" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-price-gen">Arancel General ($)</label>
+            <input type="number" id="activity-modal-price-gen" class="form-control" value="800">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-capacity">Cupos Máx.</label>
+            <input type="number" id="activity-modal-capacity" class="form-control" value="30">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="activity-modal-status">Inscripciones</label>
+            <select id="activity-modal-status" class="form-control">
+              <option value="OPEN">🟢 Abiertas</option>
+              <option value="FULL">🟠 Cupos Agotados</option>
+              <option value="CLOSED">🔴 Finalizado</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Image Upload for Activity -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
+          <label class="form-label" style="margin-bottom:8px;">Fotografía o Afiche del Evento</label>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <img src="assets/hero_uruguay_monte.jpg" id="activity-modal-preview-img" style="width:100px; height:60px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-bronze); background:#000;" alt="Foto">
+            <div style="flex:1;">
+              <input type="text" id="activity-modal-image-url" class="form-control" placeholder="URL o subir archivo..." style="margin-bottom:8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer; display:inline-flex;">
+                📷 Subir Foto desde Dispositivo
+                <input type="file" id="activity-modal-file" accept="image/*" style="display:none;" onchange="handleActivityImageUpload(event)">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:18px;">
+          <label class="form-label" for="activity-modal-desc">Descripción Detallada del Evento y Requisitos *</label>
+          <textarea id="activity-modal-desc" class="form-control" rows="3" placeholder="Detalles de la jornada, temario, instructores, equipamiento necesario..." required></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('activity-editor-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-bronze" id="btn-save-activity-submit">Guardar Actividad &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear / Editar Convenio Comercial -->
+  <div class="modal-overlay" id="benefit-editor-modal">
+    <div class="modal-box" style="max-width:600px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone);" id="benefit-modal-header-title">
+          ✨ Nuevo Convenio Comercial
+        </h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('benefit-editor-modal')">&times;</button>
+      </div>
+
+      <form id="benefit-editor-form" onsubmit="saveBenefitForm(event)">
+        <input type="hidden" id="benefit-modal-id" value="">
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="benefit-modal-name">Comercio / Armería / Empresa *</label>
+            <input type="text" id="benefit-modal-name" class="form-control" placeholder="Ej: Armería El Cazador" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="benefit-modal-category">Rubro</label>
+            <select id="benefit-modal-category" class="form-control">
+              <option value="Armerías">Armería & Armamento</option>
+              <option value="Camping y Óptica">Camping & Óptica</option>
+              <option value="Indumentaria">Indumentaria Técnica</option>
+              <option value="Capacitación">Capacitación & Polígonos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="benefit-modal-discount">Beneficio o Descuento para Socios *</label>
+          <input type="text" id="benefit-modal-discount" class="form-control" placeholder="Ej: 15% de descuento en municiones y óptica" required>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="benefit-modal-dept">Departamento</label>
+            <select id="benefit-modal-dept" class="form-control">
+              <option value="Montevideo">Montevideo</option>
+              <option value="Canelones">Canelones</option>
+              <option value="Maldonado">Maldonado</option>
+              <option value="Lavalleja">Lavalleja</option>
+              <option value="Rocha">Rocha</option>
+              <option value="Rivera">Rivera</option>
+              <option value="Salto">Salto</option>
+              <option value="Paysandú">Paysandú</option>
+              <option value="Colonia">Colonia</option>
+              <option value="Todo el País">Todo el País (Venta Online)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="benefit-modal-address">Dirección / Local</label>
+            <input type="text" id="benefit-modal-address" class="form-control" placeholder="Ej: 18 de Julio 1420">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="benefit-modal-web">Sitio Web / Red Social (Opcional)</label>
+          <input type="url" id="benefit-modal-web" class="form-control" placeholder="https://...">
+        </div>
+
+        <!-- Logo Upload for Partner -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
+          <label class="form-label" style="margin-bottom:8px;">Logo del Comercio</label>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <img src="assets/logo.png" id="benefit-modal-preview-img" style="width:60px; height:60px; object-fit:contain; border-radius:var(--radius-sm); border:1px solid var(--border-bronze); background:#000; padding:4px;" alt="Logo">
+            <div style="flex:1;">
+              <input type="text" id="benefit-modal-logo-url" class="form-control" placeholder="URL o subir archivo..." style="margin-bottom:8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer; display:inline-flex;">
+                📷 Subir Logo desde Dispositivo
+                <input type="file" id="benefit-modal-file" accept="image/*" style="display:none;" onchange="handleBenefitLogoUpload(event)">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('benefit-editor-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-bronze" id="btn-save-benefit-submit">Guardar Convenio &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Subir Estatuto Oficial (PDF) -->
+  <div class="modal-overlay" id="statute-upload-modal">
+    <div class="modal-box" style="max-width:540px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone);">
+          📄 Subir Estatuto Social Oficial
+        </h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('statute-upload-modal')">&times;</button>
+      </div>
+
+      <form id="statute-upload-form" onsubmit="handleStatuteUploadSubmit(event)">
+        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:16px;">
+          Seleccioná el archivo PDF oficial del estatuto registrado ante el MEC. Reemplazará automáticamente el documento descargable para todos los socios en la web.
+        </p>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" for="statute-file-input">Archivo PDF Oficial (.pdf)</label>
+          <input type="file" id="statute-file-input" class="form-control" accept="application/pdf" required>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('statute-upload-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-bronze" id="btn-upload-statute-submit">Subir y Actualizar Documento &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/app.js?v=20260815_3"></script>
 </body>
 </html>

@@ -165,3 +165,66 @@ CREATE INDEX IF NOT EXISTS idx_news_status_date ON news_articles (status, publis
 CREATE INDEX IF NOT EXISTS idx_news_category ON news_articles (category);
 CREATE INDEX IF NOT EXISTS idx_news_slug ON news_articles (slug);
 
+-- 9. Comisión Directiva y Autoridades Institucionales
+CREATE TABLE IF NOT EXISTS authorities (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    role_title VARCHAR(150) NOT NULL,
+    bio TEXT,
+    photo_url TEXT,
+    mandate_period VARCHAR(50) NOT NULL DEFAULT '2024 – 2027',
+    display_order INTEGER NOT NULL DEFAULT 1,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- 'ACTIVE', 'HISTORICAL'
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_authorities_status_order ON authorities (status, display_order ASC);
+
+-- 10. Parámetros y Configuración Institucional Global
+CREATE TABLE IF NOT EXISTS institutional_settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    category VARCHAR(50) NOT NULL DEFAULT 'GENERAL', -- 'GOVERNANCE', 'FINANCIAL', 'ANNOUNCEMENT', 'CONTACT', 'STATUTE'
+    label VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 11. Calendario de Actividades, Cursos y Encuentros
+CREATE TABLE IF NOT EXISTS activities (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL DEFAULT 'Capacitación', -- 'Capacitación', 'Tiro y Balística', 'Muestreo Científico', 'Asamblea'
+    event_date DATE NOT NULL,
+    event_time VARCHAR(50) DEFAULT '09:00',
+    location VARCHAR(255) NOT NULL,
+    department VARCHAR(100) NOT NULL DEFAULT 'Lavalleja',
+    description TEXT NOT NULL,
+    price_members NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+    price_general NUMERIC(10,2) NOT NULL DEFAULT 800.00,
+    capacity INTEGER DEFAULT 30,
+    registration_status VARCHAR(20) NOT NULL DEFAULT 'OPEN', -- 'OPEN', 'FULL', 'CLOSED'
+    image_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_activities_date ON activities (event_date DESC);
+
+-- 12. Directorio de Beneficios y Convenios Comerciales
+CREATE TABLE IF NOT EXISTS commercial_benefits (
+    id SERIAL PRIMARY KEY,
+    partner_name VARCHAR(255) NOT NULL,
+    discount_text VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL DEFAULT 'Armerías', -- 'Armerías', 'Camping y Óptica', 'Indumentaria', 'Capacitación'
+    logo_url TEXT,
+    website_url TEXT,
+    address TEXT,
+    department VARCHAR(100) NOT NULL DEFAULT 'Montevideo',
+    display_order INTEGER NOT NULL DEFAULT 1,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_benefits_active_order ON commercial_benefits (is_active, display_order ASC);
+

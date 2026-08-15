@@ -105,6 +105,90 @@ VALUES
     )
 ON CONFLICT (slug) DO NOTHING;
 
--- 8. Log de Auditoría Inicial
+-- 8. Comisión Directiva y Autoridades Institucionales
+INSERT INTO authorities (id, name, role_title, bio, photo_url, mandate_period, display_order, status)
+VALUES 
+    (1, 'Julio M. Graña', 'Presidente', 'Representante legal ante ministerios, DINABISE y comisiones técnicas nacionales.', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80', '2024 – 2027', 1, 'ACTIVE'),
+    (2, 'Fernando Etcheverry', 'Vicepresidente', 'Coordinación de delegados departamentales y asuntos del interior.', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80', '2024 – 2027', 2, 'ACTIVE'),
+    (3, 'Martín Larrosa', 'Secretario General', 'Actas institucionales, padrón social y comunicaciones públicas oficiales.', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&auto=format&fit=crop&q=80', '2024 – 2027', 3, 'ACTIVE'),
+    (4, 'Ignacio Benítez', 'Tesorero', 'Administración financiera, rendición de cuentas y recaudación de rifas.', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80', '2024 – 2027', 4, 'ACTIVE'),
+    (5, 'Dra. Valeria Silvera', 'Vocal de Conservación', 'Enlace científico y programas de muestreo de fauna con la Universidad.', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80', '2024 – 2027', 5, 'ACTIVE'),
+    (6, 'Rodrigo Cabrera', 'Vocal de Seguridad y Tiro', 'Instructor de tiro habilitado y organizador de cursos de seguridad y balística.', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=300&auto=format&fit=crop&q=80', '2024 – 2027', 6, 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
+
+-- 9. Configuración y Parámetros Institucionales Globales
+INSERT INTO institutional_settings (setting_key, setting_value, category, label)
+VALUES 
+    ('mandate_period', '2024 – 2027', 'GOVERNANCE', 'Período de Mandato de la Comisión Directiva'),
+    ('top_announcement_text', 'Temporada Oficial 2026 Habilitada', 'ANNOUNCEMENT', 'Texto de la Barra Superior de Avisos'),
+    ('membership_fee_amount', '600', 'FINANCIAL', 'Valor de Cuota Social Mensual ($ UYU)'),
+    ('brou_account_info', 'Caja de Ahorro BROU: 001558921-00001 (Titular: ANCU - Asoc. Nac. Cazadores)', 'FINANCIAL', 'Cuenta BROU para Transferencias'),
+    ('prex_account_info', 'Cuenta Prex: 1234-5678-9012 (Titular: ANCU)', 'FINANCIAL', 'Cuenta Prex para Transferencias'),
+    ('contact_email', 'info@ancu.uy', 'CONTACT', 'Correo Electrónico de Contacto Oficial'),
+    ('contact_phone', '099 123 456', 'CONTACT', 'Teléfono / WhatsApp de Guardia y Secretaría'),
+    ('statute_summary', 'Estatuto oficial aprobado y registrado ante el Ministerio de Educación y Cultura (MEC). Rige el funcionamiento democrático, la defensa de la caza ética y los derechos de los asociados.', 'STATUTE', 'Resumen del Estatuto Social'),
+    ('statute_pdf_url', 'assets/estatutos_ancu_oficial.pdf', 'STATUTE', 'Ruta al Documento PDF del Estatuto')
+ON CONFLICT (setting_key) DO NOTHING;
+
+-- 10. Calendario Inicial de Actividades
+INSERT INTO activities (id, title, category, event_date, event_time, location, department, description, price_members, price_general, capacity, registration_status, image_url)
+VALUES 
+    (
+        1,
+        'Curso de Seguridad, Balística y Manejo Defensivo',
+        'Capacitación',
+        '2026-09-12',
+        '09:00 a 16:00 hs',
+        'Polígono de Tiro Departamental',
+        'Lavalleja',
+        'Jornada teórico-práctica con instructores habilitados por el SMA. Prácticas de tiro con arma corta y larga, protocolos de seguridad y primeros auxilios de campo.',
+        0.00,
+        950.00,
+        25,
+        'OPEN',
+        'https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=600&auto=format&fit=crop&q=80'
+    ),
+    (
+        2,
+        'Jornada de Muestreo de Fauna y Monitoreo con la Facultad de Ciencias',
+        'Muestreo Científico',
+        '2026-09-26',
+        '07:30 hs',
+        'Establecimiento El Ombú (Ruta 8 km 140)',
+        'Lavalleja',
+        'Relevamiento biológico y toma voluntaria de muestras de jabalí en cooperación con investigadores universitarios.',
+        0.00,
+        0.00,
+        40,
+        'OPEN',
+        'assets/hero_uruguay_monte.jpg'
+    ),
+    (
+        3,
+        'Asamblea General Ordinaria de Socios 2026',
+        'Asamblea',
+        '2026-10-18',
+        '19:00 hs',
+        'Sede Social Central (Minas)',
+        'Lavalleja',
+        'Rendición de memoria y balance anual, informe de tesorería y tratamiento de temas institucionales con la Comisión Directiva.',
+        0.00,
+        0.00,
+        100,
+        'OPEN',
+        'assets/reunion_institucional_ancu.jpg'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- 11. Directorio Inicial de Beneficios Comerciales
+INSERT INTO commercial_benefits (id, partner_name, discount_text, category, logo_url, website_url, address, department, display_order, is_active)
+VALUES 
+    (1, 'Armería El Cazador', '15% de descuento en municiones y accesorios de caza', 'Armerías', 'assets/logo.png', 'https://ancu.uy', '18 de Julio 1420', 'Montevideo', 1, true),
+    (2, 'Outdoor & Camping Uruguay', '20% de descuento en indumentaria técnica, carpas y óptica', 'Camping y Óptica', 'assets/logo.png', 'https://ancu.uy', 'Av. Sarandí 680', 'Rivera', 2, true),
+    (3, 'Armería y Cuchillería del Este', '10% de descuento en armamento deportivo y cuchillería artesanal', 'Armerías', 'assets/logo.png', 'https://ancu.uy', 'Treinta y Tres 450', 'Lavalleja', 3, true),
+    (4, 'Centro de Capacitación Táctica SMA', 'Bonificación del 50% en aranceles de cursos de tiro', 'Capacitación', 'assets/logo.png', 'https://ancu.uy', 'Polígono Nacional', 'Canelones', 4, true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 12. Log de Auditoría Inicial
 INSERT INTO audit_logs (action, details, ip_address)
-VALUES ('SYSTEM_INIT', '{"message": "Sistema inicializado con base de datos PostgreSQL, 1000 números y CMS de noticias cargado"}'::jsonb, '127.0.0.1');
+VALUES ('SYSTEM_INIT', '{"message": "Sistema inicializado con base de datos PostgreSQL, autoridades, configuraciones y CMS cargados"}'::jsonb, '127.0.0.1');
