@@ -430,7 +430,7 @@ button, input, select, textarea {
   min-height: auto;
   display: flex;
   align-items: center;
-  padding: 56px 0 46px 0;
+  padding: 60px 0 60px 0;
   overflow: hidden;
   background-size: cover;
   background-position: center;
@@ -497,13 +497,14 @@ button, input, select, textarea {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .hero-portal-shortcut-wrap {
   display: flex;
   align-items: center;
-  margin-top: 14px;
+  margin-top: 0;
+  margin-bottom: 0;
   width: 100%;
 }
 
@@ -714,7 +715,7 @@ button, input, select, textarea {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 22px;
-  margin-top: -40px;
+  margin-top: -30px;
   position: relative;
   z-index: 10;
 }
