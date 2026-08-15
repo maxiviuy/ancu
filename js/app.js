@@ -64,6 +64,10 @@ const DEFAULT_STATE = {
   },
   adminUser: null,
   adminPrizesDraft: [],
+  adminAuthorities: [],
+  adminActivities: [],
+  adminBenefits: [],
+  adminUsers: [],
   articles: [],
   featuredArticle: null
 };
@@ -1498,6 +1502,7 @@ async function loadAdminUsers() {
     const res = await fetch(`${API_BASE}/admin/users`);
     if (!res.ok) return;
     const { users } = await res.json();
+    AppState.adminUsers = users || [];
 
     if (!Array.isArray(users) || users.length === 0) {
       tbody.innerHTML = `<tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);">No hay usuarios registrados.</td></tr>`;
@@ -1530,8 +1535,8 @@ async function loadAdminUsers() {
             ${new Date(u.created_at).toLocaleDateString('es-UY')}
           </td>
           <td style="padding:12px 16px; text-align:right;">
-            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; margin-right:4px;" onclick="editUser(${u.id}, '${escape(u.full_name)}', '${u.username}', '${u.email}', '${u.role}')">Editar ✏️</button>
-            ${u.id !== 1 ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteUser(${u.id})">🗑️</button>` : ''}
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; margin-right:4px; cursor:pointer;" onclick="editUser(${u.id})">Editar ✏️</button>
+            ${u.id !== 1 ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171; cursor:pointer;" onclick="deleteUser(${u.id})">🗑️</button>` : ''}
           </td>
         </tr>
       `;
@@ -1558,13 +1563,16 @@ function openNewUserModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editUser(userId, fullNameEscaped, username, email, role) {
-  document.getElementById('user-modal-id').value = userId;
-  document.getElementById('user-modal-fullname').value = unescape(fullNameEscaped);
-  document.getElementById('user-modal-username').value = username;
+function editUser(userId) {
+  const u = (AppState.adminUsers || []).find(item => item.id == userId);
+  if (!u) return;
+
+  document.getElementById('user-modal-id').value = u.id;
+  document.getElementById('user-modal-fullname').value = u.full_name || '';
+  document.getElementById('user-modal-username').value = u.username || '';
   document.getElementById('user-modal-username').disabled = true; // username immutable
-  document.getElementById('user-modal-email').value = email;
-  document.getElementById('user-modal-role').value = role;
+  document.getElementById('user-modal-email').value = u.email || '';
+  document.getElementById('user-modal-role').value = u.role || 'EDITOR';
   document.getElementById('user-modal-password').value = '';
   document.getElementById('user-modal-password').required = false;
   document.getElementById('user-modal-password-label').textContent = 'Nueva Contraseña (Opcional)';
@@ -1908,6 +1916,7 @@ async function loadAdminAuthorities() {
     const res = await fetch(`${API_BASE}/admin/authorities`);
     if (!res.ok) return;
     const { authorities } = await res.json();
+    AppState.adminAuthorities = authorities || [];
 
     // Check mandate
     const setRes = await fetch(`${API_BASE}/settings`);
@@ -1918,16 +1927,16 @@ async function loadAdminAuthorities() {
       }
     }
 
-    if (!authorities || authorities.length === 0) {
+    if (!AppState.adminAuthorities || AppState.adminAuthorities.length === 0) {
       container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted);">No hay directivos registrados. Haz click en "Agregar Directivo".</div>`;
       return;
     }
 
-    container.innerHTML = authorities.map(a => `
+    container.innerHTML = AppState.adminAuthorities.map(a => `
       <div class="pillar-card" style="text-align:center; position:relative; background:var(--bg-card); border:1px solid ${a.status === 'ACTIVE' ? 'var(--border-bronze)' : 'var(--border-subtle)'};">
         <div style="position:absolute; top:12px; right:12px; display:flex; gap:6px;">
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="editAuthority(${a.id}, '${escape(a.name)}', '${escape(a.role_title)}', '${escape(a.bio || '')}', '${escape(a.photo_url || '')}', '${escape(a.mandate_period || '')}', ${a.display_order || 1}, '${a.status}')">✏️</button>
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteAuthority(${a.id})">🗑️</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; cursor:pointer;" onclick="editAuthority(${a.id})">✏️</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171; cursor:pointer;" onclick="deleteAuthority(${a.id})">🗑️</button>
         </div>
 
         <div style="width:84px; height:84px; border-radius:50%; margin:0 auto 14px auto; overflow:hidden; border:2px solid var(--border-bronze); background:#000;">
@@ -1970,18 +1979,20 @@ function openNewAuthorityModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editAuthority(id, nameEsc, roleEsc, bioEsc, photoEsc, mandateEsc, order, status) {
+function editAuthority(id) {
+  const a = (AppState.adminAuthorities || []).find(item => item.id == id);
+  if (!a) return;
+
   adminAuthorityPhotoFile = null;
-  document.getElementById('authority-modal-id').value = id;
-  document.getElementById('authority-modal-name').value = unescape(nameEsc);
-  document.getElementById('authority-modal-role').value = unescape(roleEsc);
-  document.getElementById('authority-modal-bio').value = unescape(bioEsc);
-  const photoUrl = unescape(photoEsc);
-  document.getElementById('authority-modal-photo-url').value = photoUrl;
-  document.getElementById('authority-modal-preview-img').src = photoUrl || 'assets/logo.png';
-  document.getElementById('authority-modal-mandate').value = unescape(mandateEsc);
-  document.getElementById('authority-modal-order').value = order;
-  document.getElementById('authority-modal-status').value = status;
+  document.getElementById('authority-modal-id').value = a.id;
+  document.getElementById('authority-modal-name').value = a.name || '';
+  document.getElementById('authority-modal-role').value = a.role_title || '';
+  document.getElementById('authority-modal-bio').value = a.bio || '';
+  document.getElementById('authority-modal-photo-url').value = a.photo_url || '';
+  document.getElementById('authority-modal-preview-img').src = a.photo_url || 'assets/logo.png';
+  document.getElementById('authority-modal-mandate').value = a.mandate_period || '2024 – 2027';
+  document.getElementById('authority-modal-order').value = a.display_order || 1;
+  document.getElementById('authority-modal-status').value = a.status || 'ACTIVE';
   document.getElementById('authority-modal-header-title').textContent = '✏️ Modificar Autoridad Institucional';
 
   const modal = document.getElementById('authority-editor-modal');
@@ -2216,13 +2227,14 @@ async function loadAdminActivities() {
     const res = await fetch(`${API_BASE}/admin/activities`);
     if (!res.ok) return;
     const { activities } = await res.json();
+    AppState.adminActivities = activities || [];
 
-    if (!activities || activities.length === 0) {
+    if (!AppState.adminActivities || AppState.adminActivities.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" style="padding:20px; text-align:center; color:var(--text-muted);">No hay actividades registradas.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = activities.map(act => {
+    tbody.innerHTML = AppState.adminActivities.map(act => {
       const d = new Date(act.event_date);
       const dateStr = d.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' });
       const statusBadge = act.registration_status === 'OPEN'
@@ -2255,8 +2267,8 @@ async function loadAdminActivities() {
             ${statusBadge}
           </td>
           <td style="padding:12px 16px; text-align:right;">
-            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; margin-right:4px;" onclick="editActivity(${act.id}, '${escape(act.title)}', '${act.category}', '${act.event_date}', '${escape(act.event_time || '')}', '${escape(act.location)}', '${act.department}', '${escape(act.description || '')}', ${act.price_members}, ${act.price_general}, ${act.capacity}, '${act.registration_status}', '${escape(act.image_url || '')}')">Editar ✏️</button>
-            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteActivity(${act.id})">🗑️</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; margin-right:4px; cursor:pointer;" onclick="editActivity(${act.id})">Editar ✏️</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171; cursor:pointer;" onclick="deleteActivity(${act.id})">🗑️</button>
           </td>
         </tr>
       `;
@@ -2288,23 +2300,25 @@ function openNewActivityModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editActivity(id, titleEsc, category, eventDate, timeEsc, locEsc, dept, descEsc, priceMem, priceGen, capacity, regStatus, imgEsc) {
+function editActivity(id) {
+  const act = (AppState.adminActivities || []).find(item => item.id == id);
+  if (!act) return;
+
   adminActivityImageFile = null;
-  document.getElementById('activity-modal-id').value = id;
-  document.getElementById('activity-modal-title').value = unescape(titleEsc);
-  document.getElementById('activity-modal-category').value = category;
-  document.getElementById('activity-modal-date').value = eventDate ? eventDate.substring(0, 10) : '';
-  document.getElementById('activity-modal-time').value = unescape(timeEsc);
-  document.getElementById('activity-modal-location').value = unescape(locEsc);
-  document.getElementById('activity-modal-dept').value = dept;
-  document.getElementById('activity-modal-price-members').value = priceMem;
-  document.getElementById('activity-modal-price-gen').value = priceGen;
-  document.getElementById('activity-modal-capacity').value = capacity;
-  document.getElementById('activity-modal-status').value = regStatus;
-  document.getElementById('activity-modal-desc').value = unescape(descEsc);
-  const imgUrl = unescape(imgEsc);
-  document.getElementById('activity-modal-image-url').value = imgUrl;
-  document.getElementById('activity-modal-preview-img').src = imgUrl || 'assets/hero_uruguay_monte.jpg';
+  document.getElementById('activity-modal-id').value = act.id;
+  document.getElementById('activity-modal-title').value = act.title || '';
+  document.getElementById('activity-modal-category').value = act.category || 'Capacitación';
+  document.getElementById('activity-modal-date').value = act.event_date ? act.event_date.substring(0, 10) : '';
+  document.getElementById('activity-modal-time').value = act.event_time || '';
+  document.getElementById('activity-modal-location').value = act.location || '';
+  document.getElementById('activity-modal-dept').value = act.department || 'Lavalleja';
+  document.getElementById('activity-modal-price-members').value = act.price_members || 0;
+  document.getElementById('activity-modal-price-gen').value = act.price_general || 0;
+  document.getElementById('activity-modal-capacity').value = act.capacity || 30;
+  document.getElementById('activity-modal-status').value = act.registration_status || 'OPEN';
+  document.getElementById('activity-modal-desc').value = act.description || '';
+  document.getElementById('activity-modal-image-url').value = act.image_url || '';
+  document.getElementById('activity-modal-preview-img').src = act.image_url || 'assets/hero_uruguay_monte.jpg';
   document.getElementById('activity-modal-header-title').textContent = '✏️ Modificar Actividad';
 
   const modal = document.getElementById('activity-editor-modal');
@@ -2415,17 +2429,18 @@ async function loadAdminBenefits() {
     const res = await fetch(`${API_BASE}/admin/benefits`);
     if (!res.ok) return;
     const { benefits } = await res.json();
+    AppState.adminBenefits = benefits || [];
 
-    if (!benefits || benefits.length === 0) {
+    if (!AppState.adminBenefits || AppState.adminBenefits.length === 0) {
       container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted);">No hay convenios comerciales cargados.</div>`;
       return;
     }
 
-    container.innerHTML = benefits.map(b => `
+    container.innerHTML = AppState.adminBenefits.map(b => `
       <div class="pillar-card" style="background:var(--bg-card); border:1px solid var(--border-medium); position:relative;">
         <div style="position:absolute; top:12px; right:12px; display:flex; gap:6px;">
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="editBenefit(${b.id}, '${escape(b.partner_name)}', '${escape(b.discount_text)}', '${b.category}', '${escape(b.website_url || '')}', '${escape(b.address || '')}', '${b.department}', ${b.display_order || 1}, ${b.is_active}, '${escape(b.logo_url || '')}')">✏️</button>
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171;" onclick="deleteBenefit(${b.id})">🗑️</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; cursor:pointer;" onclick="editBenefit(${b.id})">✏️</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; color:#F87171; cursor:pointer;" onclick="deleteBenefit(${b.id})">🗑️</button>
         </div>
 
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
@@ -2470,18 +2485,20 @@ function openNewBenefitModal() {
   if (modal) modal.classList.add('active');
 }
 
-function editBenefit(id, nameEsc, discEsc, cat, webEsc, addrEsc, dept, order, active, logoEsc) {
+function editBenefit(id) {
+  const b = (AppState.adminBenefits || []).find(item => item.id == id);
+  if (!b) return;
+
   adminBenefitLogoFile = null;
-  document.getElementById('benefit-modal-id').value = id;
-  document.getElementById('benefit-modal-name').value = unescape(nameEsc);
-  document.getElementById('benefit-modal-discount').value = unescape(discEsc);
-  document.getElementById('benefit-modal-category').value = cat;
-  document.getElementById('benefit-modal-web').value = unescape(webEsc);
-  document.getElementById('benefit-modal-address').value = unescape(addrEsc);
-  document.getElementById('benefit-modal-dept').value = dept;
-  const logoUrl = unescape(logoEsc);
-  document.getElementById('benefit-modal-logo-url').value = logoUrl;
-  document.getElementById('benefit-modal-preview-img').src = logoUrl || 'assets/logo.png';
+  document.getElementById('benefit-modal-id').value = b.id;
+  document.getElementById('benefit-modal-name').value = b.partner_name || '';
+  document.getElementById('benefit-modal-discount').value = b.discount_text || '';
+  document.getElementById('benefit-modal-category').value = b.category || 'Armerías';
+  document.getElementById('benefit-modal-dept').value = b.department || 'Montevideo';
+  document.getElementById('benefit-modal-address').value = b.address || '';
+  document.getElementById('benefit-modal-web').value = b.website_url || '';
+  document.getElementById('benefit-modal-logo-url').value = b.logo_url || '';
+  document.getElementById('benefit-modal-preview-img').src = b.logo_url || 'assets/logo.png';
   document.getElementById('benefit-modal-header-title').textContent = '✏️ Modificar Convenio';
 
   const modal = document.getElementById('benefit-editor-modal');
