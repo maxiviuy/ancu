@@ -801,9 +801,20 @@ function printTicket() {
   window.print();
 }
 
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+}
+
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 
 function initModalListeners() {
@@ -1371,8 +1382,7 @@ function openNewArticleModal() {
   document.getElementById('news-modal-featured').checked = false;
   document.getElementById('news-modal-header-title').textContent = '✍️ Redactar Noticia o Comunicado Oficial';
 
-  const modal = document.getElementById('news-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('news-editor-modal');
 }
 
 async function editArticle(articleId) {
@@ -1393,8 +1403,7 @@ async function editArticle(articleId) {
     document.getElementById('news-modal-featured').checked = article.is_featured === true;
     document.getElementById('news-modal-header-title').textContent = '✏️ Editar Noticia o Comunicado';
 
-    const modal = document.getElementById('news-editor-modal');
-    if (modal) modal.classList.add('active');
+    openModal('news-editor-modal');
   } catch (err) {
     alert('Error al cargar datos del artículo para editar.');
   }
@@ -1559,8 +1568,7 @@ function openNewUserModal() {
   document.getElementById('user-modal-password-hint').textContent = 'Mínimo 6 caracteres.';
   document.getElementById('user-modal-header-title').textContent = '✨ Crear Cuenta de Acceso';
 
-  const modal = document.getElementById('user-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('user-editor-modal');
 }
 
 async function editUser(userId) {
@@ -1609,8 +1617,7 @@ async function editUser(userId) {
   if (passHintEl) passHintEl.textContent = 'Dejar en blanco para mantener la contraseña actual.';
   if (headTitleEl) headTitleEl.textContent = '✏️ Modificar Usuario y Permisos';
 
-  const modal = document.getElementById('user-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('user-editor-modal');
 }
 
 async function saveUserForm(event) {
@@ -1846,8 +1853,7 @@ async function saveRaffleConfig(event) {
 }
 
 function openNewRaffleModal() {
-  const modal = document.getElementById('new-raffle-modal');
-  if (modal) modal.classList.add('active');
+  openModal('new-raffle-modal');
 }
 
 async function handleCreateNewRaffle(event) {
@@ -2005,8 +2011,7 @@ function openNewAuthorityModal() {
   document.getElementById('authority-modal-preview-img').src = 'assets/logo.png';
   document.getElementById('authority-modal-header-title').textContent = '✨ Agregar Miembro de Comisión Directiva';
 
-  const modal = document.getElementById('authority-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('authority-editor-modal');
 }
 
 async function editAuthority(id) {
@@ -2052,8 +2057,7 @@ async function editAuthority(id) {
   if (statusEl) statusEl.value = a.status || 'ACTIVE';
   if (titleEl) titleEl.textContent = '✏️ Modificar Autoridad Institucional';
 
-  const modal = document.getElementById('authority-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('authority-editor-modal');
 }
 
 function handleAuthorityPhotoUpload(event) {
@@ -2158,8 +2162,7 @@ async function saveMandatePeriod() {
 }
 
 function openStatuteModal() {
-  const modal = document.getElementById('statute-upload-modal');
-  if (modal) modal.classList.add('active');
+  openModal('statute-upload-modal');
 }
 
 async function handleStatuteUploadSubmit(event) {
@@ -2353,8 +2356,7 @@ function openNewActivityModal() {
   document.getElementById('activity-modal-preview-img').src = 'assets/hero_uruguay_monte.jpg';
   document.getElementById('activity-modal-header-title').textContent = '✨ Nueva Actividad o Capacitación';
 
-  const modal = document.getElementById('activity-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('activity-editor-modal');
 }
 
 async function editActivity(id) {
@@ -2410,8 +2412,7 @@ async function editActivity(id) {
   if (previewImgEl) previewImgEl.src = act.image_url || 'assets/hero_uruguay_monte.jpg';
   if (headTitleEl) headTitleEl.textContent = '✏️ Modificar Actividad';
 
-  const modal = document.getElementById('activity-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('activity-editor-modal');
 }
 
 function handleActivityImageUpload(event) {
@@ -2570,8 +2571,7 @@ function openNewBenefitModal() {
   document.getElementById('benefit-modal-preview-img').src = 'assets/logo.png';
   document.getElementById('benefit-modal-header-title').textContent = '✨ Nuevo Convenio Comercial';
 
-  const modal = document.getElementById('benefit-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('benefit-editor-modal');
 }
 
 async function editBenefit(id) {
@@ -2617,8 +2617,7 @@ async function editBenefit(id) {
   if (previewImgEl) previewImgEl.src = b.logo_url || 'assets/logo.png';
   if (headTitleEl) headTitleEl.textContent = '✏️ Modificar Convenio';
 
-  const modal = document.getElementById('benefit-editor-modal');
-  if (modal) modal.classList.add('active');
+  openModal('benefit-editor-modal');
 }
 
 function handleBenefitLogoUpload(event) {
@@ -2958,3 +2957,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load Admin Dashboard if on admin.html
   await initAdminDashboard();
 });
+
+// Explicit Global Window Bindings for Inline HTML Events
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.switchAdminTab = switchAdminTab;
+window.openNewAuthorityModal = openNewAuthorityModal;
+window.editAuthority = editAuthority;
+window.deleteAuthority = deleteAuthority;
+window.saveAuthorityForm = saveAuthorityForm;
+window.saveMandatePeriod = saveMandatePeriod;
+window.openStatuteModal = openStatuteModal;
+window.handleStatuteUploadSubmit = handleStatuteUploadSubmit;
+window.openNewActivityModal = openNewActivityModal;
+window.editActivity = editActivity;
+window.deleteActivity = deleteActivity;
+window.saveActivityForm = saveActivityForm;
+window.openNewBenefitModal = openNewBenefitModal;
+window.editBenefit = editBenefit;
+window.deleteBenefit = deleteBenefit;
+window.saveBenefitForm = saveBenefitForm;
+window.openNewUserModal = openNewUserModal;
+window.editUser = editUser;
+window.deleteUser = deleteUser;
+window.saveUserForm = saveUserForm;
+window.openNewArticleModal = openNewArticleModal;
+window.editArticle = editArticle;
+window.deleteArticle = deleteArticle;
+window.saveArticleForm = saveArticleForm;
+window.openNewRaffleModal = openNewRaffleModal;
+window.handleCreateNewRaffle = handleCreateNewRaffle;
+window.saveRaffleConfig = saveRaffleConfig;
+window.handleAdminLogin = handleAdminLogin;
+window.handleAdminLogout = handleAdminLogout;
+window.approveReceipt = approveReceipt;
+window.rejectReceipt = rejectReceipt;
+window.saveInstitutionalSettings = saveInstitutionalSettings;
+window.saveSettingsQuick = saveSettingsQuick;
+
