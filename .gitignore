@@ -24,3 +24,5 @@ dist/
 .dist/
 build/
 .astro/
+uploads/
+
