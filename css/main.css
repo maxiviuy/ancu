@@ -2298,3 +2298,70 @@ button, input, select, textarea {
   background: #000;
 }
 
+/* ------------------ Admin Navigation Tabs ------------------ */
+.admin-tabs-container {
+  background: rgba(10, 18, 13, 0.95);
+  border-bottom: 1px solid var(--border-medium);
+  padding: 8px 24px;
+  position: sticky;
+  top: 60px;
+  z-index: 90;
+  backdrop-filter: blur(16px);
+}
+
+.admin-tabs-scroll {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 8px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bronze-primary) transparent;
+}
+
+.admin-tabs-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+
+.admin-tabs-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.admin-tabs-scroll::-webkit-scrollbar-thumb {
+  background: var(--bronze-primary);
+  border-radius: 4px;
+}
+
+.btn-tab {
+  white-space: nowrap;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-tab:hover {
+  color: var(--text-bone);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-subtle);
+}
+
+.btn-tab.active {
+  color: #070C09 !important;
+  background: linear-gradient(135deg, var(--bronze-light), var(--bronze-primary)) !important;
+  border-color: var(--bronze-light) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(184, 134, 11, 0.25);
+}
+
+

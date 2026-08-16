@@ -2992,6 +2992,5 @@ window.handleAdminLogin = handleAdminLogin;
 window.handleAdminLogout = handleAdminLogout;
 window.approveReceipt = approveReceipt;
 window.rejectReceipt = rejectReceipt;
-window.saveInstitutionalSettings = saveInstitutionalSettings;
-window.saveSettingsQuick = saveSettingsQuick;
+window.saveInstitutionalSettingsForm = saveInstitutionalSettingsForm;
 
