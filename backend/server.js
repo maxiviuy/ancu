@@ -787,27 +787,53 @@ app.get('/api/members/lookup/:identifier', async (req, res) => {
 });
 
 // Login formal de Socio al Portal "Mi ANCU"
+// Usuario: Nº de Socio (o Cédula)
+// Contraseña: Cédula de Identidad sin puntos ni guiones
 app.post('/api/members/login', async (req, res) => {
   try {
-    const { identifier } = req.body;
-    if (!identifier) {
-      return res.status(400).json({ error: 'Por favor ingrese su Cédula de Identidad o Nº de Socio.' });
+    const { username, password, identifier } = req.body;
+    const userInput = (username || identifier || '').trim();
+    const passInput = (password || '').trim();
+
+    if (!userInput) {
+      return res.status(400).json({ error: 'Por favor ingrese su Usuario (Nº de Socio) o Cédula de Identidad.' });
     }
 
-    const cleanId = identifier.trim();
+    const cleanUserDigits = userInput.replace(/[^0-9]/g, '');
+    const cleanPassDigits = passInput.replace(/[^0-9]/g, '');
+
+    // Buscar socio por número de socio (con o sin prefijo ANCU-) o por cédula
     const memberRes = await db.query(`
       SELECT * FROM members 
-      WHERE REPLACE(REPLACE(ci, '.', ''), '-', '') = REPLACE(REPLACE($1, '.', ''), '-', '') 
-         OR member_number ILIKE $1 
-         OR ci = $1
+      WHERE member_number ILIKE $1 
+         OR member_number ILIKE ('ANCU-' || $1)
+         OR member_number ILIKE ('ANCU-%' || $1)
+         OR REPLACE(REPLACE(ci, '.', ''), '-', '') = $1
+         OR ($2 <> '' AND REPLACE(REPLACE(ci, '.', ''), '-', '') = $2)
+      ORDER BY 
+        CASE 
+          WHEN member_number ILIKE $1 OR member_number ILIKE ('ANCU-' || $1) THEN 1 
+          ELSE 2 
+        END
       LIMIT 1;
-    `, [cleanId]);
+    `, [userInput, cleanUserDigits]);
 
     if (memberRes.rowCount === 0) {
-      return res.status(404).json({ error: 'No se encontró ningún socio registrado con los datos proporcionados.' });
+      return res.status(404).json({ error: 'No se encontró ningún socio registrado con el número de socio o documento ingresado.' });
     }
 
     const member = memberRes.rows[0];
+    const memberCleanCi = member.ci.replace(/[^0-9]/g, '');
+
+    // Si se envió contraseña, verificar que coincida con la cédula sin puntos ni guiones
+    if (passInput) {
+      if (cleanPassDigits !== memberCleanCi && passInput !== member.ci) {
+        return res.status(401).json({ 
+          error: 'Contraseña incorrecta. Recordá que tu clave inicial es tu Cédula de Identidad sin puntos ni guiones.' 
+        });
+      }
+    }
+
     const isExpired = new Date(member.valid_until) < new Date();
     const effectiveStatus = isExpired ? 'OVERDUE' : member.status;
 
@@ -824,7 +850,7 @@ app.post('/api/members/login', async (req, res) => {
         memberNumber: member.member_number,
         firstName: member.first_name,
         lastName: member.last_name,
-        fullName: `${member.first_name} ${member.last_name}`,
+        fullName: `${member.first_name} ${member.last_name}`.trim(),
         ci: member.ci,
         phone: member.phone,
         email: member.email,

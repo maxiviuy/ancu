@@ -866,29 +866,32 @@ function initModalListeners() {
 // ---------------- Member Portal (Mi ANCU) ----------------
 async function handleMemberLogin(event) {
   if (event) event.preventDefault();
-  const inputEl = document.getElementById('login-identifier-input');
-  if (!inputEl) return;
+  const userInputEl = document.getElementById('login-username-input') || document.getElementById('login-identifier-input');
+  const passInputEl = document.getElementById('login-password-input');
+  if (!userInputEl) return;
 
-  const val = inputEl.value.trim();
-  if (!val) {
-    alert("Por favor ingrese su Cédula de Identidad o Nº de Socio.");
+  const username = userInputEl.value.trim();
+  const password = passInputEl ? passInputEl.value.trim() : '';
+
+  if (!username) {
+    alert("Por favor ingrese su Usuario (Nº de Socio) o Cédula de Identidad.");
     return;
   }
 
   const btn = document.getElementById('btn-login-member');
-  if (btn) btn.textContent = 'Verificando...';
+  if (btn) btn.textContent = 'Verificando credenciales...';
 
   try {
     const res = await fetch(`${API_BASE}/members/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: val })
+      body: JSON.stringify({ username, password })
     });
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.error || 'No se encontró ningún socio con los datos ingresados.');
-      if (btn) btn.textContent = 'Ingresar al Portal →';
+      alert(data.error || 'Credenciales inválidas. Verifique su número de socio y cédula.');
+      if (btn) btn.textContent = 'Ingresar al Portal "Mi ANCU" →';
       return;
     }
 
@@ -902,28 +905,30 @@ async function handleMemberLogin(event) {
       status: data.member.status,
       validUntil: new Date(data.member.validUntil).toLocaleDateString('es-UY'),
       department: data.member.department,
-      thataNumber: data.member.thataNumber || 'En trámite',
+      thataNumber: data.member.thataNumber || 'Habilitado',
       photoUrl: data.member.photoUrl || DEFAULT_STATE.memberUser.photoUrl
     };
     saveState();
 
-    alert(data.message || `¡Bienvenido ${data.member.firstName}!`);
+    alert(data.message || `¡Bienvenido/a ${data.member.firstName}!`);
     renderDigitalCard();
     updateSessionBar();
 
     const cardEl = document.getElementById('digital-member-card');
     if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (err) {
-    console.warn('Error de login API, intentando modo local:', err);
-    await syncMemberFromAPI(val);
+    console.warn('Error de login API, intentando sincronización:', err);
+    await syncMemberFromAPI(username);
   } finally {
-    if (btn) btn.textContent = 'Ingresar al Portal →';
+    if (btn) btn.textContent = 'Ingresar al Portal "Mi ANCU" →';
   }
 }
 
-function quickLoginMember(ci) {
-  const inputEl = document.getElementById('login-identifier-input');
-  if (inputEl) inputEl.value = ci;
+function quickLoginMember(num, pass) {
+  const userInputEl = document.getElementById('login-username-input') || document.getElementById('login-identifier-input');
+  const passInputEl = document.getElementById('login-password-input');
+  if (userInputEl) userInputEl.value = num;
+  if (passInputEl) passInputEl.value = pass;
   handleMemberLogin();
 }
 
@@ -932,8 +937,10 @@ function logoutMember() {
     AppState.memberUser.isLoggedIn = false;
     saveState();
     updateSessionBar();
-    const inputEl = document.getElementById('login-identifier-input');
-    if (inputEl) inputEl.value = '';
+    const userInputEl = document.getElementById('login-username-input') || document.getElementById('login-identifier-input');
+    const passInputEl = document.getElementById('login-password-input');
+    if (userInputEl) userInputEl.value = '';
+    if (passInputEl) passInputEl.value = '';
     const cardWrap = document.getElementById('digital-member-card');
     if (cardWrap) {
       cardWrap.innerHTML = `
