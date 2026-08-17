@@ -146,16 +146,54 @@ async function syncRaffleFromAPI() {
         if (availEl) availEl.textContent = data.raffle.stats.available.toLocaleString('es-UY');
         if (heldEl) heldEl.textContent = data.raffle.stats.held.toLocaleString('es-UY');
         if (soldEl) soldEl.textContent = data.raffle.stats.sold.toLocaleString('es-UY');
+
+        // Progress bar in index.html
+        const totalNum = data.raffle.totalNumbers || 1000;
+        const soldCount = data.raffle.stats.sold || 0;
+        const heldCount = data.raffle.stats.held || 0;
+        const takenPercent = Math.round(((soldCount + heldCount) / totalNum) * 100);
+        
+        const statPercentEl = document.getElementById('stat-percent');
+        const progressBarEl = document.getElementById('raffle-progress-bar');
+        if (statPercentEl) statPercentEl.textContent = `${takenPercent}% Asignado (${data.raffle.stats.available} Libres)`;
+        if (progressBarEl) progressBarEl.style.width = `${Math.max(takenPercent, 4)}%`;
       }
 
       renderPublicPrizes();
+      renderHomeRafflePrizes();
       saveState();
       console.log('🌲 Rifa y premios sincronizados con PostgreSQL.');
     }
   } catch (err) {
     console.warn('Usando estado local para rifas (Backend offline):', err.message);
     renderPublicPrizes();
+    renderHomeRafflePrizes();
   }
+}
+
+function renderHomeRafflePrizes() {
+  const container = document.getElementById('home-raffle-prizes');
+  if (!container) return;
+
+  const prizes = AppState.activeRaffle.prizes;
+  if (!Array.isArray(prizes) || prizes.length === 0) return;
+
+  container.innerHTML = prizes.map((p, idx) => {
+    const badgeLabel = `${p.order || idx + 1}º PREMIO`;
+    const imgUrl = p.imageUrl || 'assets/logo.png';
+    const fallbackEmoji = idx === 0 ? '🔭' : (idx === 1 ? '🏹' : '🔪');
+    
+    return `
+      <div class="prize-mini-card">
+        <span class="prize-mini-badge">${badgeLabel}</span>
+        <div class="prize-mini-img-wrap">
+          <img src="${imgUrl}" alt="${p.title}" class="prize-mini-img" onerror="this.src='assets/logo.png';" />
+        </div>
+        <div class="prize-mini-title" title="${p.title}">${p.title}</div>
+        ${p.estimatedValue ? `<div class="prize-mini-val">Ref. USD $${Number(p.estimatedValue).toLocaleString('es-UY')}</div>` : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 function renderPublicPrizes() {
