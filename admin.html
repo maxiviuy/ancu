@@ -85,6 +85,9 @@
         <button type="button" class="btn btn-tab" id="tab-btn-authorities" onclick="switchAdminTab('authorities')">
           🏛️ Gobernanza & Directivos
         </button>
+        <button type="button" class="btn btn-tab" id="tab-btn-members" onclick="switchAdminTab('members')">
+          🪪 Padrón de Socios
+        </button>
         <button type="button" class="btn btn-tab" id="tab-btn-settings" onclick="switchAdminTab('settings')">
           ⚙️ Configuración Institucional
         </button>
@@ -395,7 +398,7 @@
               </div>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
-              <input type="text" id="admin-mandate-period-input" class="form-control" style="width:180px; font-weight:700; text-align:center;" value="2024 – 2027">
+              <input type="text" id="admin-mandate-period-input" class="form-control" style="width:180px; font-weight:700; text-align:center;" value="2026 – 2028">
               <button type="button" class="btn btn-secondary btn-sm" onclick="saveMandatePeriod()">Guardar Período</button>
             </div>
           </div>
@@ -403,6 +406,63 @@
           <!-- Authorities Cards Grid -->
           <div id="admin-authorities-grid" class="grid-3" style="margin-top:16px;">
             <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB: PADRÓN DE SOCIOS (MI ANCU) ================= -->
+      <section id="admin-tab-members" class="admin-tab-content" style="display:none;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag">Base Oficial de Datos</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.45rem; font-weight:700; color:var(--text-bone);">
+                🪪 Padrón Oficial de Socios y Carnet Digital
+              </h2>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                Administrá las altas de socios, fotografías de perfil, estado de cuotas anuales, números de THATA y vigencia estatutaria.
+              </p>
+            </div>
+            <button type="button" class="btn btn-bronze btn-sm" onclick="openNewMemberModal()">
+              ✨ Nuevo Socio Oficial
+            </button>
+          </div>
+
+          <!-- Filters & Search Bar -->
+          <div style="display:flex; gap:14px; margin-bottom:20px; flex-wrap:wrap; align-items:center; background:rgba(0,0,0,0.25); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+            <div style="flex:1; min-width:260px; position:relative;">
+              <input type="text" id="admin-member-search-input" class="form-control" placeholder="Buscar por Nombre, Cédula o Nº de Socio (ej. ANCU-0001)..." oninput="debounceMemberSearch()">
+            </div>
+            <div style="width:200px;">
+              <select id="admin-member-status-filter" class="form-control" onchange="loadAdminMembers()">
+                <option value="ALL">🔍 Todos los Estados</option>
+                <option value="ACTIVE">🟢 Activo / Al Día</option>
+                <option value="OVERDUE">🔴 Cuota Vencida</option>
+                <option value="PENDING_APPROVAL">🟡 Pendiente de Aprobación</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="admin-members-table-wrap" style="overflow-x:auto;">
+            <table style="width:100%; min-width:900px; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border-subtle); color:var(--text-muted); background:rgba(255,255,255,0.02);">
+                  <th style="padding:12px 16px;">Socio / Foto</th>
+                  <th style="padding:12px 16px;">Nº Socio</th>
+                  <th style="padding:12px 16px;">Cédula de Identidad</th>
+                  <th style="padding:12px 16px;">Contacto</th>
+                  <th style="padding:12px 16px;">Departamento & THATA</th>
+                  <th style="padding:12px 16px;">Categoría</th>
+                  <th style="padding:12px 16px;">Estado & Vigencia</th>
+                  <th style="padding:12px 16px; text-align:right;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="admin-members-tbody">
+                <tr>
+                  <td colspan="8" style="padding:24px; text-align:center; color:var(--text-muted);">Cargando padrón oficial de socios...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -786,7 +846,7 @@
         <div class="grid-3" style="margin-bottom:14px;">
           <div class="form-group">
             <label class="form-label" for="authority-modal-mandate">Mandato</label>
-            <input type="text" id="authority-modal-mandate" class="form-control" value="2024 – 2027">
+            <input type="text" id="authority-modal-mandate" class="form-control" value="2026 – 2028">
           </div>
           <div class="form-group">
             <label class="form-label" for="authority-modal-order">Orden de Grilla</label>
@@ -1061,6 +1121,130 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20260815_9"></script>
+  <!-- Modal: Crear / Editar Socio del Padrón -->
+  <div class="modal-overlay" id="member-editor-modal">
+    <div class="modal-box" style="max-width:680px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-family:var(--font-heading); font-size:1.3rem; font-weight:700; color:var(--text-bone);" id="member-modal-header-title">
+          🪪 Alta / Edición de Socio Oficial
+        </h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('member-editor-modal')">&times;</button>
+      </div>
+
+      <form id="member-editor-form" onsubmit="saveMemberForm(event)">
+        <input type="hidden" id="member-modal-id" value="">
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="member-modal-first-name">Nombre *</label>
+            <input type="text" id="member-modal-first-name" class="form-control" placeholder="Ej: Carlos" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="member-modal-last-name">Apellido *</label>
+            <input type="text" id="member-modal-last-name" class="form-control" placeholder="Ej: Mendiondo" required>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="member-modal-ci">Cédula de Identidad *</label>
+            <input type="text" id="member-modal-ci" class="form-control" placeholder="Ej: 3.842.190-4" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="member-modal-number">Nº de Socio Oficial</label>
+            <input type="text" id="member-modal-number" class="form-control" placeholder="Ej: ANCU-0012 (Auto si vacío)">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="member-modal-phone">Teléfono / WhatsApp *</label>
+            <input type="tel" id="member-modal-phone" class="form-control" placeholder="Ej: 099 123 456" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="member-modal-email">Correo Electrónico *</label>
+            <input type="email" id="member-modal-email" class="form-control" placeholder="Ej: socio@correo.uy" required>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="member-modal-dept">Departamento</label>
+            <select id="member-modal-dept" class="form-control">
+              <option value="Lavalleja">Lavalleja</option>
+              <option value="Montevideo">Montevideo</option>
+              <option value="Canelones">Canelones</option>
+              <option value="Maldonado">Maldonado</option>
+              <option value="Rocha">Rocha</option>
+              <option value="Treinta y Tres">Treinta y Tres</option>
+              <option value="Cerro Largo">Cerro Largo</option>
+              <option value="Rivera">Rivera</option>
+              <option value="Tacuarembó">Tacuarembó</option>
+              <option value="Durazno">Durazno</option>
+              <option value="Florida">Florida</option>
+              <option value="Flores">Flores</option>
+              <option value="San José">San José</option>
+              <option value="Colonia">Colonia</option>
+              <option value="Soriano">Soriano</option>
+              <option value="Río Negro">Río Negro</option>
+              <option value="Paysandú">Paysandú</option>
+              <option value="Salto">Salto</option>
+              <option value="Artigas">Artigas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="member-modal-thata">Nº THATA (Habilitación)</label>
+            <input type="text" id="member-modal-thata" class="form-control" placeholder="Ej: UY-88421 o En trámite">
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="member-modal-category">Categoría de Socio</label>
+            <select id="member-modal-category" class="form-control">
+              <option value="Socio Pleno Activo">Socio Pleno Activo</option>
+              <option value="Socio Adherente">Socio Adherente</option>
+              <option value="Socio Fundador">Socio Fundador</option>
+              <option value="Socio Honorario">Socio Honorario</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="member-modal-status">Estado</label>
+            <select id="member-modal-status" class="form-control">
+              <option value="ACTIVE">🟢 Activo / Al Día</option>
+              <option value="OVERDUE">🔴 Cuota Vencida</option>
+              <option value="PENDING_APPROVAL">🟡 Pendiente Aprobación</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="member-modal-valid">Válido Hasta</label>
+            <input type="date" id="member-modal-valid" class="form-control">
+          </div>
+        </div>
+
+        <!-- Photo Upload for Member Card -->
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+          <label class="form-label" style="margin-bottom:8px;">Fotografía Oficial para Carnet Digital</label>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <img src="assets/logo.png" id="member-modal-preview-img" style="width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--border-bronze); background:#000;" alt="Foto Socio">
+            <div style="flex:1;">
+              <input type="text" id="member-modal-photo-url" class="form-control" placeholder="URL o subir foto..." style="margin-bottom:8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer; display:inline-flex;">
+                📷 Subir Foto desde Dispositivo
+                <input type="file" id="member-modal-file" accept="image/*" style="display:none;" onchange="handleMemberPhotoUpload(event)">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('member-editor-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-bronze" id="btn-save-member-submit">Guardar Socio Oficial &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/app.js?v=20260817_1"></script>
 </body>
 </html>

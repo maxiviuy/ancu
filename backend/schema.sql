@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS institutional_settings (
     setting_key VARCHAR(100) PRIMARY KEY,
     setting_value TEXT NOT NULL,
     category VARCHAR(50) NOT NULL DEFAULT 'GENERAL', -- 'GOVERNANCE', 'FINANCIAL', 'ANNOUNCEMENT', 'CONTACT', 'STATUTE'
-    label VARCHAR(255) NOT NULL,
+    label VARCHAR(255) DEFAULT 'Parámetro General',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

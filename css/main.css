@@ -1069,54 +1069,66 @@ button, input, select, textarea {
   border: 1px solid var(--border-subtle);
 }
 
-.num-cell {
+.num-cell, .number-cell {
+  appearance: none;
+  -webkit-appearance: none;
   aspect-ratio: 1 / 1;
+  min-height: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
+  font-family: var(--font-heading), monospace;
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.15s ease-in-out;
   position: relative;
   user-select: none;
+  outline: none;
+  box-sizing: border-box;
 }
 
-.num-cell.available {
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #A7F3D0;
+.num-cell.available, .number-cell.available {
+  background: #0E1C15;
+  border: 1.5px solid rgba(52, 211, 153, 0.4);
+  color: #F0FDF4;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
-.num-cell.available:hover {
-  background: var(--color-available);
-  color: #0A0F0D;
-  transform: scale(1.08);
+.num-cell.available:hover, .number-cell.available:hover {
+  background: #10B981;
+  color: #04140C;
+  font-weight: 800;
+  border-color: #6EE7B7;
+  transform: translateY(-2px) scale(1.06);
   z-index: 5;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
 }
 
-.num-cell.selected {
-  background: var(--bronze-primary) !important;
-  color: #0A0F0D !important;
-  border-color: var(--bronze-light) !important;
-  transform: scale(1.06);
-  box-shadow: 0 0 14px rgba(197, 155, 39, 0.6);
+.num-cell.selected, .number-cell.selected {
+  background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+  color: #000000 !important;
+  border: 1.5px solid #FDE68A !important;
+  font-weight: 800 !important;
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.6) !important;
+  z-index: 10;
 }
 
-.num-cell.held {
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+.num-cell.held, .number-cell.held {
+  background: #1F1708;
+  border: 1.5px solid rgba(245, 158, 11, 0.5);
   color: #FDE68A;
   cursor: not-allowed;
+  font-weight: 700;
 }
 
-.num-cell.sold {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #9CA3AF;
+.num-cell.sold, .number-cell.sold, .num-cell.paid, .number-cell.paid {
+  background: #180D0D;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #EF4444;
   text-decoration: line-through;
   cursor: not-allowed;
   opacity: 0.55;
@@ -2042,9 +2054,10 @@ button, input, select, textarea {
     max-height: 380px;
     padding: 8px;
   }
-  .num-cell {
+  .num-cell, .number-cell {
     font-size: 0.85rem;
     border-radius: 4px;
+    min-height: 40px;
   }
 
   /* Floating Checkout Tray on Mobile */
@@ -2138,9 +2151,10 @@ button, input, select, textarea {
     gap: 4px;
     padding: 6px;
   }
-  .num-cell {
+  .num-cell, .number-cell {
     font-size: 0.78rem;
-    padding: 8px 2px;
+    padding: 6px 2px;
+    min-height: 36px;
   }
   .card-body-layout {
     grid-template-columns: 1fr;

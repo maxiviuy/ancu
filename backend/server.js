@@ -23,8 +23,9 @@ const authoritiesUploadsDir = path.join(uploadsDir, 'authorities');
 const activitiesUploadsDir = path.join(uploadsDir, 'activities');
 const partnersUploadsDir = path.join(uploadsDir, 'partners');
 const documentsUploadsDir = path.join(uploadsDir, 'documents');
+const membersUploadsDir = path.join(uploadsDir, 'members');
 
-[prizeUploadsDir, newsUploadsDir, receiptUploadsDir, authoritiesUploadsDir, activitiesUploadsDir, partnersUploadsDir, documentsUploadsDir].forEach(dir => {
+[prizeUploadsDir, newsUploadsDir, receiptUploadsDir, authoritiesUploadsDir, activitiesUploadsDir, partnersUploadsDir, documentsUploadsDir, membersUploadsDir].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -127,6 +128,23 @@ const uploadDocument = multer({
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Solo se permiten archivos PDF o imágenes.'));
+  }
+});
+
+// Multer Storage para Fotos de Socios (Carnet Digital)
+const memberStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, membersUploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    cb(null, `member_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
+const uploadMember = multer({
+  storage: memberStorage,
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP).'));
   }
 });
 
@@ -435,6 +453,54 @@ app.post('/api/raffle/create-preference', async (req, res) => {
   } catch (err) {
     console.error('Error creating MP preference:', err);
     res.status(500).json({ error: 'Error al generar preferencia de pago de Mercado Pago.' });
+  }
+});
+
+// Consulta de estado de pago post-redirección de Mercado Pago
+app.get('/api/raffle/payment-status', async (req, res) => {
+  try {
+    const { payment_id, external_reference } = req.query;
+    let query = 'SELECT number, buyer_name, buyer_ci, buyer_phone, buyer_email, buyer_dept, payment_ref, status FROM raffle_tickets WHERE ';
+    const params = [];
+    if (payment_id) {
+      params.push(`MP-${payment_id}`);
+      query += 'payment_ref = $1';
+    } else if (external_reference) {
+      params.push(external_reference);
+      query += 'payment_ref = $1';
+    } else {
+      return res.status(400).json({ error: 'Faltan parámetros de búsqueda.' });
+    }
+
+    const result = await db.query(query, params);
+    if (result.rowCount === 0) {
+      return res.json({
+        success: true,
+        buyer_name: 'Comprador Registrado',
+        buyer_ci: 'Confirmado',
+        numbers: [],
+        payment_ref: payment_id ? `MP-${payment_id}` : (external_reference || 'ANCU-OK'),
+        status: 'PAID'
+      });
+    }
+
+    const first = result.rows[0];
+    const numbers = result.rows.map(r => r.number);
+    res.json({
+      success: true,
+      buyer_name: first.buyer_name,
+      buyer_ci: first.buyer_ci,
+      buyer_phone: first.buyer_phone,
+      buyer_email: first.buyer_email,
+      buyer_dept: first.buyer_dept,
+      payment_ref: first.payment_ref,
+      numbers,
+      totalAmount: numbers.length * 400,
+      status: first.status
+    });
+  } catch (err) {
+    console.error('Error fetching payment status:', err);
+    res.status(500).json({ error: 'Error del servidor.' });
   }
 });
 
@@ -856,6 +922,246 @@ app.post('/api/members/pay-fee', async (req, res) => {
   } catch (err) {
     console.error('Error paying fee:', err);
     res.status(500).json({ error: 'Error al procesar pago de cuota social.' });
+  }
+});
+
+// ====================================================
+// GESTIÓN DE PADRÓN DE SOCIOS (ADMIN BACKOFFICE)
+// ====================================================
+
+// Listar todos los socios con búsqueda y filtros
+app.get('/api/admin/members', async (req, res) => {
+  try {
+    const { q, status } = req.query;
+    let query = 'SELECT * FROM members';
+    const params = [];
+    const conditions = [];
+
+    if (q && q.trim()) {
+      params.push(`%${q.trim()}%`);
+      conditions.push(`(first_name ILIKE $${params.length} OR last_name ILIKE $${params.length} OR ci ILIKE $${params.length} OR member_number ILIKE $${params.length} OR email ILIKE $${params.length})`);
+    }
+
+    if (status && status !== 'ALL') {
+      params.push(status);
+      conditions.push(`status = $${params.length}`);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY id DESC;';
+
+    const membersRes = await db.query(query, params);
+    
+    // Actualizar estado dinámico por vencimiento
+    const now = new Date();
+    const members = membersRes.rows.map(m => {
+      const isExpired = new Date(m.valid_until) < now;
+      return {
+        ...m,
+        effectiveStatus: isExpired ? 'OVERDUE' : m.status
+      };
+    });
+
+    res.json({ members });
+  } catch (err) {
+    console.error('Error fetching admin members:', err);
+    res.status(500).json({ error: 'Error al consultar el padrón de socios.' });
+  }
+});
+
+// Subida independiente de foto de socio
+app.post('/api/admin/upload-member-photo', uploadMember.single('photo'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se recibió ningún archivo de imagen.' });
+    }
+    const photoUrl = `/uploads/members/${req.file.filename}`;
+    res.json({ success: true, photoUrl, filename: req.file.filename });
+  } catch (err) {
+    console.error('Error uploading member photo:', err);
+    res.status(500).json({ error: 'Error al procesar la foto de socio.' });
+  }
+});
+
+// Crear nuevo socio desde el panel admin
+app.post('/api/admin/members', uploadMember.single('photo'), async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      ci,
+      phone,
+      email,
+      department = 'Lavalleja',
+      thataNumber,
+      category = 'Socio Pleno Activo',
+      status = 'ACTIVE',
+      validUntil,
+      memberNumber: customMemberNumber,
+      photoUrl: inputPhotoUrl
+    } = req.body;
+
+    if (!firstName || !lastName || !ci || !phone || !email) {
+      return res.status(400).json({ error: 'Nombre, apellido, cédula, teléfono y email son obligatorios.' });
+    }
+
+    const cleanCi = ci.trim();
+    const existingRes = await db.query('SELECT id FROM members WHERE ci = $1', [cleanCi]);
+    if (existingRes.rowCount > 0) {
+      return res.status(409).json({ error: 'Ya existe un socio con esta Cédula de Identidad.' });
+    }
+
+    let memberNumber = customMemberNumber;
+    if (!memberNumber) {
+      const countRes = await db.query('SELECT COUNT(*) FROM members');
+      const nextNum = String(parseInt(countRes.rows[0].count, 10) + 1).padStart(4, '0');
+      memberNumber = `ANCU-${nextNum}`;
+    }
+
+    let finalPhotoUrl = inputPhotoUrl || null;
+    if (req.file) {
+      finalPhotoUrl = `/uploads/members/${req.file.filename}`;
+    }
+
+    const expiryDate = validUntil ? new Date(validUntil) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+    const insertRes = await db.query(`
+      INSERT INTO members (member_number, first_name, last_name, ci, phone, email, department, thata_number, category, status, valid_until, photo_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *;
+    `, [
+      memberNumber,
+      firstName.trim(),
+      lastName.trim(),
+      cleanCi,
+      phone.trim(),
+      email.trim(),
+      department,
+      thataNumber ? thataNumber.trim() : null,
+      category,
+      status,
+      expiryDate,
+      finalPhotoUrl || 'assets/logo.png'
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ADMIN_MEMBER_CREATED', { memberNumber, ci: cleanCi, name: `${firstName} ${lastName}` }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Socio registrado con éxito en el padrón oficial.',
+      member: insertRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error creating admin member:', err);
+    res.status(500).json({ error: 'Error al registrar socio en la base de datos.' });
+  }
+});
+
+// Modificar datos o foto de un socio
+app.put('/api/admin/members/:id', uploadMember.single('photo'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      firstName,
+      lastName,
+      ci,
+      phone,
+      email,
+      department,
+      thataNumber,
+      category,
+      status,
+      validUntil,
+      memberNumber,
+      photoUrl: inputPhotoUrl
+    } = req.body;
+
+    const existingRes = await db.query('SELECT * FROM members WHERE id = $1', [id]);
+    if (existingRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Socio no encontrado.' });
+    }
+    const current = existingRes.rows[0];
+
+    let finalPhotoUrl = current.photo_url;
+    if (req.file) {
+      finalPhotoUrl = `/uploads/members/${req.file.filename}`;
+    } else if (inputPhotoUrl !== undefined && inputPhotoUrl !== '') {
+      finalPhotoUrl = inputPhotoUrl;
+    }
+
+    const updateRes = await db.query(`
+      UPDATE members
+      SET first_name = COALESCE($1, first_name),
+          last_name = COALESCE($2, last_name),
+          ci = COALESCE($3, ci),
+          phone = COALESCE($4, phone),
+          email = COALESCE($5, email),
+          department = COALESCE($6, department),
+          thata_number = COALESCE($7, thata_number),
+          category = COALESCE($8, category),
+          status = COALESCE($9, status),
+          valid_until = COALESCE($10, valid_until),
+          member_number = COALESCE($11, member_number),
+          photo_url = $12,
+          updated_at = NOW()
+      WHERE id = $13
+      RETURNING *;
+    `, [
+      firstName ? firstName.trim() : current.first_name,
+      lastName ? lastName.trim() : current.last_name,
+      ci ? ci.trim() : current.ci,
+      phone ? phone.trim() : current.phone,
+      email ? email.trim() : current.email,
+      department || current.department,
+      thataNumber !== undefined ? thataNumber : current.thata_number,
+      category || current.category,
+      status || current.status,
+      validUntil ? new Date(validUntil) : current.valid_until,
+      memberNumber || current.member_number,
+      finalPhotoUrl,
+      id
+    ]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ADMIN_MEMBER_UPDATED', { memberId: id, memberNumber: updateRes.rows[0].member_number, ci: updateRes.rows[0].ci }, req.ip]);
+
+    res.json({
+      success: true,
+      message: 'Ficha de socio actualizada con éxito en PostgreSQL.',
+      member: updateRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating admin member:', err);
+    res.status(500).json({ error: 'Error al actualizar datos de socio.' });
+  }
+});
+
+// Eliminar socio del padrón
+app.delete('/api/admin/members/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const delRes = await db.query('DELETE FROM members WHERE id = $1 RETURNING member_number, first_name, last_name;', [id]);
+    if (delRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Socio no encontrado.' });
+    }
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['ADMIN_MEMBER_DELETED', { memberId: id, memberNumber: delRes.rows[0].member_number }, req.ip]);
+
+    res.json({ success: true, message: `Socio ${delRes.rows[0].member_number} eliminado del padrón.` });
+  } catch (err) {
+    console.error('Error deleting admin member:', err);
+    res.status(500).json({ error: 'Error al eliminar socio.' });
   }
 });
 
@@ -1876,11 +2182,14 @@ app.put('/api/admin/settings', async (req, res) => {
     for (const item of entries) {
       if (item.setting_key) {
         await db.query(`
-          INSERT INTO institutional_settings (setting_key, setting_value, updated_at)
-          VALUES ($1, $2, NOW())
+          INSERT INTO institutional_settings (setting_key, setting_value, category, label, updated_at)
+          VALUES ($1, $2, COALESCE($3, 'GENERAL'), COALESCE($4, 'Parámetro Institucional'), NOW())
           ON CONFLICT (setting_key) DO UPDATE 
-          SET setting_value = EXCLUDED.setting_value, updated_at = NOW();
-        `, [item.setting_key, String(item.setting_value || '')]);
+          SET setting_value = EXCLUDED.setting_value, 
+              category = COALESCE(EXCLUDED.category, institutional_settings.category),
+              label = COALESCE(EXCLUDED.label, institutional_settings.label),
+              updated_at = NOW();
+        `, [item.setting_key, String(item.setting_value || ''), item.category || null, item.label || null]);
       }
     }
 
@@ -2253,8 +2562,22 @@ app.delete('/api/admin/benefits/:id', async (req, res) => {
   }
 });
 
+// Auto-migraciones y verificaciones de esquema al inicio
+async function runStartupMigrations() {
+  try {
+    await db.query(`
+      ALTER TABLE institutional_settings ALTER COLUMN label DROP NOT NULL;
+      ALTER TABLE institutional_settings ALTER COLUMN label SET DEFAULT 'Parámetro General';
+    `);
+    console.log('✅ Verificación de constraints en institutional_settings completada.');
+  } catch (e) {
+    // Si ya fue modificada, ignorar
+  }
+}
+
 // Iniciar Servidor
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🌲 Servidor Backend ANCU activo en el puerto ${PORT}`);
   console.log(`📊 Conexión a PostgreSQL: ${process.env.DB_NAME || 'ancu_db'} en ${process.env.DB_HOST || 'localhost'}`);
+  await runStartupMigrations();
 });

@@ -18,30 +18,30 @@ const DEFAULT_STATE = {
     prizes: [
       {
         order: 1,
-        title: "Rifle Deportivo Savage Mark-II F",
-        description: "Calibre .22LR, cerrojo de precisión, culata sintética ergonómica de alta resistencia y cargador extraíble de 10 tiros.",
-        imageUrl: "https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=600&auto=format&fit=crop&q=80",
-        estimatedValue: 750,
-        regulated: true,
-        note: "Requiere THATA vigente y registro legal ante SMA/ANCU."
+        title: "Visor Térmico Sytong XS03-35LRF con Telémetro Láser",
+        description: "Sensor térmico de alta sensibilidad 384x288 px, lente de 35mm F1.0, telémetro láser integrado hasta 1.200 metros, aumento óptico 2.8x y digital hasta 8x, pantalla AMOLED 1024x768, grabación de foto/video, conectividad WiFi y protección IP66.",
+        imageUrl: "/uploads/prizes/prize_visor_sytong_xs03.png",
+        estimatedValue: 1450,
+        regulated: false,
+        note: "Entrega directa y garantía oficial en todo el Uruguay."
       },
       {
         order: 2,
-        title: "Pistola Taurus G3C Compact Black",
-        description: "Calibre 9mm Parabellum, acabado Black Tenifer anticorrosión, 3 cargadores incluidos y miras ajustables de tres puntos.",
-        imageUrl: "https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=600&auto=format&fit=crop&q=80",
-        estimatedValue: 680,
-        regulated: true,
-        note: "Requiere THATA vigente y registro legal ante SMA/ANCU."
+        title: "Arco Compuesto Profesional Diamond EDGE",
+        description: "Velocidad de salida hasta 310 FPS, peso ultra ligero 3.5 lbs (1.59 kg), distancia entre ejes 31\" (78.7 cm), longitud de ataque 6.25\" - 31\", potencia regulable de 5 a 70 lbs, modos Diamond Draw y Bowtech Draw, acabado Realtree Edge.",
+        imageUrl: "/uploads/prizes/prize_arco_diamond_edge.png",
+        estimatedValue: 650,
+        regulated: false,
+        note: "Entrega directa con accesorios completos en todo el país."
       },
       {
         order: 3,
-        title: "Cuchillo de Monte Glock FM81 con Sierra",
-        description: "Acero al carbono fosfatado, sierra dorsal, empuñadura de polímero militar y vaina rígida con clip de retención rápida.",
-        imageUrl: "https://images.unsplash.com/photo-1593487568720-92097fb460fb?w=600&auto=format&fit=crop&q=80",
-        estimatedValue: 160,
+        title: "Cuchillo Criollo Schmieden Acero Inoxidable con Vaina",
+        description: "Hoja de acero inoxidable de alta retención de filo y tenacidad, cabo artesanal combinado en maderas nobles y virolas de bronce, incluye vaina tradicional de cuero vacuno repujado con broches y pasacinto reforzado.",
+        imageUrl: "/uploads/prizes/prize_cuchillo_schmieden.png",
+        estimatedValue: 180,
         regulated: false,
-        note: "Entrega directa a domicilio en todo el Uruguay."
+        note: "Entrega directa a domicilio en todo el país."
       }
     ],
     numbers: {}
@@ -65,6 +65,7 @@ const DEFAULT_STATE = {
   adminUser: null,
   adminPrizesDraft: [],
   adminAuthorities: [],
+  adminMembers: [],
   adminActivities: [],
   adminBenefits: [],
   adminUsers: [],
@@ -429,7 +430,7 @@ function renderNumbersGrid(hundredIndex) {
 
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `number-cell ${item.status} ${isSelected ? 'selected' : ''}`;
+    btn.className = `number-cell num-cell ${item.status} ${isSelected ? 'selected' : ''}`;
     btn.setAttribute('data-number', formatted);
     btn.setAttribute('aria-label', `Número ${formatted} - Estado: ${item.status}`);
     
@@ -801,6 +802,41 @@ function printTicket() {
   window.print();
 }
 
+async function checkMercadoPagoReturn() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const mpStatus = urlParams.get('mp_status') || urlParams.get('collection_status') || urlParams.get('status');
+  const paymentId = urlParams.get('payment_id') || urlParams.get('collection_id');
+  const externalRef = urlParams.get('external_reference');
+
+  if (mpStatus === 'approved' || mpStatus === 'success') {
+    try {
+      const res = await fetch(`${API_BASE}/raffle/payment-status?payment_id=${paymentId || ''}&external_reference=${externalRef || ''}`);
+      if (res.ok) {
+        const data = await res.json();
+        renderSuccessTicket({
+          name: data.buyer_name || 'Comprador Registrado',
+          ci: data.buyer_ci || 'C.I. Confirmada',
+          phone: data.buyer_phone || '',
+          email: data.buyer_email || '',
+          dept: data.buyer_dept || 'Uruguay',
+          orderRef: data.payment_ref || `MP-${paymentId || Date.now()}`,
+          ticketCode: `ANCU-${data.numbers && data.numbers.length ? data.numbers.join('-') : 'TKT'}`,
+          numbers: data.numbers && data.numbers.length > 0 ? data.numbers : [],
+          total: data.totalAmount || (data.numbers?.length ? data.numbers.length * 400 : 400),
+          paymentMethod: 'mercadopago',
+          isPaid: true
+        });
+      }
+    } catch (e) {
+      console.warn('Error checking returned payment:', e);
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (mpStatus === 'failure') {
+    alert("El pago no fue completado o fue cancelado en Mercado Pago. Tus números continúan disponibles.");
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
 function openModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
@@ -1117,11 +1153,10 @@ async function handleAdminLogin(event) {
 }
 
 function handleAdminLogout() {
-  if (confirm("¿Deseas cerrar la sesión administrativa?")) {
-    AppState.adminUser = null;
-    saveState();
-    checkAdminAuthView();
-  }
+  AppState.adminUser = null;
+  saveState();
+  sessionStorage.clear();
+  checkAdminAuthView();
 }
 
 function switchAdminTab(tabName) {
@@ -1135,6 +1170,7 @@ function switchAdminTab(tabName) {
   if (content) content.style.display = 'block';
 
   if (tabName === 'authorities') loadAdminAuthorities();
+  if (tabName === 'members') loadAdminMembers();
   if (tabName === 'settings') loadAdminSettings();
   if (tabName === 'activities') loadAdminActivities();
   if (tabName === 'benefits') loadAdminBenefits();
@@ -1280,6 +1316,7 @@ async function initAdminDashboard() {
 
     // Load Governance, Settings, Activities and Benefits
     await loadAdminAuthorities();
+    await loadAdminMembers();
     await loadAdminSettings();
     await loadAdminActivities();
     await loadAdminBenefits();
@@ -1938,6 +1975,253 @@ async function rejectReceipt(receiptId) {
 }
 
 // ====================================================
+// PADRÓN DE SOCIOS (ADMIN BACKOFFICE)
+// ====================================================
+
+let adminMemberPhotoFile = null;
+let memberSearchTimer = null;
+
+function debounceMemberSearch() {
+  clearTimeout(memberSearchTimer);
+  memberSearchTimer = setTimeout(() => {
+    loadAdminMembers();
+  }, 300);
+}
+
+async function loadAdminMembers() {
+  const tbody = document.getElementById('admin-members-tbody');
+  if (!tbody) return;
+
+  const q = document.getElementById('admin-member-search-input')?.value.trim() || '';
+  const statusFilter = document.getElementById('admin-member-status-filter')?.value || 'ALL';
+
+  try {
+    const url = new URL(`${API_BASE}/admin/members`, window.location.origin);
+    if (q) url.searchParams.set('q', q);
+    if (statusFilter !== 'ALL') url.searchParams.set('status', statusFilter);
+
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const { members } = await res.json();
+    AppState.adminMembers = members || [];
+
+    if (AppState.adminMembers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:28px; text-align:center; color:var(--text-muted);">No se encontraron socios registrados con los criterios seleccionados.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = AppState.adminMembers.map(m => {
+      const isOverdue = m.effectiveStatus === 'OVERDUE' || (new Date(m.valid_until) < new Date());
+      const statusPill = isOverdue
+        ? `<span class="status-badge-pill" style="background:rgba(239,68,68,0.2); color:#FCA5A5; font-size:0.75rem;">🔴 VENCIDA</span>`
+        : (m.status === 'ACTIVE' 
+            ? `<span class="status-badge-pill" style="background:rgba(16,185,129,0.2); color:#6EE7B7; font-size:0.75rem;">🟢 ACTIVO</span>` 
+            : `<span class="status-badge-pill" style="background:rgba(245,158,11,0.2); color:#FCD34D; font-size:0.75rem;">🟡 ${m.status}</span>`);
+
+      const validStr = m.valid_until ? new Date(m.valid_until).toLocaleDateString('es-UY') : '-';
+
+      return `
+        <tr style="border-bottom:1px solid var(--border-subtle);">
+          <td style="padding:12px 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:38px; height:38px; border-radius:50%; overflow:hidden; border:1.5px solid var(--border-bronze); background:#000; flex-shrink:0;">
+                <img src="${m.photo_url || 'assets/logo.png'}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='assets/logo.png';" alt="${m.first_name}" />
+              </div>
+              <div>
+                <strong style="color:var(--text-bone); font-size:0.92rem;">${m.first_name} ${m.last_name}</strong>
+              </div>
+            </div>
+          </td>
+          <td style="padding:12px 16px;"><strong style="color:var(--bronze-light); font-family:monospace;">${m.member_number || 'S/N'}</strong></td>
+          <td style="padding:12px 16px; font-family:monospace; color:var(--text-bone);">${m.ci}</td>
+          <td style="padding:12px 16px;">
+            <div style="font-size:0.82rem; color:var(--text-bone);">${m.phone}</div>
+            <small style="color:var(--text-muted); font-size:0.75rem;">${m.email}</small>
+          </td>
+          <td style="padding:12px 16px;">
+            <div>${m.department}</div>
+            <small style="color:var(--text-muted); font-size:0.75rem;">THATA: ${m.thata_number || 'No especificado'}</small>
+          </td>
+          <td style="padding:12px 16px;"><span style="font-size:0.8rem; color:var(--text-bone);">${m.category}</span></td>
+          <td style="padding:12px 16px;">
+            <div>${statusPill}</div>
+            <small style="color:var(--text-muted); font-size:0.72rem; display:block; margin-top:2px;">Hasta: ${validStr}</small>
+          </td>
+          <td style="padding:12px 16px; text-align:right;">
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem; margin-right:4px;" onclick="editMember(${m.id})">✏️</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem; color:#F87171;" onclick="deleteMember(${m.id})">🗑️</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading admin members:', err);
+  }
+}
+
+function openNewMemberModal() {
+  adminMemberPhotoFile = null;
+  document.getElementById('member-modal-id').value = '';
+  document.getElementById('member-modal-first-name').value = '';
+  document.getElementById('member-modal-last-name').value = '';
+  document.getElementById('member-modal-ci').value = '';
+  document.getElementById('member-modal-number').value = '';
+  document.getElementById('member-modal-phone').value = '';
+  document.getElementById('member-modal-email').value = '';
+  document.getElementById('member-modal-dept').value = 'Lavalleja';
+  document.getElementById('member-modal-thata').value = '';
+  document.getElementById('member-modal-category').value = 'Socio Pleno Activo';
+  document.getElementById('member-modal-status').value = 'ACTIVE';
+
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  document.getElementById('member-modal-valid').value = nextYear.toISOString().slice(0, 10);
+
+  document.getElementById('member-modal-photo-url').value = '';
+  document.getElementById('member-modal-preview-img').src = 'assets/logo.png';
+  document.getElementById('member-modal-header-title').textContent = '🪪 Alta de Nuevo Socio Oficial';
+
+  openModal('member-editor-modal');
+}
+
+async function editMember(id) {
+  let m = (AppState.adminMembers || []).find(item => item.id == id);
+  if (!m) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/members`);
+      if (res.ok) {
+        const data = await res.json();
+        AppState.adminMembers = data.members || [];
+        m = AppState.adminMembers.find(item => item.id == id);
+      }
+    } catch (e) {
+      console.error('Error fetching member:', e);
+    }
+  }
+
+  if (!m) {
+    alert("No se pudo cargar la información del socio #" + id);
+    return;
+  }
+
+  adminMemberPhotoFile = null;
+  document.getElementById('member-modal-id').value = m.id;
+  document.getElementById('member-modal-first-name').value = m.first_name || '';
+  document.getElementById('member-modal-last-name').value = m.last_name || '';
+  document.getElementById('member-modal-ci').value = m.ci || '';
+  document.getElementById('member-modal-number').value = m.member_number || '';
+  document.getElementById('member-modal-phone').value = m.phone || '';
+  document.getElementById('member-modal-email').value = m.email || '';
+  document.getElementById('member-modal-dept').value = m.department || 'Lavalleja';
+  document.getElementById('member-modal-thata').value = m.thata_number || '';
+  document.getElementById('member-modal-category').value = m.category || 'Socio Pleno Activo';
+  document.getElementById('member-modal-status').value = m.status || 'ACTIVE';
+
+  if (m.valid_until) {
+    document.getElementById('member-modal-valid').value = new Date(m.valid_until).toISOString().slice(0, 10);
+  } else {
+    document.getElementById('member-modal-valid').value = '';
+  }
+
+  document.getElementById('member-modal-photo-url').value = m.photo_url || '';
+  document.getElementById('member-modal-preview-img').src = m.photo_url || 'assets/logo.png';
+  document.getElementById('member-modal-header-title').textContent = `✏️ Modificar Socio: ${m.first_name} ${m.last_name} (${m.member_number || ''})`;
+
+  openModal('member-editor-modal');
+}
+
+function handleMemberPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  adminMemberPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('member-modal-preview-img').src = e.target.result;
+    document.getElementById('member-modal-photo-url').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveMemberForm(event) {
+  if (event) event.preventDefault();
+
+  const id = document.getElementById('member-modal-id').value;
+  const firstName = document.getElementById('member-modal-first-name').value.trim();
+  const lastName = document.getElementById('member-modal-last-name').value.trim();
+  const ci = document.getElementById('member-modal-ci').value.trim();
+  const memberNumber = document.getElementById('member-modal-number').value.trim();
+  const phone = document.getElementById('member-modal-phone').value.trim();
+  const email = document.getElementById('member-modal-email').value.trim();
+  const department = document.getElementById('member-modal-dept').value;
+  const thataNumber = document.getElementById('member-modal-thata').value.trim();
+  const category = document.getElementById('member-modal-category').value;
+  const status = document.getElementById('member-modal-status').value;
+  const validUntil = document.getElementById('member-modal-valid').value;
+  const photoUrl = document.getElementById('member-modal-photo-url').value.trim();
+
+  if (!firstName || !lastName || !ci || !phone || !email) {
+    alert("Por favor complete los campos obligatorios (*).");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('firstName', firstName);
+  formData.append('lastName', lastName);
+  formData.append('ci', ci);
+  if (memberNumber) formData.append('memberNumber', memberNumber);
+  formData.append('phone', phone);
+  formData.append('email', email);
+  formData.append('department', department);
+  formData.append('thataNumber', thataNumber);
+  formData.append('category', category);
+  formData.append('status', status);
+  if (validUntil) formData.append('validUntil', validUntil);
+  if (photoUrl) formData.append('photoUrl', photoUrl);
+  if (adminMemberPhotoFile) formData.append('photo', adminMemberPhotoFile);
+
+  const btn = document.getElementById('btn-save-member-submit');
+  if (btn) btn.textContent = 'Guardando en Base de Datos...';
+
+  try {
+    const url = id ? `${API_BASE}/admin/members/${id}` : `${API_BASE}/admin/members`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Error al guardar socio.');
+      return;
+    }
+
+    alert(data.message || 'Socio guardado exitosamente en PostgreSQL.');
+    closeModal('member-editor-modal');
+    await loadAdminMembers();
+  } catch (err) {
+    console.error('Error saving member:', err);
+    alert('Error al conectar con el servidor.');
+  } finally {
+    if (btn) btn.textContent = 'Guardar Socio Oficial →';
+  }
+}
+
+async function deleteMember(id) {
+  if (!confirm("¿Estás seguro de que deseas eliminar este socio del padrón oficial?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/members/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || "Socio eliminado.");
+      await loadAdminMembers();
+    } else {
+      alert(data.error || "Error al eliminar.");
+    }
+  } catch (err) {
+    alert("Error de conexión con el backend.");
+  }
+}
+
+// ====================================================
 // GOBERNANZA & AUTORIDADES (ADMIN & PUBLIC)
 // ====================================================
 
@@ -2003,7 +2287,7 @@ function openNewAuthorityModal() {
   document.getElementById('authority-modal-id').value = '';
   document.getElementById('authority-modal-name').value = '';
   document.getElementById('authority-modal-role').value = '';
-  document.getElementById('authority-modal-mandate').value = document.getElementById('admin-mandate-period-input')?.value || '2024 – 2027';
+  document.getElementById('authority-modal-mandate').value = document.getElementById('admin-mandate-period-input')?.value || '2026 – 2028';
   document.getElementById('authority-modal-order').value = '1';
   document.getElementById('authority-modal-status').value = 'ACTIVE';
   document.getElementById('authority-modal-bio').value = '';
@@ -2052,7 +2336,7 @@ async function editAuthority(id) {
   if (bioEl) bioEl.value = a.bio || '';
   if (photoUrlEl) photoUrlEl.value = a.photo_url || '';
   if (previewImgEl) previewImgEl.src = a.photo_url || 'assets/logo.png';
-  if (mandateEl) mandateEl.value = a.mandate_period || '2024 – 2027';
+  if (mandateEl) mandateEl.value = a.mandate_period || '2026 – 2028';
   if (orderEl) orderEl.value = a.display_order || 1;
   if (statusEl) statusEl.value = a.status || 'ACTIVE';
   if (titleEl) titleEl.textContent = '✏️ Modificar Autoridad Institucional';
@@ -2942,6 +3226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initRaffleGrid();
   renderNumbersGrid(currentHundred);
   updateCheckoutTray();
+  await checkMercadoPagoReturn();
 
   // Search input listener
   const searchInput = document.getElementById('raffle-search-input');
@@ -2993,4 +3278,11 @@ window.handleAdminLogout = handleAdminLogout;
 window.approveReceipt = approveReceipt;
 window.rejectReceipt = rejectReceipt;
 window.saveInstitutionalSettingsForm = saveInstitutionalSettingsForm;
+window.openNewMemberModal = openNewMemberModal;
+window.editMember = editMember;
+window.deleteMember = deleteMember;
+window.saveMemberForm = saveMemberForm;
+window.handleMemberPhotoUpload = handleMemberPhotoUpload;
+window.loadAdminMembers = loadAdminMembers;
+window.debounceMemberSearch = debounceMemberSearch;
 
