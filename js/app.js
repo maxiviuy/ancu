@@ -3056,6 +3056,26 @@ async function loadPublicSettings() {
       });
     }
 
+    if (settings.contact_phone) {
+      const cleanPhone = settings.contact_phone.replace(/\D/g, '');
+      const intlPhone = cleanPhone.startsWith('598') ? cleanPhone : (cleanPhone.startsWith('0') ? '598' + cleanPhone.substring(1) : '598' + cleanPhone);
+      let displayPhone = settings.contact_phone;
+      if (!displayPhone.startsWith('+598') && cleanPhone.length === 9 && cleanPhone.startsWith('09')) {
+        displayPhone = `+598 ${cleanPhone.substring(1, 3)} ${cleanPhone.substring(3, 6)} ${cleanPhone.substring(6)}`;
+      }
+
+      document.querySelectorAll('a[href*="wa.me"], .contact-whatsapp-link').forEach(link => {
+        link.href = `https://wa.me/${intlPhone}`;
+        if (!link.classList.contains('no-auto-sync')) {
+          link.textContent = displayPhone;
+        }
+      });
+
+      document.querySelectorAll('.contact-phone-display').forEach(el => {
+        el.textContent = displayPhone;
+      });
+    }
+
     // 3. Membership Fee Sync
     if (settings.membership_fee_amount) {
       document.querySelectorAll('.membership-fee-display').forEach(el => {
