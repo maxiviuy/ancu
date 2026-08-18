@@ -116,6 +116,12 @@ La institución cuenta con una infraestructura moderna basada en **Linux VPS ded
 - [x] **Cuentas Bancarias de Recaudación:**
   - **Banco BROU:** Caja de Ahorro UYU `110766786-00001` (Titular: ANCU).
   - **Mercado Pago (Transferencia / CVU):** Cuenta UYU `1005929265537` (Titular: Martin Pastorino Alvarez).
+- [x] **Pasarela de Pagos Digital Automática (Mercado Pago Checkout Pro):**
+  - **Public Key de Producción:** `APP_USR-f24043e3-2e82-4355-9c18-c3da4cad9405`
+  - **Access Token de Producción:** `APP_USR-1164599044469406-081815-346acbf6ba12b6c4f54205b00de485cf-183924404`
+  - **Client ID:** `1164599044469406`
+  - **Client Secret:** `vHOBC9llcN5DztzetdIHI04es9RElTWP`
+  - **Modo en Servidor:** 🟢 **LIVE / PRODUCCIÓN ACTIVO** (Verificado y generando Checkout Pro con redirección segura a Mercado Pago Uruguay).
 - [x] **Canales de Contacto Centralizados:**
   - Correo institucional: `Asociaciondecazadoresdeluruguay@hotmail.com`.
   - WhatsApp / Teléfono oficial: `094 156 582` (`+598 94 156 582`).
@@ -124,20 +130,15 @@ La institución cuenta con una infraestructura moderna basada en **Linux VPS ded
 - [x] **Comisión Directiva:**
   - Soporte de celular/WhatsApp directo opcional por directivo y fotos actualizadas.
 
-### ⏳ Pendiente de Respuesta / En Espera:
-- [ ] **Credenciales de API de Mercado Pago (Solicitadas a Martín Pastorino Alvarez):**
-  - **Access Token de Producción** (`APP_USR-...`)
-  - **Public Key de Producción** (`APP_USR-...`)
-  *(Obtenibles desde [mercadopago.com.uy/developers](https://www.mercadopago.com.uy/developers) -> Tus integraciones -> Credenciales de producción para activar la pasarela automática con tarjetas de crédito/débito en cuotas).*
-
 ---
 
 ## 7. Agradecimiento y Conclusión
 
 Agradecemos profundamente la confianza depositada en nuestro equipo para llevar adelante la transformación digital de **ANCU**. 
 
-Quedamos a la espera de las credenciales de API de Mercado Pago para realizar la activación final de la pasarela automática de tarjetas.
+El sistema se encuentra **100% operativo, integrado y listo para la recaudación oficial**.
 
 **Atentamente,**  
 *Equipo de Ingeniería y Desarrollo Tecnológico*  
 **ANCU Digital Ecosystem** — [https://ancu.uy](https://ancu.uy)
+
