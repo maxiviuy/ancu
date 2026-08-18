@@ -1427,6 +1427,7 @@ function switchAdminTab(tabName) {
   if (btn) btn.classList.add('active');
   if (content) content.style.display = 'block';
 
+  if (tabName === 'raffles') loadAdminRaffles();
   if (tabName === 'authorities') loadAdminAuthorities();
   if (tabName === 'members') loadAdminMembers();
   if (tabName === 'settings') loadAdminSettings();
@@ -1434,6 +1435,89 @@ function switchAdminTab(tabName) {
   if (tabName === 'benefits') loadAdminBenefits();
   if (tabName === 'users') loadAdminUsers();
   if (tabName === 'news') loadAdminNews();
+}
+
+async function loadAdminRaffles() {
+  try {
+    const rafflesRes = await fetch(`${API_BASE}/admin/raffles`);
+    if (!rafflesRes.ok) return;
+    const { raffles } = await rafflesRes.json();
+    const listEl = document.getElementById('admin-raffles-list');
+    if (listEl && Array.isArray(raffles)) {
+      listEl.innerHTML = raffles.map(r => `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid ${r.status === 'ACTIVE' ? 'var(--border-bronze)' : 'var(--border-subtle)'}; padding:14px; border-radius:var(--radius-md); font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong style="color:${r.status === 'ACTIVE' ? 'var(--bronze-light)' : 'var(--text-bone)'}; font-size:0.95rem;">${r.title}</strong>
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:3px;">
+              Sorteo: <strong>${new Date(r.draw_date).toLocaleDateString('es-UY')}</strong> · Valor: $ ${r.ticket_price} UYU
+            </div>
+            <div style="font-size:0.75rem; color:#6EE7B7; margin-top:2px;">
+              ${r.sold_tickets || 0} vendidos / ${r.total_tickets || 1000} totales
+            </div>
+          </div>
+          <div>
+            <span class="status-badge-pill ${r.status === 'ACTIVE' ? 'active' : 'pending'}" style="font-size:0.75rem; font-weight:700;">${r.status}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    const activeRaffle = (Array.isArray(raffles) && raffles.find(r => r.status === 'ACTIVE')) || (Array.isArray(raffles) && raffles[0]);
+    if (activeRaffle) {
+      const titleInput = document.getElementById('raffle-title-input');
+      const subInput = document.getElementById('raffle-subtitle-input');
+      const dateInput = document.getElementById('raffle-date-input');
+      const priceInput = document.getElementById('raffle-price-input');
+      const statusSelect = document.getElementById('raffle-status-select');
+      const methodInput = document.getElementById('raffle-method-input');
+
+      if (titleInput) titleInput.value = activeRaffle.title || '';
+      if (subInput) subInput.value = activeRaffle.subtitle || '';
+      if (dateInput && activeRaffle.draw_date) {
+        const d = new Date(activeRaffle.draw_date);
+        const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        dateInput.value = localIso;
+      }
+      if (priceInput) priceInput.value = parseFloat(activeRaffle.ticket_price) || 400;
+      if (statusSelect) statusSelect.value = activeRaffle.status || 'ACTIVE';
+      if (methodInput) methodInput.value = activeRaffle.draw_method || '';
+
+      // Cargar números ganadores
+      const w1Input = document.getElementById('winning-number-1');
+      const w2Input = document.getElementById('winning-number-2');
+      const w3Input = document.getElementById('winning-number-3');
+      if (w1Input) w1Input.value = activeRaffle.winning_number_1 || '';
+      if (w2Input) w2Input.value = activeRaffle.winning_number_2 || '';
+      if (w3Input) w3Input.value = activeRaffle.winning_number_3 || '';
+
+      // Títulos de premios en casilleros de ganadores
+      if (Array.isArray(activeRaffle.prizes)) {
+        const p1El = document.getElementById('win-prize-title-1');
+        const p2El = document.getElementById('win-prize-title-2');
+        const p3El = document.getElementById('win-prize-title-3');
+        if (p1El && activeRaffle.prizes[0]) p1El.textContent = activeRaffle.prizes[0].title;
+        if (p2El && activeRaffle.prizes[1]) p2El.textContent = activeRaffle.prizes[1].title;
+        if (p3El && activeRaffle.prizes[2]) p3El.textContent = activeRaffle.prizes[2].title;
+
+        AppState.adminPrizesDraft = activeRaffle.prizes.map((p, idx) => ({
+          order: p.prize_order || idx + 1,
+          title: p.title || '',
+          description: p.description || '',
+          imageUrl: p.image_url || '',
+          estimatedValue: parseFloat(p.estimated_value || 0),
+          regulated: p.regulated === true,
+          note: p.note || ''
+        }));
+        renderAdminPrizesEditor();
+      }
+
+      if (activeRaffle.winning_number_1) handleWinningNumberInput(1, activeRaffle.winning_number_1);
+      if (activeRaffle.winning_number_2) handleWinningNumberInput(2, activeRaffle.winning_number_2);
+      if (activeRaffle.winning_number_3) handleWinningNumberInput(3, activeRaffle.winning_number_3);
+    }
+  } catch (err) {
+    console.error('Error loading admin raffles:', err);
+  }
 }
 
 function checkAdminAuthView() {
@@ -1532,61 +1616,8 @@ async function initAdminDashboard() {
       }
     }
 
-    // Load Raffles list and Prizes
-    const rafflesRes = await fetch(`${API_BASE}/admin/raffles`);
-    if (rafflesRes.ok) {
-      const { raffles } = await rafflesRes.json();
-      const listEl = document.getElementById('admin-raffles-list');
-      if (listEl && Array.isArray(raffles)) {
-        listEl.innerHTML = raffles.map(r => `
-          <div style="background:rgba(0,0,0,0.3); border:1px solid ${r.status === 'ACTIVE' ? 'var(--border-bronze)' : 'var(--border-subtle)'}; padding:12px; border-radius:var(--radius-md); font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <strong style="color:${r.status === 'ACTIVE' ? 'var(--bronze-light)' : 'var(--text-bone)'};">${r.title}</strong>
-              <div style="font-size:0.75rem; color:var(--text-muted);">Sorteo: ${new Date(r.draw_date).toLocaleDateString('es-UY')} · $ ${r.ticket_price} UYU</div>
-            </div>
-            <div>
-              <span class="status-badge-pill ${r.status === 'ACTIVE' ? 'active' : 'pending'}" style="font-size:0.72rem;">${r.status}</span>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      const activeRaffle = raffles.find(r => r.status === 'ACTIVE') || raffles[0];
-      if (activeRaffle) {
-        // Cargar números ganadores
-        const w1Input = document.getElementById('winning-number-1');
-        const w2Input = document.getElementById('winning-number-2');
-        const w3Input = document.getElementById('winning-number-3');
-        if (w1Input) w1Input.value = activeRaffle.winning_number_1 || '';
-        if (w2Input) w2Input.value = activeRaffle.winning_number_2 || '';
-        if (w3Input) w3Input.value = activeRaffle.winning_number_3 || '';
-
-        // Títulos de premios en casilleros de ganadores
-        if (Array.isArray(activeRaffle.prizes)) {
-          const p1El = document.getElementById('win-prize-title-1');
-          const p2El = document.getElementById('win-prize-title-2');
-          const p3El = document.getElementById('win-prize-title-3');
-          if (p1El && activeRaffle.prizes[0]) p1El.textContent = activeRaffle.prizes[0].title;
-          if (p2El && activeRaffle.prizes[1]) p2El.textContent = activeRaffle.prizes[1].title;
-          if (p3El && activeRaffle.prizes[2]) p3El.textContent = activeRaffle.prizes[2].title;
-
-          AppState.adminPrizesDraft = activeRaffle.prizes.map((p, idx) => ({
-            order: p.prize_order || idx + 1,
-            title: p.title || '',
-            description: p.description || '',
-            imageUrl: p.image_url || '',
-            estimatedValue: parseFloat(p.estimated_value || 0),
-            regulated: p.regulated === true,
-            note: p.note || ''
-          }));
-          renderAdminPrizesEditor();
-        }
-
-        if (activeRaffle.winning_number_1) handleWinningNumberInput(1, activeRaffle.winning_number_1);
-        if (activeRaffle.winning_number_2) handleWinningNumberInput(2, activeRaffle.winning_number_2);
-        if (activeRaffle.winning_number_3) handleWinningNumberInput(3, activeRaffle.winning_number_3);
-      }
-    }
+    // Load Raffles list, active raffle form, prizes and winners
+    await loadAdminRaffles();
 
     // Load News Articles into Admin CMS
     await loadAdminNews();
@@ -3685,27 +3716,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   initNormativaFilters();
   initMembershipForm();
 
+  // If on admin.html, initialize dashboard immediately
+  if (document.getElementById('admin-dashboard-view') || document.getElementById('admin-login-screen')) {
+    try { await initAdminDashboard(); } catch (err) { console.error('Admin init error:', err); }
+  }
+
   // Load global settings, top bar & fees across all pages
-  await loadPublicSettings();
+  try { await loadPublicSettings(); } catch (err) { console.warn('Public settings warning:', err); }
 
   // Load public authorities on autoridades.html
-  await loadPublicAuthorities();
+  try { await loadPublicAuthorities(); } catch (err) { console.warn('Public authorities warning:', err); }
 
   // Load public activities on actividades.html
-  await loadPublicActivities();
+  try { await loadPublicActivities(); } catch (err) { console.warn('Public activities warning:', err); }
 
   // Load public benefits on socios.html
-  await loadPublicBenefits();
+  try { await loadPublicBenefits(); } catch (err) { console.warn('Public benefits warning:', err); }
 
   // Load news from PostgreSQL
-  await syncNewsFromAPI();
+  try { await syncNewsFromAPI(); } catch (err) { console.warn('News sync warning:', err); }
 
-  // Load active raffle & numbers
-  await syncRaffleFromAPI();
-  initRaffleGrid();
-  renderNumbersGrid(currentHundred);
-  updateCheckoutTray();
-  await checkMercadoPagoReturn();
+  // Load active raffle & numbers on rifas.html or index.html
+  if (document.getElementById('numbers-grid') || document.getElementById('hundreds-tabs-wrap')) {
+    try {
+      await syncRaffleFromAPI();
+      initRaffleGrid();
+      renderNumbersGrid(currentHundred);
+      updateCheckoutTray();
+      await checkMercadoPagoReturn();
+    } catch (err) {
+      console.warn('Raffle sync warning:', err);
+    }
+  }
 
   // Search input listener
   const searchInput = document.getElementById('raffle-search-input');
@@ -3715,11 +3757,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Load Member Digital Card
-  renderDigitalCard();
-
-  // Load Admin Dashboard if on admin.html
-  await initAdminDashboard();
+  // Load Member Digital Card on socios.html
+  try { renderDigitalCard(); } catch (err) { console.warn('Digital card warning:', err); }
 });
 
 // Explicit Global Window Bindings for Inline HTML Events
@@ -3771,4 +3810,5 @@ window.submitCheckout = submitCheckout;
 window.selectPaymentMethod = selectPaymentMethod;
 window.toggleNumberSelection = toggleNumberSelection;
 window.handleWinningNumberInput = handleWinningNumberInput;
+window.loadAdminRaffles = loadAdminRaffles;
 
