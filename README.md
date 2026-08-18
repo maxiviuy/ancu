@@ -1,7 +1,7 @@
-﻿# Asociación Nacional de Cazadores del Uruguay (ANCU)
+# Asociación Nacional de Cazadores del Uruguay (ANCU)
 ### Portal Institucional · Plataforma de Rifas · Portal de Socios "Mi ANCU"
 
-Plataforma digital oficial desarrollada para la **Asociación Nacional de Cazadores del Uruguay (ANCU)**, con respaldo tecnológico de **Astro** (`astroseguridad.lat` · `info@ancu.uy`).
+Plataforma digital oficial desarrollada para la **Asociación Nacional de Cazadores del Uruguay (ANCU)**, con respaldo tecnológico de **Astro** (`astroseguridad.lat` · `Asociaciondecazadoresdeluruguay@hotmail.com`).
 
 ---
 
@@ -23,7 +23,7 @@ Plataforma digital oficial desarrollada para la **Asociación Nacional de Cazado
 - `noticias.html`: Portal de asuntos públicos con comunicados oficiales de ANCU y botón para compartir en WhatsApp.
 - `actividades.html`: Calendario de capacitaciones de tiro, seguridad y jornadas de muestreo científico con la Universidad.
 - `rifas.html`: Plataforma interactiva de rifas.
-- `contacto.html`: Canal centralizado de atención con la línea `info@ancu.uy` y WhatsApp.
+- `contacto.html`: Canal centralizado de atención con la línea `Asociaciondecazadoresdeluruguay@hotmail.com` y WhatsApp.
 
 ### 2. Plataforma de Rifas Reutilizable (Superando a `rifas.dmz.uy`)
 - **Buscador predictivo de números** con enfoque automático.
@@ -74,7 +74,7 @@ ancu-portal/
 ├── noticias.html        # Prensa y comunicados de posición
 ├── actividades.html     # Calendario de capacitaciones y campo
 ├── rifas.html           # Plataforma de rifas con timer y MP
-├── contacto.html        # Canales de atención (info@ancu.uy)
+├── contacto.html        # Canales de atención (Asociaciondecazadoresdeluruguay@hotmail.com)
 ├── admin.html           # Backoffice de control y auditoría
 ├── css/
 │   └── main.css         # Sistema de diseño sobrio y tokens
@@ -88,5 +88,5 @@ ancu-portal/
 ---
 
 ## 📞 Canales de Soporte
-- **Línea Institucional ANCU:** info@ancu.uy
+- **Línea Institucional ANCU:** Asociaciondecazadoresdeluruguay@hotmail.com
 - **Respaldo Tecnológico:** Astro · [astroseguridad.lat](https://astroseguridad.lat)

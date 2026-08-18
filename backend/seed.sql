@@ -125,7 +125,7 @@ VALUES
     ('membership_fee_amount', '600', 'FINANCIAL', 'Valor de Cuota Social Mensual ($ UYU)'),
     ('brou_account_info', 'Caja de Ahorro BROU: 001558921-00001 (Titular: ANCU - Asoc. Nac. Cazadores)', 'FINANCIAL', 'Cuenta BROU para Transferencias'),
     ('prex_account_info', 'Cuenta Prex: 1234-5678-9012 (Titular: ANCU)', 'FINANCIAL', 'Cuenta Prex para Transferencias'),
-    ('contact_email', 'info@ancu.uy', 'CONTACT', 'Correo Electrónico de Contacto Oficial'),
+    ('contact_email', 'Asociaciondecazadoresdeluruguay@hotmail.com', 'CONTACT', 'Correo Electrónico de Contacto Oficial'),
     ('contact_phone', '094 156 582', 'CONTACT', 'Teléfono / WhatsApp de Guardia y Secretaría'),
     ('statute_summary', 'Estatuto oficial aprobado y registrado ante el Ministerio de Educación y Cultura (MEC). Rige el funcionamiento democrático, la defensa de la caza ética y los derechos de los asociados.', 'STATUTE', 'Resumen del Estatuto Social'),
     ('statute_pdf_url', 'assets/estatutos_ancu_oficial.pdf', 'STATUTE', 'Ruta al Documento PDF del Estatuto')
