@@ -128,7 +128,8 @@ VALUES
     ('contact_email', 'Asociaciondecazadoresdeluruguay@hotmail.com', 'CONTACT', 'Correo Electrónico de Contacto Oficial'),
     ('contact_phone', '094 156 582', 'CONTACT', 'Teléfono / WhatsApp de Guardia y Secretaría'),
     ('statute_summary', 'Estatuto oficial aprobado y registrado ante el Ministerio de Educación y Cultura (MEC). Rige el funcionamiento democrático, la defensa de la caza ética y los derechos de los asociados.', 'STATUTE', 'Resumen del Estatuto Social'),
-    ('statute_pdf_url', 'assets/estatutos_ancu_oficial.pdf', 'STATUTE', 'Ruta al Documento PDF del Estatuto')
+    ('statute_pdf_url', 'assets/estatutos_ancu_oficial.pdf', 'STATUTE', 'Ruta al Documento PDF del Estatuto'),
+    ('site_launch_mode', 'TEASER_RIFA', 'SYSTEM', 'Modo de Visibilidad del Portal (PUBLIC / TEASER_RIFA)')
 ON CONFLICT (setting_key) DO NOTHING;
 
 -- 10. Calendario Inicial de Actividades

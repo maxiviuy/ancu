@@ -2556,6 +2556,24 @@ async function loadAdminSettings() {
     const prex = document.getElementById('setting-prex-account');
     const email = document.getElementById('setting-contact-email');
     const phone = document.getElementById('setting-contact-phone');
+    const launchMode = document.getElementById('setting-site-launch-mode');
+    const badge = document.getElementById('admin-site-mode-badge');
+
+    const currentMode = map.site_launch_mode || 'TEASER_RIFA';
+    if (launchMode) launchMode.value = currentMode;
+    if (badge) {
+      if (currentMode === 'TEASER_RIFA') {
+        badge.textContent = '🟠 Modo Expectativa Rifa';
+        badge.style.background = 'rgba(245,158,11,0.2)';
+        badge.style.color = '#FCD34D';
+        badge.style.borderColor = 'rgba(245,158,11,0.4)';
+      } else {
+        badge.textContent = '🟢 Portal Público Completo';
+        badge.style.background = 'rgba(16,185,129,0.2)';
+        badge.style.color = '#6EE7B7';
+        badge.style.borderColor = 'rgba(16,185,129,0.4)';
+      }
+    }
 
     if (topAnn && map.top_announcement_text) topAnn.value = map.top_announcement_text;
     if (fee && map.membership_fee_amount) fee.value = map.membership_fee_amount;
@@ -2569,9 +2587,25 @@ async function loadAdminSettings() {
   }
 }
 
+function handleSiteModeChange(value) {
+  const badge = document.getElementById('admin-site-mode-badge');
+  if (badge) {
+    if (value === 'TEASER_RIFA') {
+      badge.textContent = '🟠 Modo Expectativa Rifa (Pendiente Guardar)';
+      badge.style.background = 'rgba(245,158,11,0.2)';
+      badge.style.color = '#FCD34D';
+    } else {
+      badge.textContent = '🟢 Portal Público Completo (Pendiente Guardar)';
+      badge.style.background = 'rgba(16,185,129,0.2)';
+      badge.style.color = '#6EE7B7';
+    }
+  }
+}
+
 async function saveInstitutionalSettingsForm(event) {
   if (event) event.preventDefault();
 
+  const siteLaunchMode = document.getElementById('setting-site-launch-mode')?.value || 'TEASER_RIFA';
   const topAnnouncement = document.getElementById('setting-top-announcement')?.value.trim();
   const membershipFee = document.getElementById('setting-membership-fee')?.value.trim();
   const statuteSummary = document.getElementById('setting-statute-summary')?.value.trim();
@@ -2581,6 +2615,7 @@ async function saveInstitutionalSettingsForm(event) {
   const contactPhone = document.getElementById('setting-contact-phone')?.value.trim();
 
   const payload = [
+    { setting_key: 'site_launch_mode', setting_value: siteLaunchMode, category: 'SYSTEM', label: 'Modo de Visibilidad del Portal' },
     { setting_key: 'top_announcement_text', setting_value: topAnnouncement },
     { setting_key: 'membership_fee_amount', setting_value: membershipFee },
     { setting_key: 'statute_summary', setting_value: statuteSummary },
@@ -3116,6 +3151,40 @@ async function loadPublicSettings() {
       document.querySelectorAll('.prex-account-display').forEach(el => {
         el.textContent = settings.prex_account_info;
       });
+    }
+
+    // 6. Launch Teaser Mode Handling
+    const siteMode = settings.site_launch_mode || 'TEASER_RIFA';
+    const rawPath = window.location.pathname;
+    const pageName = rawPath.substring(rawPath.lastIndexOf('/') + 1).toLowerCase() || 'index.html';
+
+    const fullContent = document.getElementById('full-site-content');
+    const teaserContent = document.getElementById('teaser-launch-content');
+
+    if (siteMode === 'TEASER_RIFA') {
+      if (pageName === '' || pageName === 'index.html') {
+        if (fullContent) fullContent.style.display = 'none';
+        if (teaserContent) teaserContent.style.display = 'block';
+      } else if (pageName === 'rifas.html') {
+        // En rifas.html, ocultamos los enlaces a secciones que aún están en preparación
+        document.querySelectorAll('.nav-links li a').forEach(link => {
+          const href = (link.getAttribute('href') || '').toLowerCase();
+          if (href !== 'index.html' && !href.includes('rifas.html') && href !== '#') {
+            if (link.parentElement) link.parentElement.style.display = 'none';
+          }
+        });
+        const topMiAncu = document.getElementById('top-bar-mi-ancu-btn');
+        if (topMiAncu) topMiAncu.style.display = 'none';
+      } else if (pageName === 'admin.html') {
+        // El administrador siempre ve el panel completo
+      } else {
+        // Redirigir suavemente a la portada teaser si intentan entrar por URL directa
+        window.location.replace('index.html');
+      }
+    } else {
+      // Modo público completo
+      if (fullContent) fullContent.style.display = 'block';
+      if (teaserContent) teaserContent.style.display = 'none';
     }
   } catch (err) {
     console.warn('Configuraciones operando en modo estático/fallback:', err);

@@ -9,6 +9,8 @@
   <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body>
+  <!-- Contenido Completo del Portal (Modo Público) -->
+  <div id="full-site-content">
 
   <!-- Top Announcement & Telephone Support Bar -->
   <div class="top-bar">
@@ -460,7 +462,154 @@
       </div>
     </div>
   </footer>
+  </div>
+  <!-- Fin #full-site-content -->
 
-  <script src="js/app.js?v=20260817_3"></script>
+  <!-- TEASER / MODO EXPECTATIVA (Se activa cuando site_launch_mode === 'TEASER_RIFA') -->
+  <div id="teaser-launch-content" style="display:none; min-height:100vh; background: radial-gradient(circle at 50% 20%, rgba(35, 88, 60, 0.4) 0%, rgba(10, 15, 13, 0.98) 75%), url('assets/hero_uruguay_monte.jpg') center/cover no-repeat fixed; color: var(--text-bone);">
+    
+    <!-- Top Bar Teaser -->
+    <div class="top-bar" style="background: rgba(10,15,13,0.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-subtle);">
+      <div class="container" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div class="top-bar-left">
+          <span class="top-bar-badge" style="background: rgba(197,155,39,0.2); color: var(--bronze-light); border: 1px solid var(--border-bronze);"><span class="dot" style="background: var(--bronze-light);"></span> Próximo Lanzamiento Oficial · Temporada 2026</span>
+          <a href="mailto:Asociaciondecazadoresdeluruguay@hotmail.com" class="phone-highlight" style="color:var(--text-bone);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Asociaciondecazadoresdeluruguay@hotmail.com</a>
+        </div>
+        <div class="top-bar-right">
+          <a href="https://wa.me/59894156582" target="_blank" rel="noopener" class="top-bar-portal-btn" style="background: rgba(35,88,60,0.6); border: 1px solid var(--forest-light);">
+            <span>💬 WhatsApp Oficial: <strong>094 156 582</strong></span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teaser Header -->
+    <header style="padding: 24px 0; border-bottom: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px);">
+      <div class="container" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+        <div class="brand-logo">
+          <div class="logo-symbol" style="width: 58px; height: 58px; border: 2px solid var(--bronze-primary); border-radius: 50%; padding: 4px; background: rgba(0,0,0,0.5); box-shadow: 0 0 20px var(--bronze-glow);">
+            <img src="assets/logo.png" alt="Logo ANCU" class="brand-logo-img" style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
+          <div class="brand-text">
+            <span class="brand-name" style="font-size: 1.6rem; letter-spacing: 2px; color: var(--text-bone); font-weight: 800;">ANCU</span>
+            <span class="brand-sub" style="color: var(--bronze-light); font-size: 0.8rem; font-weight: 600;">Asociación Nacional de Cazadores del Uruguay</span>
+          </div>
+        </div>
+
+        <a href="rifas.html" class="btn btn-bronze btn-lg" style="box-shadow: 0 4px 20px rgba(197,155,39,0.4); font-weight: 700; display:flex; align-items:center; gap:8px;">
+          <span>🎯 Ingresar a la Gran Rifa 2026 &rarr;</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Teaser Hero Container -->
+    <main class="container" style="padding: 60px 16px 80px; max-width: 1100px;">
+      
+      <div style="text-align:center; max-width: 800px; margin: 0 auto 50px;">
+        <div style="display:inline-flex; align-items:center; gap:10px; background: rgba(35,88,60,0.3); border: 1px solid var(--forest-light); padding: 8px 18px; border-radius: 30px; margin-bottom: 24px; font-size: 0.9rem; color: var(--bronze-light); font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10B981; box-shadow:0 0 10px #10B981;"></span>
+          PLATAFORMA DIGITAL EN PREPARACIÓN
+        </div>
+
+        <h1 style="font-family: var(--font-heading); font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 800; line-height: 1.15; margin-bottom: 20px; color: var(--text-bone); text-shadow: 0 4px 20px rgba(0,0,0,0.8);">
+          Asociación Nacional de Cazadores del Uruguay
+        </h1>
+
+        <p style="font-size: 1.15rem; line-height: 1.6; color: var(--text-bone-muted); max-width: 680px; margin: 0 auto 30px;">
+          Estamos finalizando el desarrollo del nuevo portal institucional oficial: representación jurídica, padrón nacional de socios, beneficios en armerías de los 19 departamentos, normativa actualizada y comunidad cinegética ética y responsable.
+        </p>
+      </div>
+
+      <!-- Spotlight Rifa Card -->
+      <div style="background: linear-gradient(145deg, rgba(22, 34, 26, 0.92), rgba(10, 15, 13, 0.95)); border: 2px solid var(--border-bronze); border-radius: var(--radius-xl); padding: clamp(24px, 4vw, 40px); box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(197,155,39,0.15); backdrop-filter: blur(16px); margin-bottom: 50px; position:relative; overflow:hidden;">
+        
+        <div style="position:absolute; top:-40px; right:-40px; width:160px; height:160px; background:radial-gradient(circle, rgba(197,155,39,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; align-items:center;">
+          <div>
+            <div style="display:inline-block; background: var(--bronze-primary); color: #0A0F0D; font-weight: 800; font-size: 0.78rem; padding: 4px 12px; border-radius: 4px; letter-spacing: 1px; margin-bottom: 12px;">
+              CAMPAÑA ACTIVA 2026
+            </div>
+            <h2 style="font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; color: var(--text-bone); margin-bottom: 12px; line-height: 1.2;">
+              Gran Rifa Anual Oficial ANCU
+            </h2>
+            <p style="color: var(--text-bone-muted); font-size: 1rem; line-height: 1.5; margin-bottom: 20px;">
+              Adquirí tus números para participar por el <strong>Rifle Winchester XPR Calibre .308 Win</strong> con mira telescópica y accesorios de alta gama, y apoyá las actividades institucionales de ANCU en todo el país.
+            </p>
+
+            <div style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom: 24px;">
+              <div style="background: rgba(255,255,255,0.05); padding: 10px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Valor del Boleto</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: var(--bronze-light);">$ 400 UYU</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.05); padding: 10px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Total de Números</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-bone);">1.000 (000 al 999)</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.05); padding: 10px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Métodos de Pago</div>
+                <div style="font-size: 0.95rem; font-weight: 700; color: #10B981; margin-top:2px;">BROU & Mercado Pago</div>
+              </div>
+            </div>
+
+            <a href="rifas.html" class="btn btn-bronze btn-lg" style="width:100%; text-align:center; font-size:1.1rem; padding: 16px 24px; box-shadow: 0 8px 25px rgba(197,155,39,0.35); font-weight: 800;">
+              🎯 Elegir Números y Participar en la Rifa &rarr;
+            </a>
+          </div>
+
+          <div style="text-align:center; position:relative;">
+            <div style="border-radius: var(--radius-lg); overflow:hidden; border: 1px solid var(--border-medium); box-shadow: 0 10px 30px rgba(0,0,0,0.6); position:relative; background:#000;">
+              <img src="assets/rifa_winchester_xpr.jpg" alt="Rifle Winchester XPR" style="width:100%; height:260px; object-fit:cover; display:block;">
+              <div style="position:absolute; bottom:0; left:0; right:0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); padding: 16px 14px; text-align:left;">
+                <span style="color:var(--bronze-light); font-weight:700; font-size:0.85rem;">1º Premio Principal</span>
+                <div style="color:#fff; font-weight:700; font-size:1rem;">Winchester XPR Cal. .308 Win + Óptica</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Contact & Secretariat Channels -->
+      <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 28px; text-align:center;">
+        <h3 style="font-size: 1.15rem; color: var(--bronze-light); margin-bottom: 8px; font-weight: 700;">
+          📞 Canales Oficiales de Secretaría y Contacto
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+          Por consultas sobre afiliaciones, trámites o rifas, comunicate directamente con la Comisión Directiva:
+        </p>
+
+        <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+          <a href="https://wa.me/59894156582" target="_blank" rel="noopener" class="btn btn-secondary" style="display:flex; align-items:center; gap:8px; border-color: #25D366; color: #25D366;">
+            <span>💬 WhatsApp: <strong>094 156 582</strong></span>
+          </a>
+          <a href="mailto:Asociaciondecazadoresdeluruguay@hotmail.com" class="btn btn-secondary" style="display:flex; align-items:center; gap:8px;">
+            <span>✉️ Asociaciondecazadoresdeluruguay@hotmail.com</span>
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=100064906891036" target="_blank" rel="noopener" class="btn btn-secondary" style="display:flex; align-items:center; gap:8px;">
+            <span>📘 Facebook Oficial</span>
+          </a>
+          <a href="https://www.instagram.com/ancu.2025/" target="_blank" rel="noopener" class="btn btn-secondary" style="display:flex; align-items:center; gap:8px;">
+            <span>📸 Instagram @ancu.2025</span>
+          </a>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Teaser Footer -->
+    <footer style="border-top: 1px solid var(--border-subtle); padding: 24px 0; background: rgba(10,15,13,0.9); font-size: 0.85rem; color: var(--text-muted);">
+      <div class="container" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>&copy; 2026 Asociación Nacional de Cazadores del Uruguay · Todos los derechos reservados.</div>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span>Tecnología de <a href="https://astroseguridad.lat" target="_blank" rel="noopener" style="color:var(--bronze-light); text-decoration:underline;">Astro</a></span>
+          <a href="admin.html" style="color: rgba(255,255,255,0.3); text-decoration:none; font-size:0.75rem;">🔒 Acceso Backoffice</a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="js/app.js?v=20260817_5"></script>
 </body>
 </html>

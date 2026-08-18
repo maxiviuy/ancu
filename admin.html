@@ -63,11 +63,14 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span id="admin-site-mode-badge" style="background:rgba(245,158,11,0.2); color:#FCD34D; border:1px solid rgba(245,158,11,0.4); font-size:0.75rem; font-weight:700; padding:5px 12px; border-radius:999px;">
+            🟠 Modo Expectativa Rifa
+          </span>
           <div style="background:rgba(16,185,129,0.15); color:#6EE7B7; border:1px solid rgba(16,185,129,0.3); font-size:0.75rem; font-weight:700; padding:5px 12px; border-radius:999px;">
             ● PostgreSQL & MP Ready
           </div>
-          <a href="noticias.html" target="_blank" class="btn btn-secondary btn-sm">📰 Ver Noticias Web</a>
-          <a href="rifas.html" target="_blank" class="btn btn-secondary btn-sm">🎯 Ver Rifa Web</a>
+          <a href="index.html" target="_blank" class="btn btn-secondary btn-sm">🌐 Ver Portada</a>
+          <a href="rifas.html" target="_blank" class="btn btn-secondary btn-sm">🎯 Ver Rifa</a>
           <button type="button" class="btn btn-secondary btn-sm" onclick="handleAdminLogout()">Cerrar Sesión</button>
         </div>
       </div>
@@ -487,6 +490,24 @@
 
           <form id="institutional-settings-form" onsubmit="saveInstitutionalSettingsForm(event)">
             
+            <!-- Site Launch Mode Switcher -->
+            <div style="background: linear-gradient(135deg, rgba(197,155,39,0.12), rgba(35,88,60,0.15)); border: 1.5px solid var(--border-bronze); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+              <div>
+                <strong style="font-size:1.05rem; color:var(--bronze-light); display:flex; align-items:center; gap:8px;">
+                  🌐 Modo de Visibilidad y Lanzamiento del Portal
+                </strong>
+                <p style="font-size:0.85rem; color:var(--text-bone-muted); margin-top:4px; max-width:600px;">
+                  Controlá qué ve el público general: activá el <strong>Modo Expectativa</strong> (solo portada de Próximamente + Rifa activa) o abrí el <strong>Modo Público Completo</strong> con todas las secciones de la web.
+                </p>
+              </div>
+              <div style="min-width:280px;">
+                <select id="setting-site-launch-mode" name="site_launch_mode" class="form-control" style="font-weight:700; font-size:0.92rem; border-color:var(--bronze-light);" onchange="handleSiteModeChange(this.value)">
+                  <option value="TEASER_RIFA">🟠 Modo Expectativa (Próximamente + Rifa)</option>
+                  <option value="PUBLIC">🟢 Modo Público Completo (Toda la Web)</option>
+                </select>
+              </div>
+            </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:24px;">
               
               <!-- Left Column: Announcements & Membership Fee -->
@@ -1267,6 +1288,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20260817_1"></script>
+  <script src="js/app.js?v=20260817_5"></script>
 </body>
 </html>
