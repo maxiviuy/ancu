@@ -26,3 +26,19 @@ build/
 .astro/
 uploads/
 
+# Local diagnostic and maintenance scripts
+deploy_*.py
+test_*.py
+inspect_*.py
+manage_*.py
+exec_*.py
+update_*.py
+verify_*.py
+clean_*.py
+parse_*.py
+check_*.py
+*.xlsx
+*.txt
+__pycache__/
+
+
