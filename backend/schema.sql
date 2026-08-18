@@ -172,6 +172,7 @@ CREATE TABLE IF NOT EXISTS authorities (
     role_title VARCHAR(150) NOT NULL,
     bio TEXT,
     photo_url TEXT,
+    phone VARCHAR(50),
     mandate_period VARCHAR(50) NOT NULL DEFAULT '2024 – 2027',
     display_order INTEGER NOT NULL DEFAULT 1,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- 'ACTIVE', 'HISTORICAL'

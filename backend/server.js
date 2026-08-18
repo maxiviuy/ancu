@@ -2008,7 +2008,7 @@ app.get('/api/admin/export/raffle.csv', async (req, res) => {
 app.get('/api/authorities', async (req, res) => {
   try {
     const authRes = await db.query(`
-      SELECT id, name, role_title, bio, photo_url, mandate_period, display_order, status 
+      SELECT id, name, role_title, bio, photo_url, phone, mandate_period, display_order, status 
       FROM authorities 
       WHERE status = 'ACTIVE' 
       ORDER BY display_order ASC, id ASC;
@@ -2045,7 +2045,7 @@ app.get('/api/admin/authorities', async (req, res) => {
 // Crear autoridad (con subida de foto opcional)
 app.post('/api/admin/authorities', uploadAuthority.single('photo'), async (req, res) => {
   try {
-    const { name, role_title, bio, mandate_period, display_order, status, photo_url } = req.body;
+    const { name, role_title, bio, phone, mandate_period, display_order, status, photo_url } = req.body;
     let finalPhotoUrl = photo_url || null;
 
     if (req.file) {
@@ -2057,14 +2057,15 @@ app.post('/api/admin/authorities', uploadAuthority.single('photo'), async (req, 
     }
 
     const insertRes = await db.query(`
-      INSERT INTO authorities (name, role_title, bio, photo_url, mandate_period, display_order, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO authorities (name, role_title, bio, photo_url, phone, mandate_period, display_order, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *;
     `, [
       name,
       role_title,
       bio || '',
       finalPhotoUrl || 'assets/logo.png',
+      phone ? String(phone).trim() : null,
       mandate_period || '2024 – 2027',
       parseInt(display_order, 10) || 1,
       status || 'ACTIVE'
@@ -2090,7 +2091,7 @@ app.post('/api/admin/authorities', uploadAuthority.single('photo'), async (req, 
 app.put('/api/admin/authorities/:id', uploadAuthority.single('photo'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, role_title, bio, mandate_period, display_order, status, photo_url } = req.body;
+    const { name, role_title, bio, phone, mandate_period, display_order, status, photo_url } = req.body;
 
     const existingRes = await db.query('SELECT * FROM authorities WHERE id = $1', [id]);
     if (existingRes.rowCount === 0) {
@@ -2105,23 +2106,27 @@ app.put('/api/admin/authorities/:id', uploadAuthority.single('photo'), async (re
       finalPhotoUrl = photo_url;
     }
 
+    const finalPhone = phone !== undefined ? (phone ? String(phone).trim() : null) : current.phone;
+
     const updateRes = await db.query(`
       UPDATE authorities 
       SET name = $1,
           role_title = $2,
           bio = $3,
           photo_url = $4,
-          mandate_period = $5,
-          display_order = $6,
-          status = $7,
+          phone = $5,
+          mandate_period = $6,
+          display_order = $7,
+          status = $8,
           updated_at = NOW()
-      WHERE id = $8
+      WHERE id = $9
       RETURNING *;
     `, [
       name || current.name,
       role_title || current.role_title,
       bio !== undefined ? bio : current.bio,
       finalPhotoUrl,
+      finalPhone,
       mandate_period || current.mandate_period,
       display_order !== undefined ? parseInt(display_order, 10) : current.display_order,
       status || current.status,

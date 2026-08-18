@@ -2314,9 +2314,10 @@ async function loadAdminAuthorities() {
         <h4 style="font-size:1.15rem; font-weight:700; color:var(--text-bone); margin-bottom:6px;">
           ${a.name}
         </h4>
-        <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4; margin-bottom:10px;">
+        <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4; margin-bottom:8px;">
           ${a.bio || 'Sin descripción ingresada.'}
         </p>
+        ${a.phone ? `<div style="font-size:0.78rem; color:var(--bronze-light); margin-bottom:8px; font-weight:600;">📱 ${a.phone}</div>` : ''}
         <div style="font-size:0.72rem; color:var(--text-muted);">
           Mandato: <strong>${a.mandate_period}</strong> · Orden: <strong>#${a.display_order}</strong> · <span style="color:${a.status === 'ACTIVE' ? 'var(--color-available)' : 'var(--text-muted)'};">${a.status === 'ACTIVE' ? 'Activo' : 'Histórico'}</span>
         </div>
@@ -2332,6 +2333,8 @@ function openNewAuthorityModal() {
   document.getElementById('authority-modal-id').value = '';
   document.getElementById('authority-modal-name').value = '';
   document.getElementById('authority-modal-role').value = '';
+  const phoneEl = document.getElementById('authority-modal-phone');
+  if (phoneEl) phoneEl.value = '';
   document.getElementById('authority-modal-mandate').value = document.getElementById('admin-mandate-period-input')?.value || '2026 – 2028';
   document.getElementById('authority-modal-order').value = '1';
   document.getElementById('authority-modal-status').value = 'ACTIVE';
@@ -2367,6 +2370,7 @@ async function editAuthority(id) {
   const idEl = document.getElementById('authority-modal-id');
   const nameEl = document.getElementById('authority-modal-name');
   const roleEl = document.getElementById('authority-modal-role');
+  const phoneEl = document.getElementById('authority-modal-phone');
   const bioEl = document.getElementById('authority-modal-bio');
   const photoUrlEl = document.getElementById('authority-modal-photo-url');
   const previewImgEl = document.getElementById('authority-modal-preview-img');
@@ -2378,6 +2382,7 @@ async function editAuthority(id) {
   if (idEl) idEl.value = a.id;
   if (nameEl) nameEl.value = a.name || '';
   if (roleEl) roleEl.value = a.role_title || '';
+  if (phoneEl) phoneEl.value = a.phone || '';
   if (bioEl) bioEl.value = a.bio || '';
   if (photoUrlEl) photoUrlEl.value = a.photo_url || '';
   if (previewImgEl) previewImgEl.src = a.photo_url || 'assets/logo.png';
@@ -2407,6 +2412,7 @@ async function saveAuthorityForm(event) {
   const id = document.getElementById('authority-modal-id').value;
   const name = document.getElementById('authority-modal-name').value.trim();
   const roleTitle = document.getElementById('authority-modal-role').value.trim();
+  const phone = document.getElementById('authority-modal-phone')?.value.trim();
   const bio = document.getElementById('authority-modal-bio').value.trim();
   const mandatePeriod = document.getElementById('authority-modal-mandate').value.trim();
   const displayOrder = document.getElementById('authority-modal-order').value;
@@ -2421,6 +2427,7 @@ async function saveAuthorityForm(event) {
   const formData = new FormData();
   formData.append('name', name);
   formData.append('role_title', roleTitle);
+  formData.append('phone', phone || '');
   formData.append('bio', bio);
   formData.append('mandate_period', mandatePeriod);
   formData.append('display_order', displayOrder);
@@ -2850,6 +2857,15 @@ async function loadAdminBenefits() {
     const { benefits } = await res.json();
     AppState.adminBenefits = benefits || [];
 
+    // Populate category datalist with existing + presets
+    const datalist = document.getElementById('benefit-categories-datalist');
+    if (datalist && AppState.adminBenefits) {
+      const defaultCats = ['Armerías', 'Camping y Óptica', 'Indumentaria', 'Capacitación y Polígonos', 'Veterinaria y Campo', '4x4 y Accesorios', 'Cuchillería y Artesanías', 'Gastronomía y Hospedaje'];
+      const currentCats = AppState.adminBenefits.map(b => b.category).filter(Boolean);
+      const uniqueCats = Array.from(new Set([...defaultCats, ...currentCats]));
+      datalist.innerHTML = uniqueCats.map(c => `<option value="${c}"></option>`).join('');
+    }
+
     if (!AppState.adminBenefits || AppState.adminBenefits.length === 0) {
       container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted);">No hay convenios comerciales cargados.</div>`;
       return;
@@ -2967,7 +2983,7 @@ async function saveBenefitForm(event) {
   const id = document.getElementById('benefit-modal-id').value;
   const partnerName = document.getElementById('benefit-modal-name').value.trim();
   const discountText = document.getElementById('benefit-modal-discount').value.trim();
-  const category = document.getElementById('benefit-modal-category').value;
+  const category = document.getElementById('benefit-modal-category')?.value.trim() || 'Armerías';
   const department = document.getElementById('benefit-modal-dept').value;
   const address = document.getElementById('benefit-modal-address').value.trim();
   const websiteUrl = document.getElementById('benefit-modal-web').value.trim();
@@ -3002,7 +3018,7 @@ async function saveBenefitForm(event) {
       return;
     }
 
-    alert(data.message || 'Convenio guardado con éxito.');
+    alert(data.message || 'Convenio guardado exitosamente.');
     closeModal('benefit-editor-modal');
     await loadAdminBenefits();
   } catch (err) {
@@ -3121,22 +3137,37 @@ async function loadPublicAuthorities() {
     }
 
     if (authorities && authorities.length > 0) {
-      container.innerHTML = authorities.map(a => `
-        <div class="pillar-card" style="text-align:center;">
-          <div style="width:100px; height:100px; border-radius:50%; margin:0 auto 18px auto; overflow:hidden; border:2px solid var(--border-bronze); background:#0A0F0D;">
-            <img src="${a.photo_url || 'assets/logo.png'}" alt="${a.role_title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='assets/logo.png';" />
+      container.innerHTML = authorities.map(a => {
+        const cleanPhone = (a.phone || '').replace(/\D/g, '');
+        const intlPhone = cleanPhone.startsWith('598') ? cleanPhone : (cleanPhone.startsWith('0') ? '598' + cleanPhone.substring(1) : '598' + cleanPhone);
+        const phoneBadge = (a.phone && a.phone.trim() !== '') ? `
+          <div style="margin-top:12px;">
+            <a href="https://wa.me/${intlPhone}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:6px; background:rgba(35,88,60,0.3); border:1px solid rgba(52,126,87,0.4); padding:4px 12px; border-radius:var(--radius-pill); font-size:0.78rem; color:var(--bronze-light); text-decoration:none; font-weight:600;">
+              <span>📱</span> ${a.phone}
+            </a>
           </div>
-          <span style="font-size:0.75rem; font-weight:700; color:var(--bronze-light); text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:4px;">
-            ${a.role_title}
-          </span>
-          <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-bone); margin-bottom:8px;">
-            ${a.name}
-          </h3>
-          <p style="font-size:0.85rem; color:var(--text-muted);">
-            ${a.bio || ''}
-          </p>
-        </div>
-      `).join('');
+        ` : '';
+
+        return `
+          <div class="pillar-card" style="text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="width:100px; height:100px; border-radius:50%; margin:0 auto 18px auto; overflow:hidden; border:2px solid var(--border-bronze); background:#0A0F0D;">
+                <img src="${a.photo_url || 'assets/logo.png'}" alt="${a.role_title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='assets/logo.png';" />
+              </div>
+              <span style="font-size:0.75rem; font-weight:700; color:var(--bronze-light); text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:4px;">
+                ${a.role_title}
+              </span>
+              <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-bone); margin-bottom:8px;">
+                ${a.name}
+              </h3>
+              <p style="font-size:0.85rem; color:var(--text-muted);">
+                ${a.bio || ''}
+              </p>
+            </div>
+            ${phoneBadge}
+          </div>
+        `;
+      }).join('');
     }
   } catch (err) {
     console.warn('Autoridades operando en modo estático/fallback:', err);
@@ -3205,6 +3236,8 @@ async function loadPublicActivities() {
   }
 }
 
+let publicBenefitsList = [];
+
 async function loadPublicBenefits() {
   const container = document.getElementById('public-benefits-grid');
   if (!container) return;
@@ -3213,33 +3246,62 @@ async function loadPublicBenefits() {
     const res = await fetch(`${API_BASE}/benefits`);
     if (!res.ok) return;
     const { benefits } = await res.json();
-
-    if (benefits && benefits.length > 0) {
-      container.innerHTML = benefits.map(b => `
-        <div class="pillar-card" style="background:var(--bg-card); border:1px solid var(--border-medium); display:flex; flex-direction:column; justify-content:space-between;">
-          <div>
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-              <div style="width:48px; height:48px; border-radius:var(--radius-sm); border:1.5px solid var(--border-bronze); background:#0A0F0D; display:flex; align-items:center; justify-content:center; padding:4px;">
-                <img src="${b.logo_url || 'assets/logo.png'}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${b.partner_name}" onerror="this.src='assets/logo.png';" />
-              </div>
-              <div>
-                <span style="font-size:0.75rem; color:var(--bronze-light); font-weight:700; text-transform:uppercase;">${b.category}</span>
-                <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-bone);">${b.partner_name}</h3>
-              </div>
-            </div>
-            <div style="background:rgba(35,88,60,0.25); border:1px solid rgba(52,126,87,0.4); padding:12px; border-radius:var(--radius-md); margin-bottom:12px; font-size:0.9rem; color:#A7F3D0; font-weight:600;">
-              🎁 ${b.discount_text}
-            </div>
-          </div>
-          <div style="font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-subtle); padding-top:10px;">
-            📍 ${b.address ? b.address + ' (' + b.department + ')' : b.department}
-          </div>
-        </div>
-      `).join('');
-    }
+    publicBenefitsList = benefits || [];
+    renderPublicBenefitsGrid('ALL');
   } catch (err) {
     console.warn('Convenios operando en modo estático/fallback:', err);
   }
+}
+
+function filterPublicBenefits(dept) {
+  renderPublicBenefitsGrid(dept);
+}
+
+function renderPublicBenefitsGrid(deptFilter = 'ALL') {
+  const container = document.getElementById('public-benefits-grid');
+  if (!container) return;
+
+  let filtered = publicBenefitsList;
+  if (deptFilter && deptFilter !== 'ALL') {
+    filtered = publicBenefitsList.filter(b => {
+      const bDept = (b.department || '').trim().toLowerCase();
+      const filterLower = deptFilter.trim().toLowerCase();
+      return bDept === filterLower || bDept.includes('todo el país') || bDept.includes('nacional') || bDept.includes('online');
+    });
+  }
+
+  if (!filtered || filtered.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column:1/-1; text-align:center; padding:30px; background:rgba(0,0,0,0.25); border-radius:var(--radius-md); border:1px solid var(--border-subtle); color:var(--text-muted);">
+        No se encontraron convenios específicos para <strong>${deptFilter}</strong> en este momento.<br>
+        <small style="color:var(--bronze-light); margin-top:6px; display:block;">Podés consultar convenios de alcance nacional o en otros departamentos.</small>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(b => `
+    <div class="pillar-card" style="background:var(--bg-card); border:1px solid var(--border-medium); display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+          <div style="width:48px; height:48px; border-radius:var(--radius-sm); border:1.5px solid var(--border-bronze); background:#0A0F0D; display:flex; align-items:center; justify-content:center; padding:4px; overflow:hidden;">
+            <img src="${b.logo_url || 'assets/logo.png'}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${b.partner_name}" onerror="this.src='assets/logo.png';" />
+          </div>
+          <div>
+            <span style="font-size:0.75rem; color:var(--bronze-light); font-weight:700; text-transform:uppercase;">${b.category}</span>
+            <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-bone);">${b.partner_name}</h3>
+          </div>
+        </div>
+        <div style="background:rgba(35,88,60,0.25); border:1px solid rgba(52,126,87,0.4); padding:12px; border-radius:var(--radius-md); margin-bottom:12px; font-size:0.9rem; color:#A7F3D0; font-weight:600;">
+          🎁 ${b.discount_text}
+        </div>
+      </div>
+      <div style="font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-subtle); padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+        <span>📍 ${b.address ? b.address + ' (' + b.department + ')' : b.department}</span>
+        ${b.website_url ? `<a href="${b.website_url}" target="_blank" rel="noopener" style="color:var(--bronze-light); text-decoration:underline;">Ver web ↗</a>` : ''}
+      </div>
+    </div>
+  `).join('');
 }
 
 // ---------------- Normativa Filter Handler ----------------
@@ -3350,4 +3412,5 @@ window.saveMemberForm = saveMemberForm;
 window.handleMemberPhotoUpload = handleMemberPhotoUpload;
 window.loadAdminMembers = loadAdminMembers;
 window.debounceMemberSearch = debounceMemberSearch;
+window.filterPublicBenefits = filterPublicBenefits;
 

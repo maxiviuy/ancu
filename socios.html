@@ -252,9 +252,40 @@
 
           <!-- Partner Discounts Directory -->
           <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-xl); padding:28px; margin-bottom:24px;">
-            <h3 style="font-family:var(--font-heading); font-size:1.2rem; font-weight:700; color:var(--text-bone); margin-bottom:16px;">
-              🎁 Convenios y Beneficios Activos para Socios
-            </h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:18px;">
+              <div>
+                <h3 style="font-family:var(--font-heading); font-size:1.2rem; font-weight:700; color:var(--text-bone); margin-bottom:2px;">
+                  🎁 Convenios y Beneficios Activos para Socios
+                </h3>
+                <span style="font-size:0.8rem; color:var(--text-muted);">Descuentos exclusivos presentando carnet de socio activo ANCU.</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <label for="benefits-dept-filter" style="font-size:0.82rem; color:var(--text-muted); white-space:nowrap;">Filtrar:</label>
+                <select id="benefits-dept-filter" class="form-control" style="padding:6px 12px; font-size:0.85rem; width:auto; min-width:190px;" onchange="filterPublicBenefits(this.value)">
+                  <option value="ALL">📍 Todos los Departamentos</option>
+                  <option value="Artigas">Artigas</option>
+                  <option value="Canelones">Canelones</option>
+                  <option value="Cerro Largo">Cerro Largo</option>
+                  <option value="Colonia">Colonia</option>
+                  <option value="Durazno">Durazno</option>
+                  <option value="Flores">Flores</option>
+                  <option value="Florida">Florida</option>
+                  <option value="Lavalleja">Lavalleja</option>
+                  <option value="Maldonado">Maldonado</option>
+                  <option value="Montevideo">Montevideo</option>
+                  <option value="Paysandú">Paysandú</option>
+                  <option value="Río Negro">Río Negro</option>
+                  <option value="Rivera">Rivera</option>
+                  <option value="Rocha">Rocha</option>
+                  <option value="Salto">Salto</option>
+                  <option value="San José">San José</option>
+                  <option value="Soriano">Soriano</option>
+                  <option value="Tacuarembó">Tacuarembó</option>
+                  <option value="Treinta y Tres">Treinta y Tres</option>
+                  <option value="Todo el País">Nacional / Online</option>
+                </select>
+              </div>
+            </div>
             <div class="grid-2" id="public-benefits-grid">
               <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
                 <strong style="color:var(--bronze-light); display:block;">Armería El Cazador</strong>

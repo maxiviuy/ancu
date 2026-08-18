@@ -843,11 +843,18 @@
           </div>
         </div>
 
-        <div class="grid-3" style="margin-bottom:14px;">
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label" for="authority-modal-phone">Celular / Teléfono de Contacto (Opcional)</label>
+            <input type="tel" id="authority-modal-phone" class="form-control" placeholder="Ej: 099 123 456 (Visible en la web si se carga)">
+          </div>
           <div class="form-group">
             <label class="form-label" for="authority-modal-mandate">Mandato</label>
             <input type="text" id="authority-modal-mandate" class="form-control" value="2026 – 2028">
           </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:14px;">
           <div class="form-group">
             <label class="form-label" for="authority-modal-order">Orden de Grilla</label>
             <input type="number" id="authority-modal-order" class="form-control" value="1" min="1">
@@ -1028,13 +1035,18 @@
             <input type="text" id="benefit-modal-name" class="form-control" placeholder="Ej: Armería El Cazador" required>
           </div>
           <div class="form-group">
-            <label class="form-label" for="benefit-modal-category">Rubro</label>
-            <select id="benefit-modal-category" class="form-control">
-              <option value="Armerías">Armería & Armamento</option>
-              <option value="Camping y Óptica">Camping & Óptica</option>
-              <option value="Indumentaria">Indumentaria Técnica</option>
-              <option value="Capacitación">Capacitación & Polígonos</option>
-            </select>
+            <label class="form-label" for="benefit-modal-category">Rubro / Categoría *</label>
+            <input type="text" id="benefit-modal-category" list="benefit-categories-datalist" class="form-control" placeholder="Ej: Armerías, Óptica, Camping, etc." required>
+            <datalist id="benefit-categories-datalist">
+              <option value="Armerías"></option>
+              <option value="Camping y Óptica"></option>
+              <option value="Indumentaria"></option>
+              <option value="Capacitación y Polígonos"></option>
+              <option value="Veterinaria y Campo"></option>
+              <option value="4x4 y Accesorios"></option>
+              <option value="Cuchillería y Artesanías"></option>
+              <option value="Gastronomía y Hospedaje"></option>
+            </datalist>
           </div>
         </div>
 
@@ -1047,16 +1059,26 @@
           <div class="form-group">
             <label class="form-label" for="benefit-modal-dept">Departamento</label>
             <select id="benefit-modal-dept" class="form-control">
-              <option value="Montevideo">Montevideo</option>
+              <option value="Artigas">Artigas</option>
               <option value="Canelones">Canelones</option>
-              <option value="Maldonado">Maldonado</option>
-              <option value="Lavalleja">Lavalleja</option>
-              <option value="Rocha">Rocha</option>
-              <option value="Rivera">Rivera</option>
-              <option value="Salto">Salto</option>
-              <option value="Paysandú">Paysandú</option>
+              <option value="Cerro Largo">Cerro Largo</option>
               <option value="Colonia">Colonia</option>
-              <option value="Todo el País">Todo el País (Venta Online)</option>
+              <option value="Durazno">Durazno</option>
+              <option value="Flores">Flores</option>
+              <option value="Florida">Florida</option>
+              <option value="Lavalleja">Lavalleja</option>
+              <option value="Maldonado">Maldonado</option>
+              <option value="Montevideo" selected>Montevideo</option>
+              <option value="Paysandú">Paysandú</option>
+              <option value="Río Negro">Río Negro</option>
+              <option value="Rivera">Rivera</option>
+              <option value="Rocha">Rocha</option>
+              <option value="Salto">Salto</option>
+              <option value="San José">San José</option>
+              <option value="Soriano">Soriano</option>
+              <option value="Tacuarembó">Tacuarembó</option>
+              <option value="Treinta y Tres">Treinta y Tres</option>
+              <option value="Todo el País">Todo el País (Venta Online / Nacional)</option>
             </select>
           </div>
           <div class="form-group">

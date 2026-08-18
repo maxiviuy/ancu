@@ -84,10 +84,10 @@
       <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-bottom:40px;">
         <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn active" data-filter="all">Todos los Módulos</button>
         <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="permisos">Permisos DINABISE</button>
-        <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="jabali">Caza Libre de Jabalí</button>
+        <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="fauna">Ley de Fauna (9.481 & Dec. 164/996)</button>
+        <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="jabali">Caza Libre de Jabalí (Dec. 138/020)</button>
+        <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="armas">THATA & Armas (SMA / Ley 19.247)</button>
         <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="especies">Especies Deportivas y Vedas</button>
-        <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="armas">Tenencia THATA y Armas</button>
-        <button type="button" class="btn btn-secondary btn-sm normativa-filter-btn" data-filter="descargas">Descargas de Modelos PDF</button>
       </div>
 
       <!-- Normativa Cards Grid -->
@@ -102,48 +102,93 @@
                 Permiso de Caza Deportiva
               </h2>
             </div>
-            <a href="https://www.gub.uy/tramites/solicitud-permiso-caza-deportiva" target="_blank" rel="noopener" class="btn btn-bronze btn-sm">
-              Tramitar en gub.uy ↗
-            </a>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <a href="https://www.gub.uy/tramites/solicitud-permiso-caza-deportiva" target="_blank" rel="noopener" class="btn btn-bronze btn-sm">
+                Trámite en Gub.uy ↗
+              </a>
+              <a href="https://www.gub.uy/ministerio-ambiente/politicas-y-gestion/caza-deportiva-comercial-libre" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                Portal DINABISE ↗
+              </a>
+            </div>
           </div>
 
           <p style="color:var(--text-bone-muted); font-size:0.95rem; line-height:1.6;">
-            La caza deportiva es una actividad regulada y exige contar con un permiso personal e intransferible con validez en todo el territorio nacional.
+            La caza deportiva es una actividad regulada y exige contar con un permiso personal e intransferible emitido por la Dirección Nacional de Biodiversidad y Servicios Ecosistémicos (DINABISE) con validez en todo el territorio nacional.
           </p>
 
           <div class="grid-3" style="background:rgba(0,0,0,0.3); padding:18px; border-radius:var(--radius-md);">
             <div>
               <strong style="color:var(--bronze-light); display:block; font-size:0.85rem;">1. Documentación Personal</strong>
-              <span style="font-size:0.8rem; color:var(--text-muted);">Cédula de Identidad vigente y mayoría de 18 años cumplidos.</span>
+              <span style="font-size:0.8rem; color:var(--text-muted);">Cédula de Identidad uruguaya vigente y mayoría de 18 años cumplidos.</span>
             </div>
             <div>
               <strong style="color:var(--bronze-light); display:block; font-size:0.85rem;">2. Datos del Predio</strong>
-              <span style="font-size:0.8rem; color:var(--text-muted);">Declaración del número de padrón rural donde se realizará la actividad.</span>
+              <span style="font-size:0.8rem; color:var(--text-muted);">Declaración del número de padrón rural donde se realizará la actividad y consentimiento del dueño.</span>
             </div>
             <div>
               <strong style="color:var(--bronze-light); display:block; font-size:0.85rem;">3. Armamento Registrado</strong>
-              <span style="font-size:0.8rem; color:var(--text-muted);">Declarar tipo de arma, calibre, guía vigente y THATA.</span>
+              <span style="font-size:0.8rem; color:var(--text-muted);">Declarar tipo de arma, calibre, guía vigente emitida por el SMA y THATA habilitado.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Module: Ley de Fauna y Decreto 164/996 -->
+        <div class="normativa-item-card" data-category="fauna" style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; display:flex; flex-direction:column; gap:18px;" id="fauna">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag" style="background:rgba(197,155,39,0.15); color:var(--bronze-light); border-color:rgba(197,155,39,0.3);">Marco Jurídico de Protección · IMPO</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:6px;">
+                Ley de Fauna N° 9.481 y Decreto 164/996
+              </h2>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <a href="https://www.impo.com.uy/bases/leyes/9481-1935" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                Texto Ley 9.481 (IMPO) ↗
+              </a>
+              <a href="https://www.impo.com.uy/bases/decretos/164-1996" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                Dec. 164/996 (IMPO) ↗
+              </a>
+            </div>
+          </div>
+
+          <p style="color:var(--text-bone-muted); font-size:0.95rem; line-height:1.6;">
+            La Ley N° 9.481 consagra la protección y conservación de la fauna indígena en el Uruguay. El Decreto 164/996 establece las categorías de caza (libre, deportiva y comercial), fijando temporadas, cuotas de piezas y zonas habilitadas.
+          </p>
+
+          <div class="grid-2">
+            <div style="background:rgba(0,0,0,0.3); padding:16px; border-radius:var(--radius-md); border-left:3px solid var(--bronze-light);">
+              <strong style="color:var(--text-bone); display:block; font-size:0.9rem;">Ley de Fauna N° 9.481 (1935)</strong>
+              <span style="font-size:0.85rem; color:var(--text-muted);">Declara de interés nacional la conservación de la fauna autóctona y prohíbe la caza no autorizada.</span>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); padding:16px; border-radius:var(--radius-md); border-left:3px solid var(--bronze-light);">
+              <strong style="color:var(--text-bone); display:block; font-size:0.9rem;">Decreto 164/996</strong>
+              <span style="font-size:0.85rem; color:var(--text-muted);">Reglamenta las condiciones generales de caza, vedas y responsabilidades legales del cazador en el campo.</span>
             </div>
           </div>
         </div>
 
         <!-- Module: Caza Libre de Jabalí (Decreto 138/020) -->
         <div class="normativa-item-card" data-category="jabali" style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; display:flex; flex-direction:column; gap:18px;" id="jabali">
-          <div>
-            <span class="raffle-tag" style="background:rgba(239,68,68,0.15); color:#FCA5A5; border-color:rgba(239,68,68,0.3);">Plaga Nacional · Decreto 138/020</span>
-            <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:6px;">
-              Régimen de Caza Libre de Jabalí
-            </h2>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag" style="background:rgba(239,68,68,0.15); color:#FCA5A5; border-color:rgba(239,68,68,0.3);">Plaga Nacional · Decreto 138/020</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:6px;">
+                Régimen de Caza Libre de Jabalí
+              </h2>
+            </div>
+            <a href="https://www.impo.com.uy/bases/decretos/138-2020" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+              Ver Decreto 138/020 en IMPO ↗
+            </a>
           </div>
 
           <p style="color:var(--text-bone-muted); font-size:0.95rem; line-height:1.6;">
-            El jabalí (<em>Sus scrofa</em>) está declarado plaga nacional. Su control está habilitado durante todo el año, en todo el territorio nacional y sin límite de piezas, sujeto al consentimiento del dueño del campo.
+            El jabalí (<em>Sus scrofa</em>) está declarado plaga nacional. Su control está habilitado durante todo el año, en todo el territorio nacional y sin límite de piezas, sujeto al consentimiento expreso del propietario o arrendatario del predio.
           </p>
 
           <div class="grid-2">
             <div style="background:rgba(0,0,0,0.3); padding:16px; border-radius:var(--radius-md); border-left:3px solid var(--color-available);">
               <strong style="color:var(--text-bone); display:block; font-size:0.9rem;">Condiciones Habilitadas</strong>
-              <span style="font-size:0.85rem; color:var(--text-muted);">Uso de armas de fuego de grueso calibre, miras de visión nocturna y térmica para el control en aguadas y comederos, y jaurías registradas.</span>
+              <span style="font-size:0.85rem; color:var(--text-muted);">Uso de armas de fuego de grueso calibre, miras ópticas, de visión nocturna y térmica para control en aguadas y comederos, y jaurías registradas.</span>
             </div>
             <div style="background:rgba(0,0,0,0.3); padding:16px; border-radius:var(--radius-md); border-left:3px solid var(--color-sold);">
               <strong style="color:var(--text-bone); display:block; font-size:0.9rem;">Prohibiciones Estrictas</strong>
@@ -154,15 +199,28 @@
 
         <!-- Module: Armas, THATA y SMA -->
         <div class="normativa-item-card" data-category="armas" style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; display:flex; flex-direction:column; gap:18px;" id="armas">
-          <div>
-            <span class="raffle-tag">Servicio de Material y Armamento (SMA)</span>
-            <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:6px;">
-              Tenencia, Guías y Transporte de Armas de Fuego
-            </h2>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="raffle-tag">Servicio de Material y Armamento (SMA) · Ley 19.247</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:6px;">
+                Tenencia, Guías y Transporte de Armas de Fuego
+              </h2>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <a href="https://www.gub.uy/tramites/titulo-habilitacion-para-adquisicion-tenencia-armas-thata" target="_blank" rel="noopener" class="btn btn-bronze btn-sm">
+                Trámite THATA (Gub.uy) ↗
+              </a>
+              <a href="https://www.impo.com.uy/bases/leyes/19247-2014" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                Ley 19.247 (IMPO) ↗
+              </a>
+              <a href="https://www.impo.com.uy/bases/decretos/377-1997" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                Dec. 377/997 (IMPO) ↗
+              </a>
+            </div>
           </div>
 
           <p style="color:var(--text-bone-muted); font-size:0.95rem; line-height:1.6;">
-            Todo cazador debe portar en cada salida de campo la documentación legal emitida por el Registro Nacional de Armas del Ministerio de Defensa Nacional.
+            Todo cazador debe portar en cada salida de campo la documentación legal emitida por el Registro Nacional de Armas (Servicio de Material y Armamento - MDN).
           </p>
 
           <div class="grid-3">
@@ -172,7 +230,7 @@
             </div>
             <div style="background:rgba(0,0,0,0.3); padding:16px; border-radius:var(--radius-md);">
               <strong style="color:var(--bronze-light); display:block; font-size:0.9rem;">Guías de Pertenencia</strong>
-              <span style="font-size:0.82rem; color:var(--text-muted);">Documento que acredita la propiedad legal y número de serie de cada arma utilizada.</span>
+              <span style="font-size:0.82rem; color:var(--text-muted);">Documento que acredita la propiedad legal y número de serie de cada arma utilizada en el campo.</span>
             </div>
             <div style="background:rgba(0,0,0,0.3); padding:16px; border-radius:var(--radius-md);">
               <strong style="color:var(--bronze-light); display:block; font-size:0.9rem;">Transporte en Ruta</strong>
@@ -181,21 +239,37 @@
           </div>
         </div>
 
-        <!-- Module: Descarga Interactiva de Modelos Oficiales -->
-        <div class="normativa-item-card" data-category="descargas" style="background:linear-gradient(135deg, #18281E 0%, #101B14 100%); border:2px solid var(--border-bronze); border-radius:var(--radius-xl); padding:36px;" id="descargas">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; margin-bottom:20px;">
+        <!-- Module: Especies Deportivas y Vedas -->
+        <div class="normativa-item-card" data-category="especies" style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-xl); padding:32px; display:flex; flex-direction:column; gap:18px;" id="especies">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
             <div>
-              <span class="raffle-tag">Herramienta Interactiva ANCU</span>
-              <h2 style="font-family:var(--font-heading); font-size:1.7rem; font-weight:800; color:var(--text-bone); margin-top:6px;">
-                Generador de Permiso de Dueño de Predio Rural (PDF)
+              <span class="raffle-tag" style="background:rgba(35,88,60,0.3); color:#8CE0AF; border-color:rgba(52,126,87,0.4);">Resoluciones Anuales DINABISE</span>
+              <h2 style="font-family:var(--font-heading); font-size:1.6rem; font-weight:700; color:var(--text-bone); margin-top:6px;">
+                Especies Deportivas, Temporadas y Cuotas
               </h2>
-              <p style="color:var(--text-bone-muted); font-size:0.95rem; max-width:680px; margin-top:6px;">
-                Completá los datos del propietario del campo y del cazador para generar e imprimir la constancia legal oficial de ingreso y caza en predios privados.
-              </p>
             </div>
-            <button type="button" class="btn btn-bronze btn-lg" onclick="generateFieldPermitPDF()">
-              📄 Generar e Imprimir Formulario
-            </button>
+            <a href="https://www.gub.uy/ministerio-ambiente/politicas-y-gestion/caza-deportiva-comercial-libre" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+              Consultar Vedas en DINABISE ↗
+            </a>
+          </div>
+
+          <p style="color:var(--text-bone-muted); font-size:0.95rem; line-height:1.6;">
+            La caza de especies deportivas (perdiz, patos silvestres, torcazas, liebre) está sujeta a calendarios específicos de apertura y cierre de temporada, cuotas máximas de piezas por cazador y departamento. Consultar periódicamente los comunicados de DINABISE y ANCU.
+          </p>
+
+          <div class="grid-3" style="background:rgba(0,0,0,0.3); padding:18px; border-radius:var(--radius-md);">
+            <div>
+              <strong style="color:var(--bronze-light); display:block; font-size:0.85rem;">Perdiz Común (Nothura maculosa)</strong>
+              <span style="font-size:0.8rem; color:var(--text-muted);">Temporada otoñal/invernal habilitada por resolución ministerial con cuota por salida.</span>
+            </div>
+            <div>
+              <strong style="color:var(--bronze-light); display:block; font-size:0.85rem;">Patos Silvestres Autorizados</strong>
+              <span style="font-size:0.8rem; color:var(--text-muted);">Pato maicero, picazo y gargantilla según calendario oficial y cupos por día.</span>
+            </div>
+            <div>
+              <strong style="color:var(--bronze-light); display:block; font-size:0.85rem;">Especies Exóticas Invasoras</strong>
+              <span style="font-size:0.8rem; color:var(--text-muted);">Jabalí, ciervo axis y liebre con regulaciones de control para protección del ecosistema nativo.</span>
+            </div>
           </div>
         </div>
 
