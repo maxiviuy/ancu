@@ -254,7 +254,7 @@
 
           <div class="payment-method-card" id="pay-method-transfer" onclick="selectPaymentMethod('transfer')">
             <div class="payment-icon-wrap">🏦</div>
-            <strong>Transferencia BROU / Prex</strong>
+            <strong>Transferencia BROU / Mercado Pago</strong>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Subida de comprobante directo en la web</div>
           </div>
         </div>
@@ -264,8 +264,18 @@
         </div>
 
         <div id="bank-details-box" style="display:none; background:rgba(0,0,0,0.4); border:1px solid var(--border-medium); padding:16px; border-radius:var(--radius-md); font-size:0.85rem; margin-bottom:20px;">
-          <div style="margin-bottom:8px;"><strong>Banco BROU:</strong> Caja de Ahorro UYU: 000725433-00001 (Titular: ANCU)</div>
-          <div style="margin-bottom:12px;"><strong>PREX UYU:</strong> Cuenta Nº 43062 (Titular: ANCU)</div>
+          <div style="margin-bottom:10px; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:var(--radius-sm); border-left:3px solid var(--border-bronze);">
+            <strong style="color:var(--bronze-light); display:block; margin-bottom:2px;">🏛️ Banco BROU:</strong>
+            <span class="brou-account-display" style="font-family:monospace; font-size:0.95rem; font-weight:700; color:var(--text-bone);">Caja de Ahorro UYU: 110766786-00001</span>
+            <span style="display:block; font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Titular: Asociación Nacional de Cazadores del Uruguay (ANCU)</span>
+          </div>
+
+          <div style="margin-bottom:14px; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:var(--radius-sm); border-left:3px solid #009EE3;">
+            <strong style="color:#009EE3; display:block; margin-bottom:2px;">💙 Transferencia Mercado Pago:</strong>
+            <span class="prex-account-display" style="font-family:monospace; font-size:0.95rem; font-weight:700; color:var(--text-bone);">Cuenta UYU: 1005929265537</span>
+            <span style="display:block; font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Titular: Martin Pastorino Alvarez · Institución: Mercado Pago</span>
+          </div>
+
           <label class="form-label" style="font-size:0.8rem;">Adjuntar Foto / Captura del Comprobante:</label>
           <input type="file" class="form-control" style="font-size:0.8rem; padding:8px;" accept="image/*,.pdf">
         </div>
