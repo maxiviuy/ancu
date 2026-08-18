@@ -110,29 +110,25 @@ La institución cuenta con una infraestructura moderna basada en **Linux VPS ded
 
 ---
 
-## 6. Información y Requisitos Pendientes por parte de ANCU
+## 6. Estado de Recaudos y Datos Institucionales de ANCU
 
-Para que la web quede completamente afinada y con su información institucional final, solicitamos a la Comisión Directiva que nos facilite los siguientes recaudos:
+### ✅ Recaudos Integrados y Desplegados en Producción:
+- [x] **Cuentas Bancarias de Recaudación:**
+  - **Banco BROU:** Caja de Ahorro UYU `110766786-00001` (Titular: ANCU).
+  - **Mercado Pago (Transferencia / CVU):** Cuenta UYU `1005929265537` (Titular: Martin Pastorino Alvarez).
+- [x] **Canales de Contacto Centralizados:**
+  - Correo institucional: `Asociaciondecazadoresdeluruguay@hotmail.com`.
+  - WhatsApp / Teléfono oficial: `094 156 582` (`+598 94 156 582`).
+- [x] **Convenios y Beneficios Comerciales:**
+  - Cobertura de los 19 departamentos de Uruguay con filtro dinámico y rubros libres con autocompletado.
+- [x] **Comisión Directiva:**
+  - Soporte de celular/WhatsApp directo opcional por directivo y fotos actualizadas.
 
-- [ ] **1. Credenciales de Mercado Pago:**
-  - Access Token de Producción
-  - Public Key
-  *(Para vincular la cuenta bancaria de ANCU y recibir cobros directos de rifas y cuotas).*
-
-- [ ] **2. Canales de Contacto Oficiales:**
-  - Dirección de correo electrónico oficial de atención (ej. Hotmail, Gmail o info@ancu.uy).
-  - Números de teléfono / WhatsApp institucional para consultas de socios.
-  - Dirección de sede social o departamento de referencia.
-
-- [ ] **3. Datos Definitivos de Comisión Directiva:**
-  - Lista final de directivos, cargos correspondientes y fotos de perfil (si desean reemplazarlas).
-  - Breve reseña o biografía de cada autoridad.
-
-- [ ] **4. Estatuto Social Oficial en PDF:**
-  - Archivo escaneado o digital del estatuto para su descarga directa por parte de los socios.
-
-- [ ] **5. Convenios y Beneficios Comerciales:**
-  - Listado de armerías, comercios amigos y descuentos acordados para publicar en el portal.
+### ⏳ Pendiente de Respuesta / En Espera:
+- [ ] **Credenciales de API de Mercado Pago (Solicitadas a Martín Pastorino Alvarez):**
+  - **Access Token de Producción** (`APP_USR-...`)
+  - **Public Key de Producción** (`APP_USR-...`)
+  *(Obtenibles desde [mercadopago.com.uy/developers](https://www.mercadopago.com.uy/developers) -> Tus integraciones -> Credenciales de producción para activar la pasarela automática con tarjetas de crédito/débito en cuotas).*
 
 ---
 
@@ -140,7 +136,7 @@ Para que la web quede completamente afinada y con su información institucional 
 
 Agradecemos profundamente la confianza depositada en nuestro equipo para llevar adelante la transformación digital de **ANCU**. 
 
-Quedamos a su entera disposición para coordinar una breve sesión explicativa o asistirles en la carga inicial de los recaudos pendientes.
+Quedamos a la espera de las credenciales de API de Mercado Pago para realizar la activación final de la pasarela automática de tarjetas.
 
 **Atentamente,**  
 *Equipo de Ingeniería y Desarrollo Tecnológico*  
