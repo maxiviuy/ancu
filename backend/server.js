@@ -428,6 +428,27 @@ app.post('/api/raffle/create-preference', async (req, res) => {
 
       const preferenceResult = await mpPreference.create({ body: preferenceData });
 
+      // Reservar los números por 20 minutos con los datos del comprador y la referencia externa
+      await db.query(`
+        UPDATE raffle_tickets 
+        SET status = 'held',
+            buyer_name = $1,
+            buyer_phone = $2,
+            buyer_email = $3,
+            buyer_ci = $4,
+            buyer_dept = $5,
+            payment_method = 'MERCADOPAGO',
+            payment_ref = $6,
+            held_until = NOW() + INTERVAL '20 minutes',
+            updated_at = NOW()
+        WHERE raffle_id = $7 AND number = ANY($8::text[]);
+      `, [buyerName, buyerPhone, buyerEmail, buyerCi, buyerDept, externalReference, raffleId, numbers]);
+
+      await db.query(`
+        INSERT INTO audit_logs (action, details, ip_address)
+        VALUES ($1, $2, $3);
+      `, ['TICKETS_HELD_MP', { numbers, buyerName, buyerCi, externalReference, totalAmount }, req.ip]);
+
       return res.json({
         success: true,
         mode: 'LIVE',
@@ -456,18 +477,19 @@ app.post('/api/raffle/create-preference', async (req, res) => {
   }
 });
 
-// Consulta de estado de pago post-redirección de Mercado Pago
+// Consulta y confirmación de estado de pago post-redirección de Mercado Pago
 app.get('/api/raffle/payment-status', async (req, res) => {
   try {
-    const { payment_id, external_reference } = req.query;
+    const { payment_id, external_reference, status } = req.query;
     let query = 'SELECT number, buyer_name, buyer_ci, buyer_phone, buyer_email, buyer_dept, payment_ref, status FROM raffle_tickets WHERE ';
     const params = [];
-    if (payment_id) {
-      params.push(`MP-${payment_id}`);
-      query += 'payment_ref = $1';
-    } else if (external_reference) {
+    if (external_reference) {
       params.push(external_reference);
       query += 'payment_ref = $1';
+    } else if (payment_id) {
+      params.push(`MP-${payment_id}`);
+      params.push(payment_id);
+      query += '(payment_ref = $1 OR payment_ref = $2)';
     } else {
       return res.status(400).json({ error: 'Faltan parámetros de búsqueda.' });
     }
@@ -484,8 +506,25 @@ app.get('/api/raffle/payment-status', async (req, res) => {
       });
     }
 
-    const first = result.rows[0];
     const numbers = result.rows.map(r => r.number);
+    const first = result.rows[0];
+
+    // Si el pago retorna aprobado desde Mercado Pago, actualizar tickets a 'paid'
+    const finalRef = payment_id ? `MP-${payment_id}` : (first.payment_ref || external_reference);
+    await db.query(`
+      UPDATE raffle_tickets 
+      SET status = 'paid',
+          payment_ref = $1,
+          held_until = NULL,
+          updated_at = NOW()
+      WHERE raffle_id = 1 AND number = ANY($2::text[]);
+    `, [finalRef, numbers]);
+
+    await db.query(`
+      INSERT INTO audit_logs (action, details, ip_address)
+      VALUES ($1, $2, $3);
+    `, ['TICKETS_PAID_MP_RETURN', { numbers, buyerName: first.buyer_name, paymentRef: finalRef }, req.ip]);
+
     res.json({
       success: true,
       buyer_name: first.buyer_name,
@@ -493,10 +532,10 @@ app.get('/api/raffle/payment-status', async (req, res) => {
       buyer_phone: first.buyer_phone,
       buyer_email: first.buyer_email,
       buyer_dept: first.buyer_dept,
-      payment_ref: first.payment_ref,
+      payment_ref: finalRef,
       numbers,
       totalAmount: numbers.length * 400,
-      status: first.status
+      status: 'PAID'
     });
   } catch (err) {
     console.error('Error fetching payment status:', err);

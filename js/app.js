@@ -771,9 +771,16 @@ async function submitCheckout(e) {
       });
       const prefData = await prefRes.json();
 
-      if (prefData.mode === 'LIVE' && prefData.initPoint) {
+      if (prefData.mode === 'LIVE' && (prefData.initPoint || prefData.sandboxInitPoint)) {
+        try {
+          sessionStorage.setItem('ancu_mp_order', JSON.stringify({
+            name, ci, phone, email, dept,
+            numbers: [...AppState.selectedNumbers],
+            externalReference: prefData.externalReference
+          }));
+        } catch(e) {}
         // Redirigir al Checkout Pro oficial de Mercado Pago
-        window.location.href = prefData.initPoint;
+        window.location.href = prefData.initPoint || prefData.sandboxInitPoint;
         return;
       }
     } catch (prefErr) {
@@ -901,30 +908,67 @@ async function checkMercadoPagoReturn() {
   const externalRef = urlParams.get('external_reference');
 
   if (mpStatus === 'approved' || mpStatus === 'success') {
+    let cachedOrder = null;
     try {
-      const res = await fetch(`${API_BASE}/raffle/payment-status?payment_id=${paymentId || ''}&external_reference=${externalRef || ''}`);
+      cachedOrder = JSON.parse(sessionStorage.getItem('ancu_mp_order') || 'null');
+    } catch(e) {}
+
+    try {
+      const res = await fetch(`${API_BASE}/raffle/payment-status?payment_id=${paymentId || ''}&external_reference=${externalRef || ''}&status=approved`);
       if (res.ok) {
         const data = await res.json();
         renderSuccessTicket({
-          name: data.buyer_name || 'Comprador Registrado',
-          ci: data.buyer_ci || 'C.I. Confirmada',
-          phone: data.buyer_phone || '',
-          email: data.buyer_email || '',
-          dept: data.buyer_dept || 'Uruguay',
+          name: data.buyer_name || cachedOrder?.name || 'Comprador Registrado',
+          ci: data.buyer_ci || cachedOrder?.ci || 'C.I. Confirmada',
+          phone: data.buyer_phone || cachedOrder?.phone || '',
+          email: data.buyer_email || cachedOrder?.email || '',
+          dept: data.buyer_dept || cachedOrder?.dept || 'Uruguay',
           orderRef: data.payment_ref || `MP-${paymentId || Date.now()}`,
-          ticketCode: `ANCU-${data.numbers && data.numbers.length ? data.numbers.join('-') : 'TKT'}`,
-          numbers: data.numbers && data.numbers.length > 0 ? data.numbers : [],
-          total: data.totalAmount || (data.numbers?.length ? data.numbers.length * 400 : 400),
+          ticketCode: `ANCU-${data.numbers && data.numbers.length ? data.numbers.join('-') : (cachedOrder?.numbers?.join('-') || 'TKT')}`,
+          numbers: data.numbers && data.numbers.length > 0 ? data.numbers : (cachedOrder?.numbers || []),
+          total: data.totalAmount || (data.numbers?.length ? data.numbers.length * 400 : (cachedOrder?.numbers?.length ? cachedOrder.numbers.length * 400 : 400)),
+          paymentMethod: 'mercadopago',
+          isPaid: true
+        });
+      } else if (cachedOrder) {
+        renderSuccessTicket({
+          name: cachedOrder.name,
+          ci: cachedOrder.ci,
+          phone: cachedOrder.phone,
+          email: cachedOrder.email,
+          dept: cachedOrder.dept,
+          orderRef: `MP-${paymentId || Date.now()}`,
+          ticketCode: `ANCU-${cachedOrder.numbers?.join('-') || 'TKT'}`,
+          numbers: cachedOrder.numbers || [],
+          total: cachedOrder.numbers?.length * 400 || 400,
           paymentMethod: 'mercadopago',
           isPaid: true
         });
       }
     } catch (e) {
       console.warn('Error checking returned payment:', e);
+      if (cachedOrder) {
+        renderSuccessTicket({
+          name: cachedOrder.name,
+          ci: cachedOrder.ci,
+          phone: cachedOrder.phone,
+          email: cachedOrder.email,
+          dept: cachedOrder.dept,
+          orderRef: `MP-${paymentId || Date.now()}`,
+          ticketCode: `ANCU-${cachedOrder.numbers?.join('-') || 'TKT'}`,
+          numbers: cachedOrder.numbers || [],
+          total: cachedOrder.numbers?.length * 400 || 400,
+          paymentMethod: 'mercadopago',
+          isPaid: true
+        });
+      }
     }
+    sessionStorage.removeItem('ancu_mp_order');
     window.history.replaceState({}, document.title, window.location.pathname);
+    await syncRaffleFromAPI();
   } else if (mpStatus === 'failure') {
     alert("El pago no fue completado o fue cancelado en Mercado Pago. Tus números continúan disponibles.");
+    sessionStorage.removeItem('ancu_mp_order');
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 }
