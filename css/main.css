@@ -1196,19 +1196,32 @@ button, input, select, textarea {
 
 /* Floating Checkout Tray */
 .checkout-tray {
-  position: sticky;
-  bottom: 20px;
-  background: var(--bg-glass-heavy);
-  border: 1px solid var(--border-bronze);
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  width: calc(100% - 40px);
+  max-width: 960px;
+  background: rgba(12, 18, 14, 0.96);
+  border: 1.5px solid var(--bronze-light);
   border-radius: var(--radius-lg);
-  padding: 16px 24px;
+  padding: 16px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(16px);
-  margin-top: 24px;
-  z-index: 80;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(200, 155, 60, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 999;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkout-tray.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .tray-info {

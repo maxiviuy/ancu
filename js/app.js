@@ -722,29 +722,41 @@ function searchRaffleNumber() {
   }, 100);
 }
 
+function clearRaffleSelection() {
+  AppState.selectedNumbers = [];
+  renderNumbersGrid(currentHundred);
+  updateCheckoutTray();
+}
+
 function updateCheckoutTray() {
   const tray = document.getElementById('checkout-tray');
-  const countBadge = document.getElementById('selected-count');
-  const chipsWrap = document.getElementById('selected-chips');
-  const totalPrice = document.getElementById('total-price');
-
   if (!tray) return;
 
-  const total = AppState.selectedNumbers.length * AppState.activeRaffle.ticketPrice;
+  const countBadge = document.getElementById('tray-count') || document.getElementById('selected-count');
+  const pillsWrap = document.getElementById('tray-pills') || document.getElementById('selected-chips');
+  const totalPrice = document.getElementById('tray-total') || document.getElementById('total-price');
 
-  if (countBadge) countBadge.textContent = AppState.selectedNumbers.length;
-  if (totalPrice) totalPrice.textContent = `$ ${total.toLocaleString('es-UY')}`;
+  const count = AppState.selectedNumbers.length;
+  const unitPrice = AppState.activeRaffle.ticketPrice || 400;
+  const total = count * unitPrice;
 
-  if (chipsWrap) {
-    chipsWrap.innerHTML = AppState.selectedNumbers.map(n => `
-      <span class="selected-chip">
+  if (countBadge) {
+    countBadge.textContent = `${count} ${count === 1 ? 'número seleccionado' : 'números seleccionados'}`;
+  }
+  if (totalPrice) {
+    totalPrice.textContent = `$ ${total.toLocaleString('es-UY')} UYU`;
+  }
+
+  if (pillsWrap) {
+    pillsWrap.innerHTML = AppState.selectedNumbers.map(n => `
+      <span class="selected-pill">
         #${n}
-        <button type="button" onclick="event.stopPropagation(); toggleNumberSelection('${n}')">&times;</button>
+        <button type="button" onclick="event.stopPropagation(); toggleNumberSelection('${n}')" aria-label="Quitar número ${n}">&times;</button>
       </span>
     `).join('');
   }
 
-  if (AppState.selectedNumbers.length > 0) {
+  if (count > 0) {
     tray.classList.add('visible');
   } else {
     tray.classList.remove('visible');
@@ -756,7 +768,7 @@ let currentPaymentMethod = 'mercadopago';
 
 async function openCheckoutModal() {
   if (AppState.selectedNumbers.length === 0) {
-    alert("Selecciona al menos un número para continuar.");
+    alert("Por favor selecciona al menos un número de la grilla para continuar.");
     return;
   }
 
@@ -775,25 +787,25 @@ async function openCheckoutModal() {
       alert(errData.error || 'Algunos números ya no están disponibles.');
       await syncRaffleFromAPI();
       renderNumbersGrid(currentHundred);
+      updateCheckoutTray();
       return;
     }
   } catch (err) {
     console.warn('API Hold offline, continuing local demo:', err);
   }
 
-  const modal = document.getElementById('checkout-modal');
-  if (!modal) return;
-
   const modalNumbers = document.getElementById('modal-selected-numbers');
-  const modalTotal = document.getElementById('modal-total-amount');
+  const modalTotal = document.getElementById('modal-total-price') || document.getElementById('modal-total-amount');
 
   if (modalNumbers) {
-    modalNumbers.innerHTML = AppState.selectedNumbers.map(n => `<span class="selected-chip" style="margin:2px;">#${n}</span>`).join(' ');
+    modalNumbers.innerHTML = AppState.selectedNumbers.map(n => `<span class="selected-pill" style="margin:3px;">#${n}</span>`).join(' ');
   }
-  if (modalTotal) modalTotal.textContent = `$ ${(AppState.selectedNumbers.length * AppState.activeRaffle.ticketPrice).toLocaleString('es-UY')}`;
+  if (modalTotal) {
+    modalTotal.textContent = `$ ${(AppState.selectedNumbers.length * (AppState.activeRaffle.ticketPrice || 400)).toLocaleString('es-UY')} UYU`;
+  }
 
   startReservationTimer();
-  modal.classList.add('active');
+  openModal('checkout-modal');
 }
 
 function startReservationTimer() {
@@ -3753,4 +3765,10 @@ window.handleMemberPhotoUpload = handleMemberPhotoUpload;
 window.loadAdminMembers = loadAdminMembers;
 window.debounceMemberSearch = debounceMemberSearch;
 window.filterPublicBenefits = filterPublicBenefits;
+window.openCheckoutModal = openCheckoutModal;
+window.clearRaffleSelection = clearRaffleSelection;
+window.submitCheckout = submitCheckout;
+window.selectPaymentMethod = selectPaymentMethod;
+window.toggleNumberSelection = toggleNumberSelection;
+window.handleWinningNumberInput = handleWinningNumberInput;
 

@@ -152,19 +152,19 @@
 
       </div>
 
-      <!-- Sticky Checkout Tray -->
-      <div class="checkout-tray" id="checkout-tray" style="display:none;">
+      <!-- Floating Bottom Checkout Tray -->
+      <div class="checkout-tray" id="checkout-tray">
         <div class="tray-info">
           <div>
-            <div style="font-size:0.8rem; color:var(--bronze-light); font-weight:700;" id="tray-count">0 seleccionados</div>
+            <div style="font-size:0.85rem; color:var(--bronze-light); font-weight:700;" id="tray-count">0 seleccionados</div>
             <div class="tray-numbers-pills" id="tray-pills"></div>
           </div>
-          <div class="tray-total-price" id="tray-total">$ 0</div>
+          <div class="tray-total-price" id="tray-total" style="font-size:1.6rem; font-weight:800; color:#FFFFFF;">$ 0</div>
         </div>
 
-        <div style="display:flex; gap:12px;">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="AppState.selectedNumbers = []; renderNumbersGrid(currentHundred); updateCheckoutTray();">Limpiar</button>
-          <button type="button" class="btn btn-bronze" onclick="openCheckoutModal()" id="btn-continue-checkout">Continuar a Pago &rarr;</button>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="clearRaffleSelection()">Limpiar</button>
+          <button type="button" class="btn btn-bronze" onclick="openCheckoutModal()" id="btn-continue-checkout" style="font-size:1rem; padding:12px 24px; font-weight:700;">Continuar a Pago &rarr;</button>
         </div>
       </div>
 
@@ -322,6 +322,6 @@
     </div>
   </footer>
 
-  <script src="js/app.js?v=20260818_date9oct"></script>
+  <script src="js/app.js?v=20260818_checkoutfix"></script>
 </body>
 </html>
