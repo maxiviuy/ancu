@@ -161,6 +161,7 @@ async function syncRaffleFromAPI() {
 
       renderPublicPrizes();
       renderHomeRafflePrizes();
+      renderTeaserRafflePrizes();
       saveState();
       console.log('🌲 Rifa y premios sincronizados con PostgreSQL.');
     }
@@ -168,7 +169,60 @@ async function syncRaffleFromAPI() {
     console.warn('Usando estado local para rifas (Backend offline):', err.message);
     renderPublicPrizes();
     renderHomeRafflePrizes();
+    renderTeaserRafflePrizes();
   }
+}
+
+function renderTeaserRafflePrizes() {
+  const container = document.getElementById('teaser-prizes-grid');
+  const titleEl = document.getElementById('teaser-raffle-title');
+  const subtitleEl = document.getElementById('teaser-raffle-subtitle');
+  const priceEl = document.getElementById('teaser-ticket-price');
+
+  if (titleEl && AppState.activeRaffle.title) {
+    titleEl.textContent = AppState.activeRaffle.title;
+  }
+  if (subtitleEl && AppState.activeRaffle.subtitle) {
+    subtitleEl.innerHTML = `${AppState.activeRaffle.subtitle}. Adquirí tus números para participar por los <strong>3 grandes premios oficiales</strong> y apoyar las actividades institucionales en todo el país.`;
+  }
+  if (priceEl && AppState.activeRaffle.ticketPrice) {
+    priceEl.textContent = `$ ${AppState.activeRaffle.ticketPrice} UYU`;
+  }
+
+  if (!container) return;
+
+  const prizes = AppState.activeRaffle.prizes;
+  if (!Array.isArray(prizes) || prizes.length === 0) return;
+
+  container.innerHTML = prizes.map((p, idx) => {
+    const badgeBg = idx === 0 
+      ? 'linear-gradient(135deg, #C59B27, #E0BA4D); color:#0A0F0D;' 
+      : (idx === 1 ? '#94A3B8; color:#0A0F0D;' : '#CD7F32; color:#FFFFFF;');
+    const badgeLabel = idx === 0 ? '🥇 1º PREMIO' : (idx === 1 ? '🥈 2º PREMIO' : '🥉 3º PREMIO');
+    const borderStyle = idx === 0 ? 'border: 1.5px solid var(--border-bronze);' : 'border: 1px solid rgba(255,255,255,0.15);';
+    const imgUrl = p.imageUrl || (idx === 0 ? '/uploads/prizes/prize_visor_sytong_xs03.png' : (idx === 1 ? '/uploads/prizes/prize_arco_diamond_edge.png' : '/uploads/prizes/prize_cuchillo_schmieden.png'));
+
+    return `
+      <div style="background: rgba(0,0,0,0.45); ${borderStyle} border-radius: var(--radius-lg); padding: 18px; display:flex; flex-direction:column; position:relative; overflow:hidden;">
+        <div style="position:absolute; top:12px; left:12px; background: ${badgeBg}; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 4px; z-index:2; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+          ${badgeLabel}
+        </div>
+        <div style="height: 180px; border-radius: var(--radius-md); overflow:hidden; background:#0B120E; margin-bottom: 14px; display:flex; align-items:center; justify-content:center; border: 1px solid var(--border-subtle);">
+          <img src="${imgUrl}" alt="${p.title}" style="max-width:100%; max-height:100%; object-fit:contain; padding:10px;" onerror="this.src='assets/logo.png';" />
+        </div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-bone); margin-bottom: 6px; line-height: 1.3;">
+          ${p.title}
+        </h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 14px; flex:1;">
+          ${p.description || ''}
+        </p>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid var(--border-subtle); padding-top: 10px; font-size: 0.82rem;">
+          <span style="color: var(--bronze-light); font-weight: 700;">${p.estimatedValue ? `Ref. USD $${Number(p.estimatedValue).toLocaleString('es-UY')}` : ''}</span>
+          <span style="color: #10B981; font-size: 0.78rem;">✓ ${p.note || 'Entrega en todo el país'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderHomeRafflePrizes() {
