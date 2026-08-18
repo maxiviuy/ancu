@@ -229,14 +229,18 @@ app.get('/api/health', async (req, res) => {
 // 1. MÓDULO DE RIFAS Y MERCADO PAGO
 // ----------------------------------------------------
 
-// Obtener estado de la rifa activa y los 1000 números
+// Obtener estado de la rifa activa (o última rifa) y los 1000 números
 app.get('/api/raffle/active', async (req, res) => {
   try {
     await cleanExpiredHolds();
 
-    const raffleRes = await db.query('SELECT * FROM raffles WHERE status = $1 ORDER BY id DESC LIMIT 1', ['ACTIVE']);
+    let raffleRes = await db.query('SELECT * FROM raffles WHERE status = $1 ORDER BY id DESC LIMIT 1', ['ACTIVE']);
     if (raffleRes.rowCount === 0) {
-      return res.status(404).json({ error: 'No hay rifas activas en este momento.' });
+      // Fallback a la última rifa registrada (para mostrar ganadores/historial si está cerrada)
+      raffleRes = await db.query('SELECT * FROM raffles ORDER BY id DESC LIMIT 1');
+    }
+    if (raffleRes.rowCount === 0) {
+      return res.status(404).json({ error: 'No hay rifas registradas en este momento.' });
     }
     const raffle = raffleRes.rows[0];
 
@@ -269,6 +273,35 @@ app.get('/api/raffle/active', async (req, res) => {
       note: p.note || ''
     }));
 
+    // Búsqueda y enriquecimiento de ganadores oficiales
+    const rawWinningNumbers = [raffle.winning_number_1, raffle.winning_number_2, raffle.winning_number_3];
+    const winners = [];
+    for (let i = 0; i < 3; i++) {
+      const winNum = rawWinningNumbers[i];
+      if (winNum && winNum.trim() !== '') {
+        const padNum = winNum.trim().padStart(3, '0');
+        const tRes = await db.query(
+          'SELECT number, status, buyer_name, buyer_ci, buyer_phone, buyer_dept FROM raffle_tickets WHERE raffle_id = $1 AND number = $2',
+          [raffle.id, padNum]
+        );
+        const ticket = tRes.rows[0];
+        const prize = prizesFormatted[i] || { title: `${i + 1}º Premio`, imageUrl: '', estimatedValue: 0 };
+        winners.push({
+          prizeOrder: i + 1,
+          prizeTitle: prize.title,
+          prizeImage: prize.imageUrl || '',
+          estimatedValue: prize.estimatedValue || 0,
+          number: padNum,
+          ticketFound: !!ticket,
+          buyerName: ticket && ticket.buyer_name ? ticket.buyer_name : (ticket && ticket.status === 'paid' ? 'Comprador Registrado' : 'Número No Vendido / Libre'),
+          buyerCi: ticket ? (ticket.buyer_ci || '') : '',
+          buyerDept: ticket ? (ticket.buyer_dept || '') : '',
+          buyerPhone: ticket ? (ticket.buyer_phone || '') : '',
+          isSold: ticket ? (ticket.status === 'paid') : false
+        });
+      }
+    }
+
     res.json({
       raffle: {
         id: raffle.id,
@@ -280,7 +313,11 @@ app.get('/api/raffle/active', async (req, res) => {
         totalNumbers: raffle.total_numbers,
         status: raffle.status,
         bannerImageUrl: raffle.banner_image_url || '',
-        winningNumbers: [raffle.winning_number_1, raffle.winning_number_2, raffle.winning_number_3].filter(Boolean),
+        winningNumbers: rawWinningNumbers.filter(Boolean),
+        winningNumber1: raffle.winning_number_1 || '',
+        winningNumber2: raffle.winning_number_2 || '',
+        winningNumber3: raffle.winning_number_3 || '',
+        winners,
         prizes: prizesFormatted,
         stats: {
           sold: soldCount,
@@ -1623,11 +1660,26 @@ app.post('/api/admin/raffles', async (req, res) => {
   }
 });
 
-// Modificar datos generales de una rifa
+// Modificar datos generales y números ganadores de una rifa
 app.put('/api/admin/raffles/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, subtitle, drawDate, drawMethod, ticketPrice, status, bannerImageUrl } = req.body;
+    const {
+      title,
+      subtitle,
+      drawDate,
+      drawMethod,
+      ticketPrice,
+      status,
+      bannerImageUrl,
+      winningNumber1,
+      winningNumber2,
+      winningNumber3
+    } = req.body;
+
+    const w1 = winningNumber1 !== undefined ? (winningNumber1 ? winningNumber1.toString().padStart(3, '0') : null) : null;
+    const w2 = winningNumber2 !== undefined ? (winningNumber2 ? winningNumber2.toString().padStart(3, '0') : null) : null;
+    const w3 = winningNumber3 !== undefined ? (winningNumber3 ? winningNumber3.toString().padStart(3, '0') : null) : null;
 
     const updateRes = await db.query(`
       UPDATE raffles 
@@ -1638,10 +1690,19 @@ app.put('/api/admin/raffles/:id', async (req, res) => {
           ticket_price = COALESCE($5, ticket_price),
           status = COALESCE($6, status),
           banner_image_url = COALESCE($7, banner_image_url),
+          winning_number_1 = CASE WHEN $8::boolean THEN $9 ELSE winning_number_1 END,
+          winning_number_2 = CASE WHEN $10::boolean THEN $11 ELSE winning_number_2 END,
+          winning_number_3 = CASE WHEN $12::boolean THEN $13 ELSE winning_number_3 END,
           updated_at = NOW()
-      WHERE id = $8
+      WHERE id = $14
       RETURNING *;
-    `, [title, subtitle, drawDate, drawMethod, ticketPrice, status, bannerImageUrl, id]);
+    `, [
+      title, subtitle, drawDate, drawMethod, ticketPrice, status, bannerImageUrl,
+      winningNumber1 !== undefined, w1,
+      winningNumber2 !== undefined, w2,
+      winningNumber3 !== undefined, w3,
+      id
+    ]);
 
     if (updateRes.rowCount === 0) {
       return res.status(404).json({ error: 'Rifa no encontrada.' });
@@ -1650,16 +1711,54 @@ app.put('/api/admin/raffles/:id', async (req, res) => {
     await db.query(`
       INSERT INTO audit_logs (action, details, ip_address)
       VALUES ($1, $2, $3);
-    `, ['RAFFLE_UPDATED', { raffleId: id, title, drawDate, ticketPrice, status }, req.ip]);
+    `, ['RAFFLE_UPDATED', { raffleId: id, title, drawDate, ticketPrice, status, winningNumbers: [w1, w2, w3] }, req.ip]);
 
     res.json({
       success: true,
-      message: 'Campaña de rifa actualizada con éxito.',
+      message: 'Campaña de rifa y números ganadores actualizados con éxito en PostgreSQL.',
       raffle: updateRes.rows[0]
     });
   } catch (err) {
     console.error('Error updating raffle:', err);
     res.status(500).json({ error: 'Error al actualizar la rifa.' });
+  }
+});
+
+// Consultar comprador y estado de un número específico para validación de ganadores
+app.get('/api/admin/raffles/:id/lookup-ticket', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let { number } = req.query;
+    if (!number) return res.status(400).json({ error: 'Número requerido' });
+    number = number.toString().trim().padStart(3, '0');
+
+    const result = await db.query(`
+      SELECT number, status, buyer_name, buyer_ci, buyer_phone, buyer_dept, buyer_email, payment_method, payment_ref, updated_at
+      FROM raffle_tickets
+      WHERE raffle_id = $1 AND number = $2
+    `, [id, number]);
+
+    if (result.rowCount === 0) {
+      return res.json({ found: false, number, status: 'NOT_FOUND', message: 'Número no encontrado en la base de datos.' });
+    }
+
+    const ticket = result.rows[0];
+    res.json({
+      found: true,
+      number: ticket.number,
+      status: ticket.status,
+      isSold: ticket.status === 'paid',
+      buyerName: ticket.buyer_name || (ticket.status === 'paid' ? 'Comprador Registrado' : 'Número Libre / No Vendido'),
+      buyerCi: ticket.buyer_ci || '',
+      buyerPhone: ticket.buyer_phone || '',
+      buyerDept: ticket.buyer_dept || '',
+      buyerEmail: ticket.buyer_email || '',
+      paymentMethod: ticket.payment_method || '',
+      paymentRef: ticket.payment_ref || ''
+    });
+  } catch (err) {
+    console.error('Error looking up ticket:', err);
+    res.status(500).json({ error: 'Error al consultar número de rifa.' });
   }
 });
 

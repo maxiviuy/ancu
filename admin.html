@@ -224,6 +224,61 @@
                   </div>
                 </div>
 
+                <!-- Official Draw Winners Management Section -->
+                <div style="border-top:1px solid var(--border-medium); padding-top:24px; margin-bottom:28px;">
+                  <div style="margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                      <h3 style="font-family:var(--font-heading); font-size:1.2rem; font-weight:700; color:var(--bronze-light); display:flex; align-items:center; gap:8px;">
+                        <span>🎉 Resultados Oficiales y Números Ganadores</span>
+                      </h3>
+                      <span style="font-size:0.75rem; color:var(--color-available); background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:3px 10px; border-radius:4px;">
+                        ● Búsqueda automática en Base de Datos
+                      </span>
+                    </div>
+                    <p style="font-size:0.83rem; color:var(--text-muted); margin-top:4px;">
+                      Ingresá los números extraídos en el sorteo (3 cifras, ej. <code>357</code>). El sistema identificará al instante al comprador y publicará los resultados en el portal público de ANCU.
+                    </p>
+                  </div>
+
+                  <div class="grid-3" style="gap:16px;">
+                    <!-- 1º Premio -->
+                    <div style="background:rgba(197,155,39,0.08); border:1.5px solid rgba(197,155,39,0.35); border-radius:var(--radius-md); padding:16px; position:relative;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label style="font-weight:700; font-size:0.85rem; color:#E0BA4D;" for="winning-number-1">🥇 1º Premio</label>
+                        <span style="font-size:0.75rem; color:var(--text-muted);" id="win-prize-title-1">1º Premio</span>
+                      </div>
+                      <input type="text" id="winning-number-1" class="form-control" placeholder="Ej: 357" maxlength="3" oninput="handleWinningNumberInput(1, this.value)" style="font-size:1.3rem; font-weight:800; letter-spacing:2px; text-align:center; color:#E0BA4D;">
+                      <div id="winner-preview-1" style="margin-top:10px; font-size:0.78rem; min-height:52px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+                        <span style="color:var(--text-muted); font-style:italic;">Esperando número...</span>
+                      </div>
+                    </div>
+
+                    <!-- 2º Premio -->
+                    <div style="background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.18); border-radius:var(--radius-md); padding:16px; position:relative;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label style="font-weight:700; font-size:0.85rem; color:#CBD5E1;" for="winning-number-2">🥈 2º Premio</label>
+                        <span style="font-size:0.75rem; color:var(--text-muted);" id="win-prize-title-2">2º Premio</span>
+                      </div>
+                      <input type="text" id="winning-number-2" class="form-control" placeholder="Ej: 042" maxlength="3" oninput="handleWinningNumberInput(2, this.value)" style="font-size:1.3rem; font-weight:800; letter-spacing:2px; text-align:center; color:#F8FAFC;">
+                      <div id="winner-preview-2" style="margin-top:10px; font-size:0.78rem; min-height:52px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+                        <span style="color:var(--text-muted); font-style:italic;">Esperando número...</span>
+                      </div>
+                    </div>
+
+                    <!-- 3º Premio -->
+                    <div style="background:rgba(205,127,50,0.08); border:1.5px solid rgba(205,127,50,0.35); border-radius:var(--radius-md); padding:16px; position:relative;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label style="font-weight:700; font-size:0.85rem; color:#E5A97D;" for="winning-number-3">🥉 3º Premio</label>
+                        <span style="font-size:0.75rem; color:var(--text-muted);" id="win-prize-title-3">3º Premio</span>
+                      </div>
+                      <input type="text" id="winning-number-3" class="form-control" placeholder="Ej: 777" maxlength="3" oninput="handleWinningNumberInput(3, this.value)" style="font-size:1.3rem; font-weight:800; letter-spacing:2px; text-align:center; color:#E5A97D;">
+                      <div id="winner-preview-3" style="margin-top:10px; font-size:0.78rem; min-height:52px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+                        <span style="color:var(--text-muted); font-style:italic;">Esperando número...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div style="display:flex; justify-content:flex-end; gap:12px;">
                   <button type="submit" class="btn btn-bronze btn-lg" id="btn-save-raffle">
                     💾 Guardar y Publicar en Vivo &rarr;

@@ -13,8 +13,11 @@ const DEFAULT_STATE = {
     subtitle: "Fondo de Equipamiento y Actividades Institucionales",
     ticketPrice: 400,
     totalNumbers: 1000,
-    drawDate: "2026-08-31T20:00:00-03:00",
+    drawDate: "2026-09-19T21:00:00-03:00",
     drawMethod: "Quiniela Nocturna de la Lotería Nacional",
+    status: "ACTIVE",
+    winningNumbers: [],
+    winners: [],
     prizes: [
       {
         order: 1,
@@ -109,6 +112,9 @@ async function syncRaffleFromAPI() {
       AppState.activeRaffle.drawMethod = data.raffle.drawMethod;
       AppState.activeRaffle.ticketPrice = data.raffle.ticketPrice;
       AppState.activeRaffle.totalNumbers = data.raffle.totalNumbers;
+      AppState.activeRaffle.status = data.raffle.status || 'ACTIVE';
+      AppState.activeRaffle.winningNumbers = data.raffle.winningNumbers || [];
+      AppState.activeRaffle.winners = data.raffle.winners || [];
       AppState.activeRaffle.prizes = data.raffle.prizes || AppState.activeRaffle.prizes;
 
       // Update numbers mapping
@@ -135,7 +141,16 @@ async function syncRaffleFromAPI() {
         subtitleEl.innerHTML = `${data.raffle.subtitle || 'Fondo de equipamiento y actividades institucionales.'} Sortea por la <strong>${data.raffle.drawMethod}</strong> el ${formattedDate}.`;
       }
       if (priceEl) priceEl.innerHTML = `$ ${data.raffle.ticketPrice} <span style="font-size:1rem; color:var(--text-bone);">UYU</span>`;
-      if (tagEl) tagEl.textContent = `Rifa Oficial · Sorteo ${new Date(data.raffle.drawDate).getFullYear()}`;
+      
+      if (tagEl) {
+        if (data.raffle.status === 'CLOSED' || (data.raffle.winners && data.raffle.winners.length > 0)) {
+          tagEl.innerHTML = `🔴 Sorteo Realizado · Rifa Finalizada`;
+          tagEl.style.background = `rgba(239, 68, 68, 0.2)`;
+          tagEl.style.color = `#FCA5A5`;
+        } else {
+          tagEl.textContent = `Rifa Oficial · Sorteo ${new Date(data.raffle.drawDate).getFullYear()}`;
+        }
+      }
       if (totalEl) totalEl.textContent = data.raffle.totalNumbers.toLocaleString('es-UY');
 
       // Update KPI stats if present
@@ -159,6 +174,7 @@ async function syncRaffleFromAPI() {
         if (progressBarEl) progressBarEl.style.width = `${Math.max(takenPercent, 4)}%`;
       }
 
+      renderPublicWinners(data.raffle.winners, data.raffle);
       renderPublicPrizes();
       renderHomeRafflePrizes();
       renderTeaserRafflePrizes();
@@ -167,9 +183,92 @@ async function syncRaffleFromAPI() {
     }
   } catch (err) {
     console.warn('Usando estado local para rifas (Backend offline):', err.message);
+    renderPublicWinners(AppState.activeRaffle.winners, AppState.activeRaffle);
     renderPublicPrizes();
     renderHomeRafflePrizes();
     renderTeaserRafflePrizes();
+  }
+}
+
+// Renderizar banner dorado de ganadores oficiales en rifas.html e index.html
+function renderPublicWinners(winners, raffle) {
+  const rifasContainer = document.getElementById('raffle-winners-banner');
+  const homeContainer = document.getElementById('home-raffle-winners-banner');
+
+  if (!Array.isArray(winners) || winners.length === 0) {
+    if (rifasContainer) rifasContainer.style.display = 'none';
+    if (homeContainer) homeContainer.style.display = 'none';
+    return;
+  }
+
+  const d = new Date(raffle.drawDate || '2026-09-19T21:00:00-03:00');
+  const formattedDate = d.toLocaleDateString('es-UY', { day: 'numeric', month: 'long', year: 'numeric' });
+  const method = raffle.drawMethod || 'Quiniela Nocturna de la Lotería Nacional';
+
+  const html = `
+    <div style="background: linear-gradient(135deg, rgba(30, 20, 10, 0.96), rgba(15, 10, 5, 0.98)); border: 2px solid var(--bronze-primary); border-radius: var(--radius-xl); padding: clamp(20px, 3vw, 32px); box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 25px rgba(197,155,39,0.25); position:relative; overflow:hidden;">
+      <div style="position:absolute; top:-30px; right:-30px; width:140px; height:140px; background:radial-gradient(circle, rgba(197,155,39,0.25) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; border-bottom:1px solid rgba(197,155,39,0.3); padding-bottom:14px;">
+        <div>
+          <span style="background:linear-gradient(135deg, #C59B27, #E0BA4D); color:#0A0F0D; font-weight:800; font-size:0.75rem; padding:4px 12px; border-radius:4px; letter-spacing:1px; display:inline-block;">
+            🎉 SORTEO OFICIAL REALIZADO
+          </span>
+          <h2 style="font-family:var(--font-heading); font-size:clamp(1.4rem, 2.5vw, 1.9rem); font-weight:800; color:var(--text-bone); margin-top:8px; margin-bottom:2px;">
+            Ganadores Oficiales de la Gran Rifa ANCU
+          </h2>
+          <p style="font-size:0.88rem; color:var(--text-bone-muted);">
+            Sorteado por la <strong>${method}</strong> el ${formattedDate}.
+          </p>
+        </div>
+        <div style="background:rgba(0,0,0,0.4); border:1px solid var(--border-bronze); border-radius:var(--radius-md); padding:10px 18px; text-align:center;">
+          <div style="font-size:0.72rem; color:var(--bronze-light); text-transform:uppercase; font-weight:700;">Fiscalización</div>
+          <div style="font-size:0.85rem; color:var(--text-bone); font-weight:600;">Comisión Directiva ANCU</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:18px;">
+        ${winners.map((w, idx) => {
+          const medal = idx === 0 ? '🥇 1º PREMIO' : (idx === 1 ? '🥈 2º PREMIO' : '🥉 3º PREMIO');
+          const medalColor = idx === 0 ? '#E0BA4D' : (idx === 1 ? '#CBD5E1' : '#E5A97D');
+          const borderStyle = idx === 0 ? 'border: 1.5px solid var(--border-bronze);' : 'border: 1px solid rgba(255,255,255,0.15);';
+          return `
+            <div style="background:rgba(0,0,0,0.5); ${borderStyle} border-radius:var(--radius-lg); padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                  <span style="font-size:0.78rem; font-weight:800; color:${medalColor}; letter-spacing:0.5px;">${medal}</span>
+                  <span style="background:rgba(197,155,39,0.15); color:var(--bronze-light); border:1px solid rgba(197,155,39,0.3); font-size:0.72rem; padding:2px 8px; border-radius:4px; font-weight:700;">
+                    Boleto Oficial
+                  </span>
+                </div>
+                <div style="font-size:1.9rem; font-weight:900; color:#FFFFFF; letter-spacing:4px; font-family:monospace; margin-bottom:6px;">
+                  Nº ${w.number}
+                </div>
+                <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-bone); line-height:1.3; margin-bottom:8px;">
+                  ${w.prizeTitle}
+                </h4>
+              </div>
+              <div style="border-top:1px solid var(--border-subtle); padding-top:10px; margin-top:8px;">
+                <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Ganador Adjudicado:</div>
+                <div style="font-size:1rem; font-weight:700; color:${w.isSold ? '#10B981' : '#F59E0B'};">
+                  ${w.buyerName}
+                </div>
+                ${w.buyerDept ? `<div style="font-size:0.78rem; color:var(--text-muted);">Depto: ${w.buyerDept}</div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  if (rifasContainer) {
+    rifasContainer.innerHTML = html;
+    rifasContainer.style.display = 'block';
+  }
+  if (homeContainer) {
+    homeContainer.innerHTML = html;
+    homeContainer.style.display = 'block';
   }
 }
 
@@ -541,6 +640,10 @@ function renderNumbersGrid(hundredIndex) {
 }
 
 function toggleNumberSelection(numberStr) {
+  if (AppState.activeRaffle.status === 'CLOSED') {
+    alert("Esta campaña de rifa ha finalizado por haberse realizado el sorteo oficial. Podés ver los resultados de los ganadores en la parte superior.");
+    return;
+  }
   const item = AppState.activeRaffle.numbers[numberStr];
   if (item && (item.status === 'sold' || item.status === 'paid')) {
     alert(`El número #${numberStr} ya ha sido adquirido.`);
@@ -1437,17 +1540,39 @@ async function initAdminDashboard() {
       }
 
       const activeRaffle = raffles.find(r => r.status === 'ACTIVE') || raffles[0];
-      if (activeRaffle && Array.isArray(activeRaffle.prizes)) {
-        AppState.adminPrizesDraft = activeRaffle.prizes.map((p, idx) => ({
-          order: p.prize_order || idx + 1,
-          title: p.title || '',
-          description: p.description || '',
-          imageUrl: p.image_url || '',
-          estimatedValue: parseFloat(p.estimated_value || 0),
-          regulated: p.regulated === true,
-          note: p.note || ''
-        }));
-        renderAdminPrizesEditor();
+      if (activeRaffle) {
+        // Cargar números ganadores
+        const w1Input = document.getElementById('winning-number-1');
+        const w2Input = document.getElementById('winning-number-2');
+        const w3Input = document.getElementById('winning-number-3');
+        if (w1Input) w1Input.value = activeRaffle.winning_number_1 || '';
+        if (w2Input) w2Input.value = activeRaffle.winning_number_2 || '';
+        if (w3Input) w3Input.value = activeRaffle.winning_number_3 || '';
+
+        // Títulos de premios en casilleros de ganadores
+        if (Array.isArray(activeRaffle.prizes)) {
+          const p1El = document.getElementById('win-prize-title-1');
+          const p2El = document.getElementById('win-prize-title-2');
+          const p3El = document.getElementById('win-prize-title-3');
+          if (p1El && activeRaffle.prizes[0]) p1El.textContent = activeRaffle.prizes[0].title;
+          if (p2El && activeRaffle.prizes[1]) p2El.textContent = activeRaffle.prizes[1].title;
+          if (p3El && activeRaffle.prizes[2]) p3El.textContent = activeRaffle.prizes[2].title;
+
+          AppState.adminPrizesDraft = activeRaffle.prizes.map((p, idx) => ({
+            order: p.prize_order || idx + 1,
+            title: p.title || '',
+            description: p.description || '',
+            imageUrl: p.image_url || '',
+            estimatedValue: parseFloat(p.estimated_value || 0),
+            regulated: p.regulated === true,
+            note: p.note || ''
+          }));
+          renderAdminPrizesEditor();
+        }
+
+        if (activeRaffle.winning_number_1) handleWinningNumberInput(1, activeRaffle.winning_number_1);
+        if (activeRaffle.winning_number_2) handleWinningNumberInput(2, activeRaffle.winning_number_2);
+        if (activeRaffle.winning_number_3) handleWinningNumberInput(3, activeRaffle.winning_number_3);
       }
     }
 
@@ -1977,6 +2102,47 @@ function removePrizeRow(index) {
   }
 }
 
+const winnerLookupDebounce = {};
+function handleWinningNumberInput(prizeOrder, val) {
+  const container = document.getElementById(`winner-preview-${prizeOrder}`);
+  if (!container) return;
+  const cleanVal = (val || '').trim();
+  if (cleanVal.length === 0) {
+    container.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">Esperando número...</span>';
+    return;
+  }
+  container.innerHTML = '<span style="color:var(--bronze-light); font-size:0.75rem;">Buscando número en PostgreSQL...</span>';
+  clearTimeout(winnerLookupDebounce[prizeOrder]);
+  winnerLookupDebounce[prizeOrder] = setTimeout(async () => {
+    try {
+      const padNum = cleanVal.padStart(3, '0');
+      const res = await fetch(`${API_BASE}/admin/raffles/1/lookup-ticket?number=${padNum}`);
+      if (!res.ok) throw new Error('Error al consultar');
+      const data = await res.json();
+      if (data.found) {
+        if (data.isSold) {
+          container.innerHTML = `
+            <div style="color:#10B981; font-weight:700; display:flex; align-items:center; gap:4px;">
+              <span>✓ GANADOR ENCONTRADO</span>
+            </div>
+            <div style="color:var(--text-bone); font-weight:600; font-size:0.85rem;">${data.buyerName}</div>
+            <div style="color:var(--text-muted); font-size:0.72rem;">C.I: ${data.buyerCi || 'S/D'} · Depto: ${data.buyerDept || 'Uruguay'} · Tel: ${data.buyerPhone || 'S/D'}</div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div style="color:#F59E0B; font-weight:700; font-size:0.8rem;">⚠️ NÚMERO LIBRE (No vendido)</div>
+            <div style="color:var(--text-muted); font-size:0.72rem;">El número ${padNum} no registra compra en la base de datos.</div>
+          `;
+        }
+      } else {
+        container.innerHTML = `<span style="color:#EF4444; font-size:0.75rem;">✕ Número no encontrado</span>`;
+      }
+    } catch (e) {
+      container.innerHTML = `<span style="color:var(--text-muted); font-size:0.72rem;">Error al buscar número</span>`;
+    }
+  }, 250);
+}
+
 async function saveRaffleConfig(event) {
   if (event) event.preventDefault();
 
@@ -1987,6 +2153,10 @@ async function saveRaffleConfig(event) {
   const status = document.getElementById('raffle-status-select')?.value || 'ACTIVE';
   const method = document.getElementById('raffle-method-input')?.value.trim() || 'Quiniela Nocturna de la Lotería Nacional';
 
+  const winningNumber1 = document.getElementById('winning-number-1')?.value.trim() || '';
+  const winningNumber2 = document.getElementById('winning-number-2')?.value.trim() || '';
+  const winningNumber3 = document.getElementById('winning-number-3')?.value.trim() || '';
+
   if (!title || !dateVal) {
     alert("Por favor complete los campos obligatorios del sorteo.");
     return;
@@ -1996,7 +2166,7 @@ async function saveRaffleConfig(event) {
   if (btn) btn.textContent = 'Guardando en PostgreSQL...';
 
   try {
-    // 1. Guardar Rifa
+    // 1. Guardar Rifa y Números Ganadores
     const raffleRes = await fetch(`${API_BASE}/admin/raffles/1`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -2006,7 +2176,10 @@ async function saveRaffleConfig(event) {
         drawDate: new Date(dateVal).toISOString(),
         drawMethod: method,
         ticketPrice: priceVal,
-        status
+        status,
+        winningNumber1,
+        winningNumber2,
+        winningNumber3
       })
     });
 
@@ -2021,7 +2194,7 @@ async function saveRaffleConfig(event) {
 
     if (!prizesRes.ok) throw new Error('Error al actualizar los premios.');
 
-    alert("🎉 ¡Campaña de Rifa, Premios y Fotografías guardados con éxito en PostgreSQL y publicados en vivo!");
+    alert("🎉 ¡Campaña de Rifa, Premios y Números Ganadores guardados con éxito en PostgreSQL y publicados en vivo!");
     await initAdminDashboard();
     await syncRaffleFromAPI();
   } catch (err) {

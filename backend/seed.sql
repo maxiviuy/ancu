@@ -17,21 +17,24 @@ VALUES (
     1,
     'Gran Rifa de Colaboración ANCU 2026',
     'Fondo de Equipamiento, Asesoría Jurídica y Actividades Institucionales',
-    '2026-08-31 20:00:00-03',
+    '2026-09-19 21:00:00-03',
     'Quiniela Nocturna de la Lotería Nacional',
     400.00,
     1000,
     'ACTIVE'
-) ON CONFLICT (id) DO NOTHING;
+) ON CONFLICT (id) DO UPDATE SET 
+    draw_date = EXCLUDED.draw_date,
+    draw_method = EXCLUDED.draw_method,
+    status = EXCLUDED.status;
 
 -- 2. Premios Oficiales con Fotografías y Descripciones
 DELETE FROM raffle_prizes WHERE raffle_id = 1;
 
 INSERT INTO raffle_prizes (raffle_id, prize_order, title, description, image_url, estimated_value, regulated, note)
 VALUES 
-    (1, 1, 'Rifle Deportivo Savage Mark-II F', 'Calibre .22LR, cerrojo de precisión, culata sintética ergonómica de alta resistencia y cargador extraíble de 10 tiros.', 'https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=600&auto=format&fit=crop&q=80', 750.00, true, 'Requiere THATA vigente y registro legal ante SMA/ANCU.'),
-    (1, 2, 'Pistola Taurus G3C Compact Black', 'Calibre 9mm Parabellum, acabado Black Tenifer anticorrosión, 3 cargadores incluidos y miras ajustables de tres puntos.', 'https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=600&auto=format&fit=crop&q=80', 680.00, true, 'Requiere THATA vigente y registro legal ante SMA/ANCU.'),
-    (1, 3, 'Cuchillo de Monte Glock FM81 con Sierra', 'Acero al carbono fosfatado, sierra dorsal, empuñadura de polímero militar y vaina rígida con clip de retención rápida.', 'https://images.unsplash.com/photo-1593487568720-92097fb460fb?w=600&auto=format&fit=crop&q=80', 160.00, false, 'Entrega directa a domicilio en todo el Uruguay.')
+    (1, 1, 'Visor Monocular Térmico Sytong XS03-35LRF', 'Sensor térmico 384x288 px, lente 35mm F1.0, telémetro láser integrado hasta 1.200 metros, pantalla AMOLED 1024x768, grabación WiFi y batería recargable.', '/uploads/prizes/prize_visor_sytong_xs03.png', 1450.00, false, 'Garantía oficial y entrega directa en todo el país.'),
+    (1, 2, 'Arco Compuesto Profesional Diamond EDGE 320', 'Velocidad hasta 320 FPS, potencia regulable de 5 a 70 lbs, modos duales de disparo y kit completo con mira, carcaj y disparador.', '/uploads/prizes/prize_arco_diamond_edge.png', 650.00, false, 'Entrega directa a domicilio en todo el Uruguay.'),
+    (1, 3, 'Cuchillo de Caza Artesanal Schmieden con Vaina de Cuero', 'Hoja de acero al carbono forjado a mano de alta retención de filo, cabo de asta de ciervo natural y vaina de cuero vacuno legítimo.', '/uploads/prizes/prize_cuchillo_schmieden.png', 220.00, false, 'Entrega en mano con certificado artesanal.')
 ON CONFLICT DO NOTHING;
 
 -- 3. Generar los 1000 números de la rifa (000 al 999)
