@@ -17,7 +17,7 @@ VALUES (
     1,
     'Gran Rifa de Colaboración ANCU 2026',
     'Fondo de Equipamiento, Asesoría Jurídica y Actividades Institucionales',
-    '2026-09-19 21:00:00-03',
+    '2026-10-09 21:00:00-03',
     'Quiniela Nocturna de la Lotería Nacional',
     400.00,
     1000,

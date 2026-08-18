@@ -13,7 +13,7 @@ const DEFAULT_STATE = {
     subtitle: "Fondo de Equipamiento y Actividades Institucionales",
     ticketPrice: 400,
     totalNumbers: 1000,
-    drawDate: "2026-09-19T21:00:00-03:00",
+    drawDate: "2026-10-09T21:00:00-03:00",
     drawMethod: "Quiniela Nocturna de la Lotería Nacional",
     status: "ACTIVE",
     winningNumbers: [],
