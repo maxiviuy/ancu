@@ -2451,4 +2451,11 @@ button, input, select, textarea {
   box-shadow: 0 4px 12px rgba(184, 134, 11, 0.25);
 }
 
+/* Modo Expectativa / Teaser */
+html.mode-teaser #full-site-content {
+  display: none !important;
+}
 
+html.mode-teaser #teaser-launch-content {
+  display: block !important;
+}

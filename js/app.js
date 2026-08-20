@@ -174,6 +174,12 @@ async function syncRaffleFromAPI() {
         if (progressBarEl) progressBarEl.style.width = `${Math.max(takenPercent, 4)}%`;
       }
 
+      const homeDrawDateEl = document.getElementById('home-raffle-draw-date');
+      if (homeDrawDateEl && data.raffle && data.raffle.drawDate) {
+        const d = new Date(data.raffle.drawDate);
+        homeDrawDateEl.textContent = d.toLocaleDateString('es-UY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
       renderPublicWinners(data.raffle.winners, data.raffle);
       renderPublicPrizes();
       renderHomeRafflePrizes();
@@ -2947,6 +2953,7 @@ async function saveInstitutionalSettingsForm(event) {
     });
     const data = await res.json();
     if (res.ok) {
+      try { localStorage.setItem('ancu_site_mode', siteLaunchMode); } catch (e) {}
       alert("✅ Parámetros institucionales guardados y sincronizados en vivo.");
       await loadAdminSettings();
     } else {
@@ -3469,6 +3476,8 @@ async function loadPublicSettings() {
 
     // 6. Launch Teaser Mode Handling
     const siteMode = settings.site_launch_mode || 'TEASER_RIFA';
+    try { localStorage.setItem('ancu_site_mode', siteMode); } catch (e) {}
+    
     const rawPath = window.location.pathname;
     const pageName = rawPath.substring(rawPath.lastIndexOf('/') + 1).toLowerCase() || 'index.html';
 
@@ -3476,6 +3485,7 @@ async function loadPublicSettings() {
     const teaserContent = document.getElementById('teaser-launch-content');
 
     if (siteMode === 'TEASER_RIFA') {
+      document.documentElement.classList.add('mode-teaser');
       if (pageName === '' || pageName === 'index.html') {
         if (fullContent) fullContent.style.display = 'none';
         if (teaserContent) teaserContent.style.display = 'block';
@@ -3497,11 +3507,23 @@ async function loadPublicSettings() {
       }
     } else {
       // Modo público completo
+      document.documentElement.classList.remove('mode-teaser');
       if (fullContent) fullContent.style.display = 'block';
       if (teaserContent) teaserContent.style.display = 'none';
     }
   } catch (err) {
     console.warn('Configuraciones operando en modo estático/fallback:', err);
+    // Fallback: Si no hay conexión con el backend, respetar modo expectativa por defecto
+    try {
+      const cachedMode = localStorage.getItem('ancu_site_mode') || 'TEASER_RIFA';
+      if (cachedMode === 'TEASER_RIFA') {
+        document.documentElement.classList.add('mode-teaser');
+        const fullContent = document.getElementById('full-site-content');
+        const teaserContent = document.getElementById('teaser-launch-content');
+        if (fullContent) fullContent.style.display = 'none';
+        if (teaserContent) teaserContent.style.display = 'block';
+      }
+    } catch (e) {}
   }
 }
 
