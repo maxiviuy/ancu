@@ -1370,12 +1370,6 @@ function initMembershipForm() {
 }
 
 // ---------------- Admin Backoffice (Rifas, Noticias CMS & Roles) ----------------
-function setAdminCredentials(user, pass) {
-  const u = document.getElementById('admin-user-input');
-  const p = document.getElementById('admin-pass-input');
-  if (u) u.value = user;
-  if (p) p.value = pass;
-}
 
 async function handleAdminLogin(event) {
   if (event) event.preventDefault();

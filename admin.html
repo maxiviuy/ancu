@@ -24,27 +24,18 @@
       <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
         <div class="form-group" style="margin-bottom:16px;">
           <label class="form-label" for="admin-user-input">Usuario o Correo Institucional</label>
-          <input type="text" id="admin-user-input" class="form-control" placeholder="admin@ancu.uy" value="admin" required>
+          <input type="text" id="admin-user-input" class="form-control" placeholder="admin@ancu.uy" autocomplete="username" required>
         </div>
 
         <div class="form-group" style="margin-bottom:24px;">
           <label class="form-label" for="admin-pass-input">Contraseña de Acceso</label>
-          <input type="password" id="admin-pass-input" class="form-control" placeholder="••••••••" value="ancu2026admin" required>
+          <input type="password" id="admin-pass-input" class="form-control" placeholder="••••••••••••" autocomplete="current-password" required>
         </div>
 
         <button type="submit" class="btn btn-bronze btn-lg" id="btn-admin-submit" style="width:100%; justify-content:center;">
           Ingresar al Panel de Control &rarr;
         </button>
       </form>
-
-      <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border-subtle); text-align:center;">
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:8px;">Credenciales de demostración iniciales:</span>
-        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="setAdminCredentials('admin', 'ancu2026admin')">🛡️ Super Admin</button>
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="setAdminCredentials('editor', 'ancu2026editor')">✍️ Editor Prensa / Rifas</button>
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="setAdminCredentials('tesoreria', 'tesoreria2026')">💰 Tesorería</button>
-        </div>
-      </div>
     </div>
   </div>
 

@@ -5,10 +5,10 @@
 -- 0. Administradores Iniciales
 INSERT INTO admin_users (username, email, password_hash, full_name, role)
 VALUES 
-    ('admin', 'admin@ancu.uy', 'ancu2026admin', 'Comisión Directiva ANCU', 'SUPERADMIN'),
-    ('superadmin', 'superadmin@ancu.uy', 'Astro2026!Admin', 'Super Administrador ANCU', 'SUPERADMIN'),
-    ('editor', 'editor@ancu.uy', 'ancu2026editor', 'Redacción y Prensa ANCU', 'EDITOR'),
-    ('tesoreria', 'tesoreria@ancu.uy', 'tesoreria2026', 'Tesorería Central ANCU', 'TREASURY')
+    ('admin', 'admin@ancu.uy', 'ANCU#SuperAdmin2026!k9', 'Comisión Directiva ANCU', 'SUPERADMIN'),
+    ('superadmin', 'superadmin@ancu.uy', 'ANCU#SuperAdmin2026!k9', 'Super Administrador ANCU', 'SUPERADMIN'),
+    ('editor', 'editor@ancu.uy', 'ANCU#Editor2026!Press7', 'Redacción y Prensa ANCU', 'EDITOR'),
+    ('tesoreria', 'tesoreria@ancu.uy', 'ANCU#Tesoreria2026!Fin8', 'Tesorería Central ANCU', 'TREASURY')
 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- 1. Insertar Rifa Activa 2026
