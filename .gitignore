@@ -37,6 +37,8 @@ verify_*.py
 clean_*.py
 parse_*.py
 check_*.py
+release_*.py
+apply_*.py
 *.xlsx
 *.txt
 __pycache__/
