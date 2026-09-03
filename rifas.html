@@ -267,10 +267,21 @@
         </div>
 
         <div id="bank-details-box" style="display:none; background:rgba(0,0,0,0.4); border:1px solid var(--border-medium); padding:16px; border-radius:var(--radius-md); font-size:0.85rem; margin-bottom:20px;">
-          <div style="margin-bottom:10px; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:var(--radius-sm); border-left:3px solid var(--border-bronze);">
-            <strong style="color:var(--bronze-light); display:block; margin-bottom:2px;">🏛️ Banco BROU:</strong>
-            <span class="brou-account-display" style="font-family:monospace; font-size:0.95rem; font-weight:700; color:var(--text-bone);">Caja de Ahorro UYU: 110766786-00001</span>
-            <span style="display:block; font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Titular: Asociación Nacional de Cazadores del Uruguay (ANCU)</span>
+          <div style="margin-bottom:12px; background:rgba(255,255,255,0.03); padding:12px 14px; border-radius:var(--radius-sm); border-left:3px solid var(--border-bronze);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <strong style="color:var(--bronze-light); font-size:0.9rem;">🏛️ Banco República (BROU):</strong>
+              <button type="button" class="btn btn-sm" onclick="copyToClipboard('110766786-00001', this)" style="padding:2px 8px; font-size:0.75rem; background:rgba(217,163,94,0.15); color:var(--bronze-light); border:1px solid rgba(217,163,94,0.3); border-radius:4px; cursor:pointer;">📋 Copiar Cuenta</button>
+            </div>
+            <div style="margin-bottom:6px;">
+              <span style="color:var(--text-muted); font-size:0.8rem;">Caja de Ahorros en Pesos (UYU):</span>
+              <div class="brou-account-display" style="font-family:monospace; font-size:1.05rem; font-weight:700; color:var(--text-bone); letter-spacing:0.04em;">110766786-00001</div>
+            </div>
+            <div>
+              <span style="color:var(--text-muted); font-size:0.75rem; display:block;">Titulares de la cuenta destino:</span>
+              <strong class="brou-titular-display" style="font-size:0.85rem; color:var(--text-bone); display:block; line-height:1.35; margin-top:2px;">
+                PHOYU MIRO GONZALO DAMIAN Y/O GIUMELLI ACOSTA CESAR ROBERTO
+              </strong>
+            </div>
           </div>
 
           <div style="margin-bottom:14px; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:var(--radius-sm); border-left:3px solid #009EE3;">

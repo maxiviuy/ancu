@@ -955,8 +955,8 @@ async function submitCheckout(e) {
 }
 
 function renderSuccessTicket(data) {
-  const modal = document.getElementById('success-ticket-modal');
-  const body = document.getElementById('success-ticket-body');
+  const modal = document.getElementById('success-ticket-modal') || document.getElementById('ticket-modal');
+  const body = document.getElementById('success-ticket-body') || document.getElementById('ticket-content');
   if (!modal || !body) return;
 
   const dateStr = new Date().toLocaleDateString('es-UY');
@@ -1004,6 +1004,17 @@ function renderSuccessTicket(data) {
             </span>
           </div>
         </div>
+
+        ${!data.isPaid ? `
+        <div style="margin-top:16px; padding:12px 14px; background:rgba(217,163,94,0.08); border-radius:6px; border:1px solid rgba(217,163,94,0.3); font-size:0.8rem;">
+          <div style="font-weight:700; color:var(--bronze-light); margin-bottom:4px; font-size:0.85rem;">🏛️ Datos para completar tu transferencia bancaria:</div>
+          <div><strong>Banco:</strong> Banco República (BROU) · <strong>Caja de Ahorro UYU ($):</strong> <span style="font-family:monospace; font-weight:700; color:var(--text-bone);">110766786-00001</span></div>
+          <div style="margin-top:2px;"><strong>Titulares:</strong> <span style="color:var(--text-bone);">PHOYU MIRO GONZALO DAMIAN Y/O GIUMELLI ACOSTA CESAR ROBERTO</span></div>
+          <div style="margin-top:6px; font-size:0.75rem; color:var(--text-muted);">
+            Envía tu comprobante con tu Nº de Operación <strong>${data.orderRef}</strong> al WhatsApp de ANCU (<a href="https://wa.me/59894156582" target="_blank" style="color:var(--bronze-light); text-decoration:underline;">094 156 582</a>) para acreditación inmediata.
+          </div>
+        </div>
+        ` : ''}
       </div>
 
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
@@ -2867,6 +2878,7 @@ async function loadAdminSettings() {
     const fee = document.getElementById('setting-membership-fee');
     const statSum = document.getElementById('setting-statute-summary');
     const brou = document.getElementById('setting-brou-account');
+    const brouTitular = document.getElementById('setting-brou-titular');
     const prex = document.getElementById('setting-prex-account');
     const email = document.getElementById('setting-contact-email');
     const phone = document.getElementById('setting-contact-phone');
@@ -2893,6 +2905,7 @@ async function loadAdminSettings() {
     if (fee && map.membership_fee_amount) fee.value = map.membership_fee_amount;
     if (statSum && map.statute_summary) statSum.value = map.statute_summary;
     if (brou && map.brou_account_info) brou.value = map.brou_account_info;
+    if (brouTitular && map.brou_account_titular) brouTitular.value = map.brou_account_titular;
     if (prex && map.prex_account_info) prex.value = map.prex_account_info;
     if (email && map.contact_email) email.value = map.contact_email;
     if (phone && map.contact_phone) phone.value = map.contact_phone;
@@ -2924,6 +2937,7 @@ async function saveInstitutionalSettingsForm(event) {
   const membershipFee = document.getElementById('setting-membership-fee')?.value.trim();
   const statuteSummary = document.getElementById('setting-statute-summary')?.value.trim();
   const brouAccount = document.getElementById('setting-brou-account')?.value.trim();
+  const brouTitular = document.getElementById('setting-brou-titular')?.value.trim();
   const prexAccount = document.getElementById('setting-prex-account')?.value.trim();
   const contactEmail = document.getElementById('setting-contact-email')?.value.trim();
   const contactPhone = document.getElementById('setting-contact-phone')?.value.trim();
@@ -2934,6 +2948,7 @@ async function saveInstitutionalSettingsForm(event) {
     { setting_key: 'membership_fee_amount', setting_value: membershipFee },
     { setting_key: 'statute_summary', setting_value: statuteSummary },
     { setting_key: 'brou_account_info', setting_value: brouAccount },
+    { setting_key: 'brou_account_titular', setting_value: brouTitular },
     { setting_key: 'prex_account_info', setting_value: prexAccount },
     { setting_key: 'contact_email', setting_value: contactEmail },
     { setting_key: 'contact_phone', setting_value: contactPhone }
@@ -3462,6 +3477,11 @@ async function loadPublicSettings() {
         el.textContent = settings.brou_account_info;
       });
     }
+    if (settings.brou_account_titular) {
+      document.querySelectorAll('.brou-titular-display').forEach(el => {
+        el.textContent = settings.brou_account_titular;
+      });
+    }
     if (settings.prex_account_info) {
       document.querySelectorAll('.prex-account-display').forEach(el => {
         el.textContent = settings.prex_account_info;
@@ -3828,3 +3848,42 @@ window.toggleNumberSelection = toggleNumberSelection;
 window.handleWinningNumberInput = handleWinningNumberInput;
 window.loadAdminRaffles = loadAdminRaffles;
 
+function copyToClipboard(text, btnElement) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (btnElement) {
+        const origText = btnElement.innerHTML;
+        btnElement.innerHTML = '✓ ¡Copiado!';
+        btnElement.style.color = '#10B981';
+        setTimeout(() => {
+          btnElement.innerHTML = origText;
+          btnElement.style.color = '';
+        }, 2000);
+      }
+    }).catch(() => fallbackCopy(text, btnElement));
+  } else {
+    fallbackCopy(text, btnElement);
+  }
+}
+
+function fallbackCopy(text, btnElement) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    if (btnElement) {
+      const origText = btnElement.innerHTML;
+      btnElement.innerHTML = '✓ ¡Copiado!';
+      btnElement.style.color = '#10B981';
+      setTimeout(() => {
+        btnElement.innerHTML = origText;
+        btnElement.style.color = '';
+      }, 2000);
+    }
+  } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+window.copyToClipboard = copyToClipboard;

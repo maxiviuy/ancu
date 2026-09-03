@@ -114,7 +114,7 @@ La institución cuenta con una infraestructura moderna basada en **Linux VPS ded
 
 ### ✅ Recaudos Integrados y Desplegados en Producción:
 - [x] **Cuentas Bancarias de Recaudación:**
-  - **Banco BROU:** Caja de Ahorro UYU `110766786-00001` (Titular: ANCU).
+  - **Banco BROU:** Caja de Ahorro UYU `110766786-00001` (Titulares: PHOYU MIRO GONZALO DAMIAN Y/O GIUMELLI ACOSTA CESAR ROBERTO).
   - **Mercado Pago (Transferencia / CVU):** Cuenta UYU `1005929265537` (Titular: Martin Pastorino Alvarez).
 - [x] **Pasarela de Pagos Digital Automática (Mercado Pago Checkout Pro):**
   - **Public Key de Producción:** `APP_USR-f24043e3-2e82-4355-9c18-c3da4cad9405`
