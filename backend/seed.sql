@@ -43,16 +43,7 @@ SELECT 1, LPAD(i::text, 3, '0'), 'available'
 FROM generate_series(0, 999) AS i
 ON CONFLICT (raffle_id, number) DO NOTHING;
 
--- 4. Sembrar algunos números vendidos/reservados para realismo
-UPDATE raffle_tickets 
-SET status = 'paid', buyer_name = 'Federico Silva', buyer_phone = '099 123 456', buyer_email = 'fsilva@cazadores.uy', buyer_ci = '4.521.890-2', buyer_dept = 'Lavalleja', payment_method = 'MERCADOPAGO', updated_at = NOW()
-WHERE raffle_id = 1 AND number IN ('014', '042', '124', '350', '777');
-
-UPDATE raffle_tickets 
-SET status = 'held', buyer_name = 'Juan Ignacio Pérez', buyer_phone = '098 765 432', buyer_email = 'juan.perez@correo.uy', buyer_ci = '3.612.984-1', buyer_dept = 'Tacuarembó', payment_method = 'BROU', held_until = NOW() + INTERVAL '15 minutes', updated_at = NOW()
-WHERE raffle_id = 1 AND number IN ('089', '420');
-
--- 5. Socios iniciales
+-- 4. Socios iniciales
 INSERT INTO members (member_number, first_name, last_name, ci, phone, email, department, thata_number, category, status, valid_until, photo_url)
 VALUES 
     ('ANCU-0001', 'Directorio', 'General', '1.111.111-1', '099 000 111', 'info@ancu.uy', 'Lavalleja', 'UY-00001', 'Comisión Directiva', 'ACTIVE', '2027-12-31', 'assets/logo.png'),
@@ -61,14 +52,7 @@ VALUES
     ('ANCU-0089', 'Gonzalo', 'Ribeiro', '2.987.654-3', '094 555 444', 'gribeiro@campo.uy', 'Rocha', 'UY-45120', 'Socio Adherente', 'OVERDUE', '2026-06-30', NULL)
 ON CONFLICT (ci) DO NOTHING;
 
--- 6. Comprobantes de prueba en bandeja administrativa
-INSERT INTO payment_receipts (target_type, reference_id, payer_name, payer_phone, payer_ci, bank_origin, amount, status, notes)
-VALUES 
-    ('RAFFLE', '089, 420', 'Juan Ignacio Pérez', '098 765 432', '3.612.984-1', 'BROU', 800.00, 'PENDING', 'Transferencia caja de ahorro BROU por 2 boletos'),
-    ('MEMBERSHIP', '3.842.190-4', 'Carlos Mendiondo', '099 888 777', '3.842.190-4', 'PREX', 600.00, 'APPROVED', 'Cuota Agosto 2026 aprobada')
-ON CONFLICT DO NOTHING;
-
--- 7. Artículos y Noticias Iniciales (CMS)
+-- 5. Artículos y Noticias Iniciales (CMS)
 INSERT INTO news_articles (title, slug, category, author, publish_date, image_url, excerpt, content, is_featured, status)
 VALUES 
     (
@@ -197,4 +181,5 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 12. Log de Auditoría Inicial
 INSERT INTO audit_logs (action, details, ip_address)
-VALUES ('SYSTEM_INIT', '{"message": "Sistema inicializado con base de datos PostgreSQL, autoridades, configuraciones y CMS cargados"}'::jsonb, '127.0.0.1');
+SELECT 'SYSTEM_INIT', '{"message": "Sistema inicializado con base de datos PostgreSQL, autoridades, configuraciones y CMS cargados"}'::jsonb, '127.0.0.1'
+WHERE NOT EXISTS (SELECT 1 FROM audit_logs WHERE action = 'SYSTEM_INIT');

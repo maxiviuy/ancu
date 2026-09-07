@@ -15,8 +15,15 @@ async function runMigration() {
     console.log('📦 Creando tablas e índices...');
     await db.query(schemaSql);
     
-    console.log('🌱 Sembrando datos iniciales...');
-    await db.query(seedSql);
+    // Solo sembrar datos si la base de datos es nueva (sin administradores)
+    const adminCheck = await db.query('SELECT COUNT(*) FROM admin_users');
+    if (parseInt(adminCheck.rows[0].count, 10) === 0) {
+      console.log('🌱 Sembrando datos iniciales por primera vez...');
+      const seedSql = fs.readFileSync(path.join(__dirname, 'seed.sql'), 'utf-8');
+      await db.query(seedSql);
+    } else {
+      console.log('ℹ️ Base de datos ya inicializada. Omitiendo siembra de datos.');
+    }
     
     console.log('✅ Migración completada con éxito.');
     process.exit(0);
