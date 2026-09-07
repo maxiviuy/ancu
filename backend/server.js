@@ -179,7 +179,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(uploadsDir));
 
 // ----------------------------------------------------
-// Worker: Limpiador de Reservas de Rifas Expiradas (15 min)
+// Worker: Limpiador de Reservas de Rifas Expiradas (2 horas)
 // ----------------------------------------------------
 async function cleanExpiredHolds() {
   try {
@@ -191,7 +191,7 @@ async function cleanExpiredHolds() {
     `);
     if (res.rowCount > 0) {
       const numbers = res.rows.map(r => r.number).join(', ');
-      console.log(`[Cleaner] ${res.rowCount} números liberados por vencimiento de 15 min: ${numbers}`);
+      console.log(`[Cleaner] ${res.rowCount} números liberados por vencimiento de reserva: ${numbers}`);
       await db.query(`
         INSERT INTO audit_logs (action, details, ip_address)
         VALUES ($1, $2, $3);
@@ -335,7 +335,7 @@ app.get('/api/raffle/active', async (req, res) => {
   }
 });
 
-// Bloquear números temporalmente (15 min) con transacción atómica
+// Bloquear números temporalmente (2 horas) con transacción atómica
 app.post('/api/raffle/hold', async (req, res) => {
   const client = await db.getClient();
   try {
@@ -371,7 +371,7 @@ app.post('/api/raffle/hold', async (req, res) => {
       });
     }
 
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 horas de reserva
     await client.query(`
       UPDATE raffle_tickets 
       SET status = 'held',
@@ -396,7 +396,7 @@ app.post('/api/raffle/hold', async (req, res) => {
       success: true,
       numbers,
       heldUntil: expiresAt,
-      message: 'Números bloqueados con éxito por 15 minutos.'
+      message: 'Números bloqueados con éxito por 2 horas.'
     });
   } catch (err) {
     await client.query('ROLLBACK');

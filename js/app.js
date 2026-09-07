@@ -51,7 +51,7 @@ const DEFAULT_STATE = {
   },
   selectedNumbers: [],
   cartTimer: null,
-  cartTimeRemaining: 900, // 15 mins in seconds
+  cartTimeRemaining: 7200, // 2 hours (120 mins) in seconds
   memberUser: {
     isLoggedIn: false,
     firstName: "Carlos",
@@ -816,19 +816,22 @@ async function openCheckoutModal() {
 
 function startReservationTimer() {
   clearInterval(AppState.cartTimer);
-  AppState.cartTimeRemaining = 900; // 15 mins
+  AppState.cartTimeRemaining = 7200; // 2 horas (120 mins)
 
   const timerDisplay = document.getElementById('checkout-timer');
   
   function updateTimerText() {
-    const mins = Math.floor(AppState.cartTimeRemaining / 60);
+    const hours = Math.floor(AppState.cartTimeRemaining / 3600);
+    const mins = Math.floor((AppState.cartTimeRemaining % 3600) / 60);
     const secs = AppState.cartTimeRemaining % 60;
     if (timerDisplay) {
-      timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      timerDisplay.textContent = hours > 0 
+        ? `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+        : `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
     if (AppState.cartTimeRemaining <= 0) {
       clearInterval(AppState.cartTimer);
-      alert("El tiempo de reserva de 15 minutos ha expirado.");
+      alert("El tiempo de reserva de 2 horas ha expirado.");
       closeModal('checkout-modal');
       AppState.selectedNumbers = [];
       syncRaffleFromAPI().then(() => {
